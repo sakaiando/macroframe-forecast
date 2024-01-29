@@ -12,6 +12,7 @@ dependencies:
 - pandas=2.2.0
 - numpy=1.26.3
 - scipy=1.12.0
+- dask=2024.1.1
 - scikit-learn=1.4.0
 - pytest=8.0.0
 - black=24.1.0
