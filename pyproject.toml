@@ -1,0 +1,107 @@
+[project]
+name = "mff"
+dynamic = ["version"]
+description = "Macroframework forecasting with accounting identities"
+readme = "README.md"
+requires-python = ">=3.11"
+maintainers = [
+    {name = "Sakai Ando", email = "sando@imf.org"},
+    {name = "Sultan Orazbayev", email = "sorazbayev@imf.org"},
+]
+keywords = [
+    "macroframework",
+    "forecasting",
+    "macroeconomic identities",
+    "high-dimensional forecasting",
+    "econometrics",
+]
+# https://pypi.org/classifiers/
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Other Audience",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+# tbd
+dependencies = [
+    "pandas >=2.20",
+    "numpy",
+    "scipy",
+    "scikit-learn",
+]
+
+[project.urls]
+homepage = "https://github.com/sakaiando/mff"
+repository = "https://github.com/sakaiando/mff"
+
+[tool.setuptools]
+# Let's be explicit
+# $ python -c 'from setuptools import find_packages ; [print(x) for x in sorted(find_packages())]'
+# $ find graphblas/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
+# $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
+packages = [
+    "mff",
+]
+
+[tool.setuptools-git-versioning]
+enabled = true
+dev_template = "{tag}+{ccount}.g{sha}"
+dirty_template = "{tag}+{ccount}.g{sha}.dirty"
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312"]
+
+[tool.isort]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+profile = "black"
+skip_gitignore = true
+float_to_top = true
+default_section = "THIRDPARTY"
+known_first_party = "mff"
+line_length = 100
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = "tests"
+pythonpath = [
+  "."
+]
+addopts = [
+    "--strict-config",  # Force error if config is mispelled
+    "--strict-markers",  # Force error if marker is mispelled (must be defined in config)
+    "-ra",  # Print summary of all fails/errors
+]
+markers = [
+    "slow: Skipped unless --runslow passed",
+]
+log_cli_level = "info"
+filterwarnings = [
+    # See: https://docs.python.org/3/library/warnings.html#describing-warning-filters
+    # and: https://docs.pytest.org/en/7.2.x/how-to/capture-warnings.html#controlling-warnings
+    "error",
+
+    # numpy 1.25.0 (2023-06-17) deprecated `np.find_common_type`; many other dependencies use it.
+    # See if we can remove this filter in 2025.
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:",
+
+    # pypy gives this warning
+    "ignore:can't resolve package from __spec__ or __package__:ImportWarning:",
+
+    # Python 3.12 introduced this deprecation, which is triggered by pandas 2.1.1
+    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning:dateutil",
+]
+
+[tool.ruff]
+# https://github.com/charliermarsh/ruff/
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
