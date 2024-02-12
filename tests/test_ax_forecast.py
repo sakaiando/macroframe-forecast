@@ -24,9 +24,9 @@ def test_ax_forecast():
     num_variables = num_free_vars + 2
     
     df = df_true.copy()
-    df[0].iloc[-h:] = np.nan
-    df[1].iloc[-h:] = np.nan
-    df['one'].iloc[-h:] = np.nan
+    df.iloc[-h:, df.columns.get_loc(0)] = np.nan
+    df.iloc[-h:, df.columns.get_loc(1)] = np.nan
+    df.iloc[-h:, df.columns.get_loc('one')] = np.nan
     C = np.ones([1,num_variables])
     C[0,-1] = -1
     d = 0
@@ -41,13 +41,13 @@ def test_ax_forecast():
     df
     
     df2,df1,df0aug_coef = ax_forecast(df, lag, Tin, C_dict, d_dict)
-    df1.to_csv('tests/example_df1_temp.csv')
-    df2.to_csv('tests/example_df2_temp.csv')
-    df1 = pd.read_csv('tests/example_df1_temp.csv')
-    df2 = pd.read_csv('tests/example_df2_temp.csv')
+    df1.to_csv('example_df1_temp.csv')
+    df2.to_csv('example_df2_temp.csv')
+    df1 = pd.read_csv('example_df1_temp.csv')
+    df2 = pd.read_csv('example_df2_temp.csv')
     
-    expected_df2 = pd.read_csv('tests/example_df2.csv')
-    expected_df1 = pd.read_csv('tests/example_df1.csv')
+    expected_df2 = pd.read_csv('example_df2.csv')
+    expected_df1 = pd.read_csv('example_df1.csv')
     
     assert df1.equals(expected_df1)
     assert df2.equals(expected_df2)

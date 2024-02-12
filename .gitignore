@@ -1,3 +1,4 @@
 __pycache__
 .git_local_repo_credentials
 mff.egg-info/*
+tests/*.csv
