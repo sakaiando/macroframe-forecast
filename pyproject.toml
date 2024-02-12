@@ -30,11 +30,20 @@ classifiers = [
 ]
 # tbd
 dependencies = [
-    "pandas >=2.20",
-    "numpy",
-    "scipy",
-    "scikit-learn",
+    "pandas >= 2.2.0",
+    "numpy >= 1.26.3",
+    "scipy >= 1.12.0",
+    "scikit-learn >= 1.4.0",
+    "dask >= 2024.2.0",
 ]
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools >=64",
+    "setuptools-git-versioning",
+]
+
 
 [project.urls]
 homepage = "https://github.com/sakaiando/mff"
@@ -43,7 +52,7 @@ repository = "https://github.com/sakaiando/mff"
 [tool.setuptools]
 # Let's be explicit
 # $ python -c 'from setuptools import find_packages ; [print(x) for x in sorted(find_packages())]'
-# $ find graphblas/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
+# $ find mff/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
 # $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
 packages = [
     "mff",
