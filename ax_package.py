@@ -140,7 +140,7 @@ def ax_forecast(df, lag, Tin, C_dict, d_dict):
         Ui = Ci.T[:u,:] # unknown part of constraint Ci, want to drop column until full rank
 
         # if there are redundant columns, drop them
-        Ui = np.matrix(Ui,dtype='float')
+        Ui = np.array(Ui,dtype='float')
         if matrix_rank(Ui) < Ui.shape[1]: # if columns are not full rank
             Ui_pd = pd.DataFrame(Ui) # set up a dataframe so that column index is fixed
             for col in Ui_pd.columns: # loop to drop redundant columns
@@ -472,7 +472,7 @@ def step2(df1, df0, Tin, C_dict, d_dict):
     # reconcili rh by projecting it on constraint
     df2_u = df1_u.copy()
     for hi in range(h):
-        C = np.matrix(C_dict[T+hi],dtype='float') # to avoid error in inv(U.T @ W @ U)
+        C = np.array(C_dict[T+hi],dtype='float') # to avoid error in inv(U.T @ W @ U)
         U = C.T[:u,:]
         d = d_dict[T+hi]
 	# this step may need python 3.8 or above, 3.6 may gives an error
