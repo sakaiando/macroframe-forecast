@@ -1,4 +1,8 @@
 __pycache__
 .git_local_repo_credentials
+# setuptools files
 mff.egg-info/*
+# temporary csv files
 tests/*.csv
+# Sphinx documentation
+docs/build/
