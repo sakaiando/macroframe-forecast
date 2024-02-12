@@ -14,6 +14,8 @@ def can_forecast(df: DataFrame) -> bool:
 
 def is_consistent_shape(df: DataFrame, C_dict: dict[int, array]) -> bool:
     """check 2: make sure the size of contraint matrix is consistent with number of vars"""
+    if len(df) == 0:
+        return False
     for i in C_dict:
         if C_dict[i].shape[1] != len(df.columns):
             return False

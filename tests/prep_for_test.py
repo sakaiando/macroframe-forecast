@@ -22,9 +22,9 @@ df_true['sum']-df_true.iloc[:,:-1].sum(axis=1)
 num_variables = num_free_vars + 2
     
 df = df_true.copy()
-df[0].iloc[-h:] = np.nan
-df[1].iloc[-h:] = np.nan
-df['one'].iloc[-h:] = np.nan
+df.iloc[-h:, df.columns.get_loc(0)] = np.nan
+df.iloc[-h:, df.columns.get_loc(1)] = np.nan
+df.iloc[-h:, df.columns.get_loc('one')] = np.nan
 C = np.ones([1,num_variables])
 C[0,-1] = -1
 d = 0
@@ -38,5 +38,5 @@ lag = 1
 Tin = 5
 
 df2,df1,df0aug_coef = ax_forecast(df, lag, Tin, C_dict, d_dict)
-df2.to_csv('tests/example_df2.csv')
-df1.to_csv('tests/example_df1.csv')
+df1.to_csv('example_df1.csv')
+df2.to_csv('example_df2.csv')
