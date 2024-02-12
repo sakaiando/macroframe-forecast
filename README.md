@@ -21,3 +21,11 @@ are immediately reflected for testing:
 ```shell
 python -m pip install -e .
 ```
+
+## Building documentation
+
+To build/update documentation, run:
+
+```shell
+sphinx-build -M html docs/source/ docs/build/
+```
