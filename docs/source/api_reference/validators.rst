@@ -1,13 +1,10 @@
 Validators
 ----------
 
-can_forecast
-~~~~~~~~~~~~
+Validators check that the data and constraints have the appropriate shape and content.
 
 .. autofunction:: mff.validators.can_forecast
 
-
-is_consistent_shape
-~~~~~~~~~~~~~~~~~~~
-
 .. autofunction:: mff.validators.is_consistent_shape
+
+.. autofunction:: mff.validators.is_consistent_intercept
