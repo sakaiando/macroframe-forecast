@@ -3,7 +3,7 @@ __pycache__
 # setuptools files
 mff.egg-info/*
 # temporary csv files
-*.csv
+tests/*.csv
 # Sphinx documentation
 docs/build/
 # MacOS

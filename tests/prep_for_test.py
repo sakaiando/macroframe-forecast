@@ -38,5 +38,5 @@ lag = 1
 Tin = 5
 
 df2,df1,df0aug_coef = ax_forecast(df, lag, Tin, C_dict, d_dict)
-df1.to_csv('example_df1.csv')
-df2.to_csv('example_df2.csv')
+df1.to_csv('./tests/example_df1.csv')
+df2.to_csv('./tests/example_df2.csv')

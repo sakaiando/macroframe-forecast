@@ -3,7 +3,7 @@ name = "mff"
 dynamic = ["version"]
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 maintainers = [
     {name = "Sakai Ando", email = "sando@imf.org"},
     {name = "Sultan Orazbayev", email = "sorazbayev@imf.org"},
@@ -35,6 +35,7 @@ dependencies = [
     "scipy >= 1.12.0",
     "scikit-learn >= 1.4.0",
     "dask >= 2024.2.0",
+    "sktime >= 0.27.0"
 ]
 
 [build-system]
@@ -62,10 +63,6 @@ packages = [
 enabled = true
 dev_template = "{tag}+{ccount}.g{sha}"
 dirty_template = "{tag}+{ccount}.g{sha}.dirty"
-
-[tool.black]
-line-length = 100
-target-version = ["py311", "py312"]
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
@@ -110,7 +107,6 @@ filterwarnings = [
 [tool.ruff]
 # https://github.com/charliermarsh/ruff/
 line-length = 100
-target-version = "py311"
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
