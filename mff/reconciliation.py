@@ -4,7 +4,7 @@ from pandas import DataFrame
 from sklearn.covariance import OAS
 
 
-def step2(df1: DataFrame, df0: DataFrame, Tin: int, C_dict: dict, d_dict: dict) -> DataFrame:
+def reconcile(df1: DataFrame, df0: DataFrame, Tin: int, C_dict: dict, d_dict: dict) -> DataFrame:
     """
      Parameters
      ----------
