@@ -1,20 +1,14 @@
-from typing import Self
+from typing import Optional
 
 import numpy as np
 from joblib import parallel_backend
-from numpy import array, full
 from pandas import DataFrame, concat
-from scipy.stats import loguniform, uniform
-from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.compose import TransformedTargetRegressor
-from sklearn.decomposition import PCA
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.linear_model import ElasticNetCV, LinearRegression
 from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR
+
+from mff.get_default_estimators import get_default_estimators
 
 
 def augment_lag(df, lag):
@@ -41,22 +35,16 @@ def augment_lag(df, lag):
     return dfaug
 
 
-class NaiveForecaster(BaseEstimator, RegressorMixin):
-    """Naive forecaster to return the last value as prediction."""
+def estimate_relationship(
+    df: DataFrame, lag: int, Tin: int, model_list: Optional[list[Pipeline] | Pipeline] = None
+) -> tuple[DataFrame]:
+    if model_list is None:
+        model_list = get_default_estimators(Tin=Tin)
 
-    def fit(self, X, y) -> Self:
-        self.last_value_ = y[-1]
-        return self
-
-    def predict(self, X) -> array:
-        return full(shape=(len(X),), fill_value=self.last_value_)
-
-
-def estimate_relationship(df: DataFrame, lag: int, Tin: int) -> tuple[DataFrame]:
     # Augment lags
     df0aug = augment_lag(df, lag)  # more columns, fewer rows
-    print("Original df shape", df.shape)
-    print("Augmented df shape", df0aug.shape)
+    # print("Original df shape", df.shape)
+    # print("Augmented df shape", df0aug.shape)
 
     # extract information on T,h,u,k from the shape of df0
     T_aug = sum(~np.isnan(df0aug).any(axis=1))  # length of historical data
@@ -66,7 +54,7 @@ def estimate_relationship(df: DataFrame, lag: int, Tin: int) -> tuple[DataFrame]
         ~np.isnan(df0aug.iloc[: T_aug + 1, :]).any(axis=0)
     )  # number of known variables in T+1 including lags
     u = m_aug - k_aug  # m-k = m_aug - k_aug # number of unknown variables
-    print(f"{T_aug=} {h=} {m_aug=} {k_aug=} {u=}")
+    # print(f"{T_aug=} {h=} {m_aug=} {k_aug=} {u=}")
 
     # create sub-dataframe and their np versions
     df0aug_u = df0aug.iloc[:, :u]  # not df0_u since rows are different from df0
@@ -81,115 +69,6 @@ def estimate_relationship(df: DataFrame, lag: int, Tin: int) -> tuple[DataFrame]
 
     # Step1 Prediction for T+1
     df0aug_h = df0aug.copy()  # hat, will be reshaped to df1 later
-    df0aug_fitted_model = {}  # storage for fitted model
-    df0aug_h_regularization = df0aug.copy()  # regularization = Elastic Net CV
-    df0aug_h_dim_reduction = df0aug.copy()  # dimension reduction = Principal Component
-    df0aug_h_naive = df0aug.copy()  # regularization = Elastic Net CV
-    df0aug_h_kernel_ridge = df0aug.copy()  # kernel ridge
-    df0aug_h_svr = df0aug.copy()  # support vector regression
-    df0aug_fitted_model_regularization = DataFrame(
-        index=df0aug_u.index, columns=df0aug.columns
-    )  # storage for ElasticNet fit
-    df0aug_fitted_model_dim_reduction = DataFrame(
-        index=df0aug_u.index, columns=df0aug.columns
-    )  # storage for ols + pca fit
-    df0aug_fitted_model_kernel_ridge = DataFrame(
-        index=df0aug_u.index, columns=df0aug.columns
-    )  # storage for ols + pca fit
-    df0aug_fitted_model_svr = DataFrame(
-        index=df0aug_u.index, columns=df0aug.columns
-    )  # storage for ols + pca fit
-
-    tscv = TimeSeriesSplit(n_splits=Tin)
-
-    pipeline_linear_regression: Pipeline = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("PCA", PCA(n_components=0.9)),
-            ("linreg", LinearRegression(fit_intercept=False)),
-        ]
-    )
-
-    pipeline_naive = Pipeline(
-        [
-            ("naive", NaiveForecaster()),
-        ]
-    )
-
-    pipeline_elastic_net = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            (
-                "elasticnet",
-                ElasticNetCV(
-                    cv=tscv,
-                    max_iter=500,
-                    fit_intercept=False,
-                ),
-            ),
-        ]
-    )
-
-    pipeline_kernel_ridge = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("kernel_ridge", KernelRidge(kernel="rbf")),
-        ]
-    )
-
-    param_distributions = {
-        "kernel_ridge__alpha": loguniform(0.1, 1000),
-        "kernel_ridge__gamma": uniform(0.5 * 1 / df.shape[1], 2 * 1 / df.shape[1]),
-    }
-
-    pipeline_kernel_ridge_cv = Pipeline(
-        [
-            (
-                "randomsearch_cv_kernel",
-                RandomizedSearchCV(
-                    pipeline_kernel_ridge,
-                    param_distributions=param_distributions,
-                    n_iter=500,
-                    random_state=0,
-                    cv=tscv,
-                ),
-            )
-        ]
-    )
-
-    pipeline_svr = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("svr", SVR(kernel="rbf")),
-        ]
-    )
-
-    param_distributions = {
-        "svr__C": loguniform(0.1, 1000),
-    }
-
-    pipeline_svr_cv = Pipeline(
-        [
-            (
-                "randomsearch_cv_svr",
-                RandomizedSearchCV(
-                    pipeline_svr,
-                    param_distributions=param_distributions,
-                    n_iter=500,
-                    random_state=0,
-                    cv=tscv,
-                ),
-            )
-        ]
-    )
-
-    model_list: list[Pipeline] = [
-        pipeline_elastic_net,
-        pipeline_naive,
-        pipeline_linear_regression,
-        pipeline_kernel_ridge_cv,
-        pipeline_svr_cv,
-    ]
 
     # unknown_variables: list[str] = ['var1', 'var2', '...']
 
@@ -267,4 +146,5 @@ def estimate_relationship(df: DataFrame, lag: int, Tin: int) -> tuple[DataFrame]
     # reorder variables to match df0
     df1 = df1[df.columns]
 
-    return df1, df0aug_fitted_model
+    # the second argument (None) is for the temporary consistency with the old API
+    return df1, None
