@@ -9,12 +9,12 @@ channels:
 - nodefaults
 dependencies:
 - python=3.11.7
-- pandas=2.2.0
+- pandas=2.2.2
 - numpy=1.26.3
 - scipy=1.12.0
 - dask=2024.2.0
 - scikit-learn=1.4.0
-- sktime=0.27.0 # currently needs lower pandas to be compatible
+- sktime=0.29.0 # currently needs lower pandas to be compatible
 - pytest=8.0.0
 - black=24.1.0
 - ruff=0.1.14
