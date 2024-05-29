@@ -65,7 +65,7 @@ def get_default_estimators(Tin: int) -> list[Pipeline]:
 
     param_distributions = {
         "kernel_ridge__alpha": loguniform(0.1, 1000),
-        "kernel_ridge__gamma": uniform(0.5 * 1 / df.shape[1], 2 * 1 / df.shape[1]),
+        "kernel_ridge__gamma": uniform(0.5 * 1 / 50, 2 * 1 / 50),
     }
 
     pipeline_kernel_ridge_cv = Pipeline(

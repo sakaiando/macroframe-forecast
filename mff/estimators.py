@@ -40,6 +40,8 @@ def estimate_relationship(
 ) -> tuple[DataFrame]:
     if model_list is None:
         model_list = get_default_estimators(Tin=Tin)
+    elif not isinstance(model_list, list):
+        model_list = [model_list]
 
     # Augment lags
     df0aug = augment_lag(df, lag)  # more columns, fewer rows

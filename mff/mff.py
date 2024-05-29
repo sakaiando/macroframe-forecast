@@ -1,6 +1,9 @@
+from typing import Optional
+
 from numpy import array
 from numpy.linalg import matrix_rank
 from pandas import DataFrame, to_numeric
+from sklearn.pipeline import Pipeline
 
 from mff.estimators import estimate_relationship
 from mff.reconciliation import reconcile
@@ -8,7 +11,12 @@ from mff.validators import can_forecast, is_consistent_shape
 
 
 def ax_forecast(
-    df: DataFrame, lag: int, Tin: int, C_dict: dict, d_dict: dict
+    df: DataFrame,
+    lag: int,
+    Tin: int,
+    C_dict: dict,
+    d_dict: dict,
+    estimators: Optional[Pipeline | list[Pipeline]]=None,
 ) -> tuple[DataFrame, DataFrame, None]:
     """
     Parameters
@@ -100,7 +108,7 @@ def ax_forecast(
     assert Ci.shape[0] == di.shape[0]
 
     # 1st step forecast
-    df1, df0aug_fitted_model = estimate_relationship(df0, lag, Tin)
+    df1, df0aug_fitted_model = estimate_relationship(df0, lag, Tin, model_list=estimators)
 
     # 2nd step reconciliation
     df2 = reconcile(df1, df0, Tin, C_dict, d_dict)
