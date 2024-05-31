@@ -4,7 +4,9 @@ from pandas import DataFrame
 from sklearn.covariance import OAS
 
 
-def reconcile(df1: DataFrame, df0: DataFrame, Tin: int, C_dict: dict, d_dict: dict) -> DataFrame:
+def forecast_reconciliation(
+    df1: DataFrame, df0: DataFrame, Tin: int, C_dict: dict, d_dict: dict
+) -> DataFrame:
     """
      Parameters
      ----------

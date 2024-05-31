@@ -35,7 +35,7 @@ def augment_lag(df, lag):
     return dfaug
 
 
-def estimate_relationship(
+def unconstrained_forecast(
     df: DataFrame, lag: int, Tin: int, model_list: Optional[list[Pipeline] | Pipeline] = None
 ) -> tuple[DataFrame]:
     if model_list is None:
