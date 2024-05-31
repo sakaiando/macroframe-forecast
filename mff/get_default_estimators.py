@@ -1,8 +1,4 @@
-from typing import Self
-
-from numpy import array, full
 from scipy.stats import loguniform, uniform
-from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.decomposition import PCA
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import ElasticNetCV, LinearRegression
@@ -10,37 +6,16 @@ from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
-
-
-class NaiveForecaster(BaseEstimator, RegressorMixin):
-    """Naive forecaster to return the last value as prediction."""
-
-    def fit(self, X, y) -> Self:
-        self.last_value_ = y[-1]
-        return self
-
-    def predict(self, X) -> array:
-        return full(shape=(len(X),), fill_value=self.last_value_)
+from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import TrendForecaster
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 
 def get_default_estimators(Tin: int) -> list[Pipeline]:
     """Returns a default set of estimators that will be used if the user did not
     specify a specific list of estimators to use."""
     tscv = TimeSeriesSplit(n_splits=Tin)
-
-    pipeline_linear_regression: Pipeline = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("PCA", PCA(n_components=0.9)),
-            ("linreg", LinearRegression(fit_intercept=False)),
-        ]
-    )
-
-    pipeline_naive = Pipeline(
-        [
-            ("naive", NaiveForecaster()),
-        ]
-    )
 
     pipeline_elastic_net = Pipeline(
         [
@@ -111,10 +86,50 @@ def get_default_estimators(Tin: int) -> list[Pipeline]:
 
     model_list: list[Pipeline] = [
         pipeline_elastic_net,
-        pipeline_naive,
-        pipeline_linear_regression,
+        # pipeline_naive,
+        # pipeline_linear_regression,
         pipeline_kernel_ridge_cv,
         pipeline_svr_cv,
+    ]
+
+    pipe_y_naive = TransformedTargetForecaster(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            (
+                "forecaster",
+                NaiveForecaster(strategy="last"),
+            ),
+        ]
+    )
+
+    pipe_X_naive = ForecastingPipeline(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            ("naive", pipe_y_naive),
+        ]
+    )
+
+    pipe_y_linear_regression = TransformedTargetForecaster(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            (
+                "forecaster",
+                TrendForecaster(regressor=LinearRegression(fit_intercept=False)),
+            ),
+        ]
+    )
+
+    pipe_X_linear_regression = ForecastingPipeline(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            ("PCA", TabularToSeriesAdaptor(PCA(n_components=0.9))),
+            ("forecaster", pipe_y_linear_regression),
+        ]
+    )
+
+    model_list = [
+        pipe_X_naive,
+        pipe_X_linear_regression,
     ]
 
     return model_list
