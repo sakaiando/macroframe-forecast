@@ -2,95 +2,18 @@ from scipy.stats import loguniform, uniform
 from sklearn.decomposition import PCA
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import ElasticNetCV, LinearRegression
-from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR
 from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
+from sktime.split import SlidingWindowSplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 
-def get_default_estimators(Tin: int) -> list[Pipeline]:
+def get_default_estimators(Tin: int) -> list[ForecastingPipeline | ForecastingGridSearchCV]:
     """Returns a default set of estimators that will be used if the user did not
     specify a specific list of estimators to use."""
-    tscv = TimeSeriesSplit(n_splits=Tin)
-
-    pipeline_elastic_net = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            (
-                "elasticnet",
-                ElasticNetCV(
-                    cv=tscv,
-                    max_iter=500,
-                    fit_intercept=False,
-                ),
-            ),
-        ]
-    )
-
-    pipeline_kernel_ridge = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("kernel_ridge", KernelRidge(kernel="rbf")),
-        ]
-    )
-
-    param_distributions = {
-        "kernel_ridge__alpha": loguniform(0.1, 1000),
-        "kernel_ridge__gamma": uniform(0.5 * 1 / 50, 2 * 1 / 50),
-    }
-
-    pipeline_kernel_ridge_cv = Pipeline(
-        [
-            (
-                "randomsearch_cv_kernel",
-                RandomizedSearchCV(
-                    pipeline_kernel_ridge,
-                    param_distributions=param_distributions,
-                    n_iter=500,
-                    random_state=0,
-                    cv=tscv,
-                ),
-            )
-        ]
-    )
-
-    pipeline_svr = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("svr", SVR(kernel="rbf")),
-        ]
-    )
-
-    param_distributions = {
-        "svr__C": loguniform(0.1, 1000),
-    }
-
-    pipeline_svr_cv = Pipeline(
-        [
-            (
-                "randomsearch_cv_svr",
-                RandomizedSearchCV(
-                    pipeline_svr,
-                    param_distributions=param_distributions,
-                    n_iter=500,
-                    random_state=0,
-                    cv=tscv,
-                ),
-            )
-        ]
-    )
-
-    model_list: list[Pipeline] = [
-        pipeline_elastic_net,
-        # pipeline_naive,
-        # pipeline_linear_regression,
-        pipeline_kernel_ridge_cv,
-        pipeline_svr_cv,
-    ]
 
     pipe_y_naive = TransformedTargetForecaster(
         steps=[
@@ -127,9 +50,62 @@ def get_default_estimators(Tin: int) -> list[Pipeline]:
         ]
     )
 
+    # elastic net
+
+    pipe_y_elastic_net = TransformedTargetForecaster(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            (
+                "forecaster",
+                TrendForecaster(regressor=ElasticNetCV(fit_intercept=False, max_iter=500)),
+            ),
+        ]
+    )
+
+    pipe_X_elastic_net = ForecastingPipeline(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            ("forecaster", pipe_y_elastic_net),
+        ]
+    )
+
+    # kernel ridge
+
+    pipe_y_kernel_ridge = TransformedTargetForecaster(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            (
+                "forecaster",
+                TrendForecaster(regressor=KernelRidge(kernel="rbf")),
+            ),
+        ]
+    )
+
+    pipe_X_kernel_ridge = ForecastingPipeline(
+        steps=[
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            ("forecaster", pipe_y_kernel_ridge),
+        ]
+    )
+
+    gridsearch_cv_kernel_ridge = ForecastingGridSearchCV(
+        forecaster=pipe_X_kernel_ridge,
+        param_grid=[
+            {
+                "forecaster__forecaster__alpha": loguniform(0.1, 1000).rvs(size=3, random_state=0),
+                "forecaster__forecaster__gamma": uniform(0.5 * 1 / 50, 2 * 1 / 50).rvs(
+                    size=3, random_state=0
+                ),
+            },
+        ],
+        cv=SlidingWindowSplitter(window_length=10),
+    )
+
     model_list = [
         pipe_X_naive,
         pipe_X_linear_regression,
+        pipe_X_elastic_net,
+        gridsearch_cv_kernel_ridge,
     ]
 
     return model_list
