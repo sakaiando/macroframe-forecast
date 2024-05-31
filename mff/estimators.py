@@ -2,7 +2,7 @@ from typing import Optional
 
 import numpy as np
 from joblib import parallel_backend
-from pandas import DataFrame, concat
+from pandas import DataFrame
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.pipeline import Pipeline
@@ -11,32 +11,8 @@ from sklearn.preprocessing import StandardScaler
 from mff.get_default_estimators import get_default_estimators
 
 
-def augment_lag(df, lag):
-    """
-    augment_lag adds lags of df
-
-    Parameters
-     ----------
-     df: dataframe
-     lag: int
-         the number of lags used as regressors in the step1 training
-
-    Returns
-     -------
-     dfaug: dataframe
-         If df is n x m, dfaug is (n-lag) x (m x lag)
-    """
-    df_list = [df]
-    for Li in range(1, lag + 1):
-        Ld = df.shift(Li)
-        Ld.columns = ["L" + str(Li) + "_" + str(vn) for vn in df.columns]
-        df_list.append(Ld)
-    dfaug = concat(df_list, axis=1).iloc[lag:, :]
-    return dfaug
-
-
 def unconstrained_forecast(
-    df: DataFrame, lag: int, Tin: int, model_list: Optional[list[Pipeline] | Pipeline] = None
+    df: DataFrame, Tin: int, model_list: Optional[list[Pipeline] | Pipeline] = None
 ) -> tuple[DataFrame]:
     if model_list is None:
         model_list = get_default_estimators(Tin=Tin)
@@ -44,7 +20,7 @@ def unconstrained_forecast(
         model_list = [model_list]
 
     # Augment lags
-    df0aug = augment_lag(df, lag)  # more columns, fewer rows
+    df0aug = df
     # print("Original df shape", df.shape)
     # print("Augmented df shape", df0aug.shape)
 
@@ -129,7 +105,7 @@ def unconstrained_forecast(
                 # drop lag variables and re-augment
                 df0_h = df.copy()
                 df0_h.iloc[-h - Tin :, :u] = df0aug_h.iloc[-h - Tin :, :u]
-                df0aug_h = augment_lag(df0_h, lag)
+                df0aug_h = df0_h
                 df0aug_k = df0aug_h.iloc[:, u:]
 
                 # drop columns with missing values (due to lags)

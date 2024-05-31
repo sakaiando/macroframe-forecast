@@ -12,7 +12,6 @@ from mff.validators import can_forecast, is_consistent_shape
 
 def constrained_forecast(
     df: DataFrame,
-    lag: int,
     Tin: int,
     C_dict: dict,
     d_dict: dict,
@@ -26,9 +25,6 @@ def constrained_forecast(
         the first m-k columns of T:T+h rows are nan, and the rest are not nan
         if the columns are not sorted in this order, a sorted version df0 will
         be produced
-    lag: int
-        the number of lags used as regressors in the step1 training
-        if all variables are unknown, lag should be > 0
     Tin: int
         the number of time periods in historical data used to estimate forecast-error
     C_dict: dictionary
@@ -108,7 +104,7 @@ def constrained_forecast(
     assert Ci.shape[0] == di.shape[0]
 
     # 1st step forecast
-    df1, df0aug_fitted_model = unconstrained_forecast(df0, lag, Tin, model_list=estimators)
+    df1, df0aug_fitted_model = unconstrained_forecast(df0, Tin, model_list=estimators)
 
     # 2nd step reconciliation
     df2 = forecast_reconciliation(df1, df0, Tin, C_dict, d_dict)
