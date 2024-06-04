@@ -3,17 +3,22 @@ from sklearn.decomposition import PCA
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import ElasticNetCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
-from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.compose import (
+    ForecastingPipeline,
+    MultiplexForecaster,
+    TransformedTargetForecaster,
+)
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
-from sktime.split import SlidingWindowSplitter
+from sktime.split import ExpandingGreedySplitter, SlidingWindowSplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 
-def get_default_estimators(Tin: int) -> list[ForecastingPipeline | ForecastingGridSearchCV]:
-    """Returns a default set of estimators that will be used if the user did not
-    specify a specific list of estimators to use."""
+def get_default_forecaster(Tin: int) -> BaseForecaster:
+    """Returns a default forecaster (grid search with cross validation) that will
+    be used if the user did not specify a specific list of estimators to use."""
 
     pipe_y_naive = TransformedTargetForecaster(
         steps=[
@@ -101,11 +106,23 @@ def get_default_estimators(Tin: int) -> list[ForecastingPipeline | ForecastingGr
         cv=SlidingWindowSplitter(window_length=10),
     )
 
-    model_list = [
-        pipe_X_naive,
-        pipe_X_linear_regression,
-        pipe_X_elastic_net,
-        gridsearch_cv_kernel_ridge,
-    ]
+    # forecaster representation for selection among the listed models
+    forecaster = MultiplexForecaster(
+        forecasters=[
+            ("naive", pipe_X_naive),
+            ("linear_reg", pipe_X_linear_regression),
+            ("elasticnet", pipe_X_elastic_net),
+            ("kernel_ridge", gridsearch_cv_kernel_ridge),
+        ]
+    )
 
-    return model_list
+    cv = ExpandingGreedySplitter(test_size=Tin, folds=5, step_length=1)
+
+    # choose among the provided forecasters
+    gscv = ForecastingGridSearchCV(
+        forecaster=forecaster,
+        cv=cv,
+        param_grid={"selected_forecaster": ["naive", "linear_reg", "elasticnet", "kernel_ridge"]},
+    )
+
+    return gscv
