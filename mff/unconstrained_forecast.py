@@ -3,7 +3,7 @@ from typing import Optional
 from pandas import DataFrame
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-from mff.get_default_estimators import get_default_forecaster
+from mff.get_default_forecaster import get_default_forecaster
 
 
 def unconstrained_forecast(
@@ -14,15 +14,15 @@ def unconstrained_forecast(
 
     unknown_variables = df.columns[df.isna().sum(axis=0) > 0]
     known_variables = df.columns[df.isna().sum(axis=0) == 0]
-    mask_fit = df[unknown_variables].notna().index
-    mask_predict = df[unknown_variables].isna().index
+    mask_fit = df[unknown_variables].notna().sum(axis=1) > 0
+    mask_predict = df[unknown_variables].isna().sum(axis=1) > 0
 
     Xf = df.loc[mask_fit, known_variables]
     yf = df.loc[mask_fit, unknown_variables]
 
     Xp = df.loc[mask_predict, known_variables]
     # yp = df.loc[mask_predict, unknown_variables]
-    fh = ForecastingHorizon(values=Xp.index, is_relative=False)
+    fh = ForecastingHorizon(values=Xp.index, is_relative=True)
 
     yp = forecaster.fit_predict(y=yf, X=Xf, fh=fh, X_pred=Xp)
 

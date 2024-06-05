@@ -65,7 +65,7 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             (
                 "forecaster",
                 DirectReductionForecaster(
-                    regressor=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=0
+                    estimator=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=0
                 ),
             ),
         ]
@@ -85,7 +85,7 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                DirectReductionForecaster(regressor=KernelRidge(kernel="rbf"), window_length=0),
+                DirectReductionForecaster(estimator=KernelRidge(kernel="rbf"), window_length=0),
             ),
         ]
     )
@@ -126,7 +126,15 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
     gscv = ForecastingGridSearchCV(
         forecaster=forecaster,
         cv=cv,
-        param_grid={"selected_forecaster": ["naive", "linear_reg", "elasticnet", "kernel_ridge"]},
+        param_grid={
+            "selected_forecaster": [
+                "naive",
+                "linear_reg",
+                "elasticnet",
+                "kernel_ridge",
+            ]
+        },
+        tune_by_variable=True,
     )
 
     return gscv
