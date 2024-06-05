@@ -5,7 +5,7 @@ from numpy.linalg import matrix_rank
 from pandas import DataFrame, to_numeric
 from sklearn.pipeline import Pipeline
 
-from mff.estimators import unconstrained_forecast
+from mff.unconstrained_forecast import unconstrained_forecast
 from mff.reconciliation import forecast_reconciliation
 from mff.validators import can_forecast, is_consistent_shape
 
