@@ -5,13 +5,13 @@ from sklearn.linear_model import ElasticNetCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import (
+    DirectReductionForecaster,
     ForecastingPipeline,
     MultiplexForecaster,
     TransformedTargetForecaster,
 )
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.trend import TrendForecaster
 from sktime.split import ExpandingGreedySplitter, SlidingWindowSplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
@@ -42,7 +42,9 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                TrendForecaster(regressor=LinearRegression(fit_intercept=False)),
+                DirectReductionForecaster(
+                    estimator=LinearRegression(fit_intercept=False), window_length=0
+                ),
             ),
         ]
     )
@@ -62,7 +64,9 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                TrendForecaster(regressor=ElasticNetCV(fit_intercept=False, max_iter=500)),
+                DirectReductionForecaster(
+                    regressor=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=0
+                ),
             ),
         ]
     )
@@ -81,7 +85,7 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                TrendForecaster(regressor=KernelRidge(kernel="rbf")),
+                DirectReductionForecaster(regressor=KernelRidge(kernel="rbf"), window_length=0),
             ),
         ]
     )
