@@ -65,6 +65,6 @@ def unconstrained_forecast(
     yp = forecaster.fit_predict(y=yf, X=Xf, fh=fh, X_pred=Xp)
 
     df1 = df.copy()
-    df1 = df1.append(yp)
+    df1 = df1.append(yp) #TODO: handle when some exogenous are present
 
     return df1, forecaster, fh

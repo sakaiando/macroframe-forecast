@@ -13,16 +13,16 @@ def make_linear_extrapolation(series):
     series.index = series.index.droplevel('subperiod')
     x_pred = series[series.isna()].index.values.reshape(-1, 1)
 
-    #observed years
+    # observed years
     d = series.dropna()
     x = d.index.values.reshape(-1, 1)
     y = d.values.reshape(-1, 1)
 
-    #fit model
+    # fit model
     model = LinearRegression()
     model.fit(x, y)
 
-    #generate prediction
+    # generate prediction
     y_hat = model.predict(x_pred)
     y_hat = pd.Series(y_hat.flatten(), index=x_pred.flatten(), name=d.name)
     return y_hat
@@ -39,21 +39,22 @@ def make_forecasts(data, endog_list):
     return endog_fcasts
 
 
-def warn_lin_dep_rows(df):
-    eigval, eigvec = np.linalg.svd(df)
-    for i in np.where(eigval == 0)[0]:
-        lin_dep_idx = np.where(eigvec[i] != 0)[0]
+def warn_lin_dep_rows(df, tol=1e-8):
+    u, eigval, v = np.linalg.svd(df)
+    for i in np.where(eigval < tol)[0]:
+        lin_dep_idx = np.where(np.abs(v[i]) > tol)[0]
         warnings.warn(f'The rows {df.iloc[lin_dep_idx].index.to_list()} are linearly dependent')
 
 
 def invert_df(df, matrix_name=None):
-#    if matrix_name is not None:
-#        warn_lin_dep_rows(df)
+    if matrix_name is not None:
+        warn_lin_dep_rows(df)
     return pd.DataFrame(np.linalg.pinv(df), columns=df.columns, index=df.index)
 
 
 def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
-    constraints = constraints_raw.T.set_index(constraints_raw.index[index_iloc].to_list()).T  # pick levels for columns (can't do in read_excel because it propegates the values where subsequent columns are missing)
+    constraints = constraints_raw.T.set_index(constraints_raw.index[
+                                                  index_iloc].to_list()).T  # pick levels for columns (can't do in read_excel because it propegates the values where subsequent columns are missing)
     constraints = constraints.fillna(0)
 
     return constraints
@@ -61,8 +62,8 @@ def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
 
 class Reconciler:
     def __init__(self, data_all, exog, W, constraints, lam):
-        self.data = data_all
-        self.exog = exog
+        self.data = data_all.copy()
+        self.exog = exog.copy()
         self.constraints = constraints
         self.constraints.index.name = 'constraint'
 
@@ -70,13 +71,14 @@ class Reconciler:
 
         self.state_space_idx = self._make_state_space_idx()
         self.nperiods = len(self.state_space_idx.to_frame(index=False)['year'].drop_duplicates())
-        self.relative_freq = self.state_space_idx.to_frame(index=0)[['freq', 'subperiod']].drop_duplicates().groupby('freq').count().to_dict()['subperiod']
+        self.relative_freq = self.state_space_idx.to_frame(index=0)[['freq', 'subperiod']].drop_duplicates().groupby(
+            'freq').count().to_dict()['subperiod']
         self.nvars = len(self.state_space_idx.to_frame(index=0)[['variable']].drop_duplicates())
 
         self.C_extended, self.d_extended = self._extend_constraints_matrix()
-        #warn_lin_dep_rows(self.C_extended)
+#        warn_lin_dep_rows(self.C_extended)
 
-        assert isinstance(lam, (int, float, complex)) and not isinstance(lam, bool)
+        assert isinstance(lam, (int, float, complex)) and not isinstance(lam, bool), 'lambda should be a numeric value'
         self._lam = lam
 
     @property
@@ -88,7 +90,7 @@ class Reconciler:
         self._lam = value
 
     def _make_state_space_idx(self):
-        return pd.MultiIndex.from_frame(self.data.unstack().stack(dropna=False).index.to_frame().reset_index(drop=True))
+        return self.data.index
 
     @staticmethod
     def collapse_multiindex(index, separator='_'):
@@ -120,7 +122,8 @@ class Reconciler:
         d = constraints['constant']
         C = constraints.drop('constant', axis=1, level='variable')
 
-        for i in range(len(state_space_idx.names) - 1, 0, -1):  #TODO: Append when no wildcards  # Bacwards from most wildcards (if you start from narrow, you will get the multivariable wildcards too)
+        for i in range(len(state_space_idx.names) - 1, 0,
+                       -1):  # TODO: Append when no wildcards  # Backwards from most wildcards (if you start from narrow, you will get the multivariable wildcards too)
             for cols in combinations(state_space_idx.names, i):
                 cols_to_extend = C.T.reset_index()[list(cols)].isna().all(axis=1).values
 
@@ -128,7 +131,6 @@ class Reconciler:
                 C_subset = C_subset[(C_subset != 0).any(axis=1)]
 
                 if len(C_subset) == 0:  # go next combination if there's no subset using combination
-                    print(cols)
                     continue
 
                 C = C.drop(C_subset.index)
@@ -172,8 +174,8 @@ class Reconciler:
         C_dict['exog'] = C_exog
         d_dict['exog'] = d_exog
 
-        C = pd.concat(C_dict, axis=0)
-        d = pd.concat(d_dict, axis=0)
+        C = pd.concat(C_dict, axis=0).fillna(0)
+        d = pd.concat(d_dict, axis=0).fillna(0)
 
         return C, d
 
@@ -204,7 +206,7 @@ class Reconciler:
 
         phis = []
         for k, v in self.relative_freq.items():
-            F_temp = self.make_F(v * self.nperiods)
+            F_temp = self.make_F(v * (self.nperiods))
             phi_temp = self.make_phi(self.lam ** v, F_temp)
             phis.append(phi_temp)
 
@@ -213,11 +215,10 @@ class Reconciler:
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
 
         W_inv = invert_df(self.W, matrix_name='W')
-        denom = invert_df(W_inv + phi, matrix_name='W+phi')
+        denom = invert_df(W_inv + phi)
 
         fcasts_stacked = self.data.reorder_levels(denom.index.names)
         cWc_inv = invert_df(C @ denom @ C.T)
-
 
         identity_df = pd.DataFrame(np.eye(len(denom)),
                                    columns=sorted_idx,

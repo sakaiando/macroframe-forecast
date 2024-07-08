@@ -16,16 +16,17 @@ from sktime.split import ExpandingGreedySplitter, SlidingWindowSplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 
-def get_default_forecaster(Tin: int) -> BaseForecaster:
+def get_default_forecaster(Tin: int, window_length: int = 1) -> BaseForecaster:
     """Returns a default forecaster (grid search with cross validation) that will
-    be used if the user did not specify a specific list of estimators to use."""
+    be used if the user did not specify a specific list of estimators to use.
+    :param window_length: """
 
     pipe_y_naive = TransformedTargetForecaster(
         steps=[
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                NaiveForecaster(strategy="last"),
+                NaiveForecaster(strategy="drift"),
             ),
         ]
     )
@@ -43,7 +44,7 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             (
                 "forecaster",
                 DirectReductionForecaster(
-                    estimator=LinearRegression(fit_intercept=False), window_length=0
+                    estimator=LinearRegression(fit_intercept=False), window_length=window_length
                 ),
             ),
         ]
@@ -65,7 +66,7 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             (
                 "forecaster",
                 DirectReductionForecaster(
-                    estimator=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=0
+                    estimator=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=window_length
                 ),
             ),
         ]
@@ -85,7 +86,9 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                DirectReductionForecaster(estimator=KernelRidge(kernel="rbf"), window_length=0),
+                DirectReductionForecaster(
+                    estimator=KernelRidge(kernel="rbf"), window_length=window_length
+                ),
             ),
         ]
     )
@@ -114,13 +117,13 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
     forecaster = MultiplexForecaster(
         forecasters=[
             ("naive", pipe_X_naive),
-            ("linear_reg", pipe_X_linear_regression),
-            ("elasticnet", pipe_X_elastic_net),
-            ("kernel_ridge", gridsearch_cv_kernel_ridge),
-        ]
+#            ("linear_reg", pipe_X_linear_regression),
+#            ("elasticnet", pipe_X_elastic_net),
+#            ("kernel_ridge", gridsearch_cv_kernel_ridge),
+        ],
     )
 
-    cv = ExpandingGreedySplitter(test_size=Tin, folds=5, step_length=1)
+    cv = ExpandingGreedySplitter(test_size=Tin, folds=1, step_length=5)
 
     # choose among the provided forecasters
     gscv = ForecastingGridSearchCV(
@@ -129,10 +132,10 @@ def get_default_forecaster(Tin: int) -> BaseForecaster:
         param_grid={
             "selected_forecaster": [
                 "naive",
-                "linear_reg",
-                "elasticnet",
-                "kernel_ridge",
-            ]
+#                "linear_reg",
+#                "elasticnet",
+#                "kernel_ridge",
+            ],
         },
         tune_by_variable=True,
     )
