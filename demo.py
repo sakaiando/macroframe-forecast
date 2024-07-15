@@ -6,18 +6,20 @@ sys.path.append(r'/mff')
 from mff.mff.step2 import process_raw_constraints, Reconciler
 from mff.mff.unconstrained_forecast import unconstrained_forecast
 from mff.mff.covariance_calc import calculate_residuals, raw_covariance
+from mff.mff.ecos_reader import load_excel
 
 Tin = 10
 forecast_year = 2022
 lam = 100
 n_horizons = 7
 
+directory = r'./data/input.xlsx'
+data, constraints_raw = load_excel(directory, excel_fmt='ecos')
+#data = pd.read_excel(r'./data/input.xlsx', index_col=0, header=list(range(0, 3)), sheet_name='data').T
+#constraints_raw = pd.read_excel(r'./data/input.xlsx', sheet_name='constraints', header=None, index_col=0)
 
-data = pd.read_excel(r'./data/input.xlsx', index_col=0, header=list(range(0, 3)), sheet_name='data').T
-constraints_raw = pd.read_excel(r'./data/input.xlsx', sheet_name='constraints', header=None, index_col=0)
-
-data.columns.name = 'variable'
-data = data.unstack(['freq', 'subperiod'])
+#data.columns.name = 'variable'
+#data = data.unstack(['freq', 'subperiod'])
 
 C = process_raw_constraints(constraints_raw, index_iloc=range(0, 4))
 
@@ -29,6 +31,10 @@ y_hat, forecaster, fh = unconstrained_forecast(data_nona, Tin, fh=n_horizons, fo
 resids = calculate_residuals(data_nona, forecaster, n_horizons, cols)
 W = raw_covariance(resids)
 
+
+constraint_dict = {'c1': {'variables': ['BGS_BP6', 'BMS_BP6', 'constant'], 'constraint': [1, 1, 3]}}
+
+constraint_1 = pd.DataFrame.from_records([(1, 1)], columns=pd.Index(['BGS_BP6', None]), index=['c1'])
 y_hat.columns = cols
 data.columns = cols
 
