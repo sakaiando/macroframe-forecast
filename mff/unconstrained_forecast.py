@@ -1,16 +1,16 @@
 from typing import Optional, Tuple
 
-from pandas import DataFrame
+import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 from .get_default_forecaster import get_default_forecaster
-
-
 
 import cProfile
 import pstats
 import io
 from functools import wraps
+
+
 def profile(func):
     """A decorator that uses cProfile to profile a function."""
 
@@ -32,10 +32,10 @@ def profile(func):
     return wrapper
 
 
-#@profile
+# @profile
 def unconstrained_forecast(
-    df: DataFrame, Tin: int, forecaster: Optional[BaseForecaster] = None, fh: ForecastingHorizon or int = None
-) -> tuple[DataFrame, BaseForecaster, ForecastingHorizon]:
+        df: pd.DataFrame, Tin: int, forecaster: Optional[BaseForecaster] = None, fh: ForecastingHorizon or int = None
+) -> tuple[pd.DataFrame, BaseForecaster, ForecastingHorizon]:
     if forecaster is None:
         forecaster = get_default_forecaster(Tin=Tin)
 
@@ -65,6 +65,6 @@ def unconstrained_forecast(
     yp = forecaster.fit_predict(y=yf, X=Xf, fh=fh, X_pred=Xp)
 
     df1 = df.copy()
-    df1 = df1.append(yp) #TODO: handle when some exogenous are present
+    df1 = pd.concat([df1, yp])  # TODO: handle when some exogenous are present
 
     return df1, forecaster, fh
