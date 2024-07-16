@@ -37,9 +37,11 @@ def find_permissible_wildcard(constraints_with_wildcard, size_of_candidates=4):
     # string a,b,...,aa,ab,...,zzzz
     wildcard_candidates = [''.join(p) for n in range(1, size_of_candidates + 1)
                            for p in product(string.ascii_lowercase, repeat=n)]
+
     for w in wildcard_candidates:
-        if w not in ''.join(constraints_with_wildcard):
-            return w
+        if len(w) == len(set(w)):  # skip wildcards with repeated letters (e.g. avoid filling a? wildcard with aaa, which would be ambigous)
+            if w not in ''.join(constraints_with_wildcard):
+                return w
     raise RuntimeError('Failed to find a unique sequence.'
                        'Consider increasing max_len or revising variable names.')
 
@@ -64,41 +66,42 @@ def generate_constraints_from_equations(constraints_list, variables_list, wildca
     return dfA, dfB, constraints
 
 
-constraints_with_wildcard = ['a1_2022 - a2_2023',
-                             'a1? + a2? - 1',
-                             '?2022 + ?2023 - 100',
-                             '? - (?Q1 + 3*?Q2 + ?Q3 + ?Q4)']
+if __name__ == '__main__':
+    constraints_with_wildcard = ['a1_2022 - a2_2023',
+                                 'a1? + a2? - 1',
+                                 '?2022 + ?2023 - 100',
+                                 '? - (?Q1 + 3*?Q2 + ?Q3 + ?Q4)']
 
-dfA = pd.DataFrame({'a1': np.random.rand(5),
-                    'a2': np.random.rand(5),
-                    'x': np.random.rand(5),
-                    'z': np.random.rand(5)},
-                   index=pd.period_range(start='2021',
-                                         end='2025',
-                                         freq='A',
-                                         )
-                   )
-dfQ = pd.DataFrame({'q1': np.random.rand(20),
-                    'q2': np.random.rand(20),
-                    'x': np.random.rand(20),
-                    'y': np.random.rand(20)},
-                   index=pd.period_range(start='2021Q1',
-                                         end='2025Q4',
-                                         freq='Q',
-                                         )
-                   )
+    dfA = pd.DataFrame({'a1': np.random.rand(5),
+                        'a2': np.random.rand(5),
+                        'x': np.random.rand(5),
+                        'z': np.random.rand(5)},
+                       index=pd.period_range(start='2021',
+                                             end='2025',
+                                             freq='A',
+                                             )
+                       )
+    dfQ = pd.DataFrame({'q1': np.random.rand(20),
+                        'q2': np.random.rand(20),
+                        'x': np.random.rand(20),
+                        'y': np.random.rand(20)},
+                       index=pd.period_range(start='2021Q1',
+                                             end='2025Q4',
+                                             freq='Q',
+                                             )
+                       )
 
-variables_a = [f'{a}_{b}' for a, b in product(dfA.columns, dfA.index)]
-variables_q = [f'{a}_{b}' for a, b in product(dfQ.columns, dfQ.index)]
+    variables_a = [f'{a}_{b}' for a, b in product(dfA.columns, dfA.index)]
+    variables_q = [f'{a}_{b}' for a, b in product(dfQ.columns, dfQ.index)]
 
-variables = variables_a + variables_q
+    variables = variables_a + variables_q
 
-A, b, constraints = generate_constraints_from_equations(constraints_with_wildcard,
-                                                        variables,
-                                                        wildcard_string='?')
+    A, b, constraints = generate_constraints_from_equations(constraints_with_wildcard,
+                                                            variables,
+                                                            wildcard_string='?')
 
-print("Matrix A:\n", A)
-print("Matrix b:\n", b)
-print("Constraints:\n", constraints)
+    print("Matrix A:\n", A)
+    print("Matrix b:\n", b)
+    print("Constraints:\n", constraints)
 
-
+#    import mff.mff.tests.test_string_parser as tests
