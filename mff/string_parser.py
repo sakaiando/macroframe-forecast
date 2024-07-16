@@ -1,104 +1,104 @@
 import re
-
 import pandas as pd
 import sympy as sp
 import numpy as np
 from itertools import product
-import fnmatch
 import string
 
 
-def extract_variables(eq: str, return_str=False):
-    variables = sp.sympify(eq).free_symbols
-    if return_str:
-        variables = [str(v) for v in variables]
-    return variables
+def find_strings_to_replace_wildcard(constraint, variables, wildcard):
+    # utilize sympy to extract variables from symbolic equations
+    varlist_with_wildcard = ['^' + str(v).replace(wildcard, '(.*)') + '$'
+                             for v in sp.sympify(constraint).free_symbols]
+    missing_string_set_list = []
+    for w in varlist_with_wildcard:
+        missing_string = []
+        for v in variables:
+            match = re.compile(w).search(v)
+            if match:
+                missing_string.append(match.group(1))
+        missing_string_set_list.append(set(missing_string))
+    missing_string_list = set.intersection(*missing_string_set_list)
+    return missing_string_list
 
 
-def parse_equations_to_matrix(equations, state_space):
-    # Extract all symbols from the equations
-    variables = sp.sympify(state_space)
-    A, b = sp.linear_eq_to_matrix(equations, variables)
-    return A, b, variables
-
-
-def expand_wildcards(constraints, state_space, wildcard):
-    # create constraints from wildcards
+def expand_wildcard(constraints_with_alphabet_wildcard, variables, wildcard):
     extended_constraints = []
-    for constraint in constraints:
-        short_varlist = extract_variables(constraint, return_str=True)
-        short_varlist = [s.replace(wildcard, '*') for s in
-                         short_varlist]  # replace user-specified with regex wildcard value
-
-        long_varlist = []
-        for v in short_varlist:
-            long_varlist += fnmatch.filter(state_space, v)
-
-        if short_varlist == long_varlist:
+    for constraint in constraints_with_alphabet_wildcard:
+        if wildcard not in constraint:
             extended_constraints.append(constraint)
         else:
-            common_phrases = []
-            for v_long in long_varlist:
-                for v_short in short_varlist:
-                    match = re.compile(v_short.replace('*', '(.*)')).search(v_long)
-                    if match:
-                        common_phrases.append(match.group(1))
-
-            count_dict = {i: common_phrases.count(i) for i in common_phrases}
-            common_phrases = [v for v in count_dict.keys() if count_dict[v] == max(count_dict.values())]
-            extended_constraints += [constraint.replace(f'{wildcard}', common_phrase) for common_phrase in
-                                     common_phrases]
-
+            missing_string_list = find_strings_to_replace_wildcard(constraint, variables, wildcard)
+            extended_constraints += [constraint.replace(f'{wildcard}', m) for m in missing_string_list]
     return extended_constraints
 
 
-# Function to check if a sequence exists in the list of strings
-def sequence_exists(sequence, constraints):
-    for constraint in constraints:
-        if sequence in constraint:
-            return True
-    return False
+def find_permissible_wildcard(constraints_with_wildcard, size_of_candidates=4):
+    # string a,b,...,aa,ab,...,zzzz
+    wildcard_candidates = [''.join(p) for n in range(1, size_of_candidates + 1)
+                           for p in product(string.ascii_lowercase, repeat=n)]
+    for w in wildcard_candidates:
+        if w not in ''.join(constraints_with_wildcard):
+            return w
+    raise RuntimeError('Failed to find a unique sequence.'
+                       'Consider increasing max_len or revising variable names.')
 
 
-# Function to generate sequences of increasing length
-def generate_sequences(length, letters):
-    return (''.join(combination) for combination in product(letters, repeat=length))
+def generate_constraints_from_equations(constraints_list, variables_list, wildcard_string='?'):
+    # add error message to say variables_list cannot include *
+    wildcard_temp = find_permissible_wildcard(constraints_list)
+    # replace wildcard with alphabet to utilize sympy
+    constraints_with_alphabet_wildcard = [c.replace(wildcard_string, wildcard_temp) for c in constraints_list]
+    constraints = expand_wildcard(constraints_with_alphabet_wildcard=constraints_with_alphabet_wildcard,
+                                  variables=variables_list,
+                                  wildcard=wildcard_temp,
+                                  )
 
-
-# Function to iterate over sequences a, b .., aa, ab, ... aaa, aab of increasing length
-def find_unique_sequence(constraints, max_len=4):
-    letters = string.ascii_lowercase  # 'a' to 'z'
-    length = 1  # Starting length of sequences
-
-    while length <= max_len:
-        for sequence in generate_sequences(length, letters):
-            if not sequence_exists(sequence, constraints):
-                return sequence
-        length += 1  # Increase the length for the next iteration
-    raise RuntimeError(f'Failed to find a unique sequence within the maximum length of {max_len}. '
-                       f'Consider increasing max_len or revising variable names.')
-
-
-def generate_constraints_from_equations(constraints_list, state_space, wildcard_string='?'):
-    wildcard_temp = find_unique_sequence(constraints_list)
-    constraints = [c.replace(wildcard_string, wildcard_temp) for c in constraints_list]
-
-    constraints = expand_wildcards(constraints=constraints,
-                                   state_space=state_space,
-                                   wildcard=wildcard_temp,
-                                   )
-
-    A, b, variables = parse_equations_to_matrix(constraints, state_space)
+    A, b = sp.linear_eq_to_matrix(constraints, sp.sympify(variables_list))
 
     A = np.array(A).astype(float)
     b = np.array(b).astype(float)
-    idx = pd.Index(constraints, name='constraints')
-    dfA = pd.DataFrame(A, index=idx, columns=pd.Index([v.name for v in variables], name='variables'))
-    dfB = pd.DataFrame(b, index=idx, columns=['constant'])['constant']
+    dfA = pd.DataFrame(A, index=constraints, columns=variables_list)
+    dfB = pd.DataFrame(b, index=constraints, columns=['constant'])['constant']
 
-    return dfA, dfB
+    return dfA, dfB, constraints
 
 
-if __name__ == '__main__':
-     import mff_files.mff.tests.test_string_parser as tests
+constraints_with_wildcard = ['a1_2022 - a2_2023',
+                             'a1? + a2? - 1',
+                             '?2022 + ?2023 - 100',
+                             '? - (?Q1 + 3*?Q2 + ?Q3 + ?Q4)']
+
+dfA = pd.DataFrame({'a1': np.random.rand(5),
+                    'a2': np.random.rand(5),
+                    'x': np.random.rand(5),
+                    'z': np.random.rand(5)},
+                   index=pd.period_range(start='2021',
+                                         end='2025',
+                                         freq='A',
+                                         )
+                   )
+dfQ = pd.DataFrame({'q1': np.random.rand(20),
+                    'q2': np.random.rand(20),
+                    'x': np.random.rand(20),
+                    'y': np.random.rand(20)},
+                   index=pd.period_range(start='2021Q1',
+                                         end='2025Q4',
+                                         freq='Q',
+                                         )
+                   )
+
+variables_a = [f'{a}_{b}' for a, b in product(dfA.columns, dfA.index)]
+variables_q = [f'{a}_{b}' for a, b in product(dfQ.columns, dfQ.index)]
+
+variables = variables_a + variables_q
+
+A, b, constraints = generate_constraints_from_equations(constraints_with_wildcard,
+                                                        variables,
+                                                        wildcard_string='?')
+
+print("Matrix A:\n", A)
+print("Matrix b:\n", b)
+print("Constraints:\n", constraints)
+
 
