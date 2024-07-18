@@ -94,7 +94,7 @@ def load_excel_correct_fmt(dir):
     return data
 
 
-def load_excel(dir, data_fmt='correct', constraint_fmt='readable'):
+def load_excel(dir=None, data_fmt='correct', constraint_fmt='readable'):
     data_loader = {'ecos': load_excel_ecos,
                    'correct': load_excel_correct_fmt,
                    }
