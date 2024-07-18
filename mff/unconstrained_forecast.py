@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -55,7 +56,7 @@ def unconstrained_forecast(
         Xp = df.loc[mask_predict, known_variables].reset_index(drop=True)
 
     # yp = df.loc[mask_predict, unknown_variables]
-    if isinstance(fh, int):
+    if isinstance(fh, (int, np.int64)):
         fh = ForecastingHorizon(values=range(1, fh + 1), is_relative=True)
     elif isinstance(fh, ForecastingHorizon):
         fh = fh

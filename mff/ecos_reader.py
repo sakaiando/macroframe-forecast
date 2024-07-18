@@ -42,30 +42,46 @@ def load_excel_ecos(dir):
     data = pd.read_excel(dir, index_col=0, header=0, sheet_name='data').T
     data = drop_ecos_metadata(data)
     data = process_ecos_df(data)
-    constraints = pd.read_excel(dir, index_col=0, header=None, sheet_name='constraints')
-    return data, constraints
+    return data
+
+
+def load_constraints_readable(dir):
+    constraints = pd.read_excel(dir, index_col=0, header=0, sheet_name='constraints')['constraint']
+    return constraints
+
+
+def load_constraints_matrix(dir):
+    constraints_raw = pd.read_excel(dir, sheet_name='constraints', header=list(range(0, 3)), index_col=0)
+    return constraints_raw
 
 
 def load_excel_correct_fmt(dir):
     data = pd.read_excel(dir, index_col=0, header=list(range(0, 3)), sheet_name='data').T
-    constraints_raw = pd.read_excel(dir, sheet_name='constraints', header=None, index_col=0)
+    return data
 
-    data.columns.name = 'variable'
-    data = data.unstack(['freq', 'subperiod'])
+
+def load_excel(dir, data_fmt='correct', constraint_fmt='readable'):
+    data_loader = {'ecos': load_excel_ecos,
+                   'correct': load_excel_correct_fmt,
+                   }
+    data = data_loader[data_fmt](dir)
+    data = reshape_data(data)
+
+
+    constraint_loader = {'readable': load_constraints_readable,
+                         'matrix': load_constraints_matrix,
+                         }
+    constraints_raw = constraint_loader[constraint_fmt](dir)
 
     return data, constraints_raw
 
 
-def load_excel(dir, excel_fmt='correct'):
-    loader = {'ecos': load_excel_ecos,
-              'correct': load_excel_correct_fmt,
-              }
-
-    data, constraints_raw = loader[excel_fmt](dir)
-
-    return data, constraints_raw
+def reshape_data(df):
+    df.columns.name = 'variable'
+    df = df.unstack(['freq', 'subperiod'])
+    return df
 
 
 if __name__ == '__main__':
     directory = r'./data/input.xlsx'
-    d, C = load_excel(directory, excel_fmt='ecos')
+    d, C = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')

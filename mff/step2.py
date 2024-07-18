@@ -61,11 +61,14 @@ def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
 
 
 class Reconciler:
-    def __init__(self, data_all, exog, W, constraints, lam):
+    def __init__(self, data_all, exog, W, constraints, constants, lam):
         self.data = data_all.copy()
         self.exog = exog.copy()
         self.constraints = constraints
+        self.constants = constants
+
         self.constraints.index.name = 'constraint'
+        self.constants.index.name = 'constraint'
 
         self.W = W
 
@@ -75,7 +78,9 @@ class Reconciler:
             'freq').count().to_dict()['subperiod']
         self.nvars = len(self.state_space_idx.to_frame(index=0)[['variable']].drop_duplicates())
 
-        self.C_extended, self.d_extended = self._extend_constraints_matrix()
+        self.C_extended = constraints
+        self.d_extended = constants
+#        self.C_extended, self.d_extended = self._extend_constraints_matrix()
 #        warn_lin_dep_rows(self.C_extended)
 
         assert isinstance(lam, (int, float, complex)) and not isinstance(lam, bool), 'lambda should be a numeric value'
@@ -201,6 +206,7 @@ class Reconciler:
         return phi
 
     def _fit(self):
+        level_order = ['freq', 'variable', 'year', 'subperiod']
         constraints_idx = self.state_space_idx
         C = self.C_extended
 
@@ -210,7 +216,7 @@ class Reconciler:
             phi_temp = self.make_phi(self.lam ** v, F_temp)
             phis.append(phi_temp)
 
-        sorted_idx = constraints_idx.sortlevel(['freq', 'variable', 'year', 'subperiod'])[0]
+        sorted_idx = constraints_idx.sortlevel(level_order)[0]
         phi = block_diag(*phis)
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
 
@@ -218,6 +224,7 @@ class Reconciler:
         denom = invert_df(W_inv + phi)
 
         fcasts_stacked = self.data.reorder_levels(denom.index.names)
+        C = C.reorder_levels(denom.index.names, axis=1)
         cWc_inv = invert_df(C @ denom @ C.T)
 
         identity_df = pd.DataFrame(np.eye(len(denom)),

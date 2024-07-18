@@ -9,14 +9,14 @@ def calculate_residuals(df, forecaster, fcast_horizons, cols=None):
         cols = df.cols
     resids = []
     for i in df.index[:-fcast_horizons]:
-        forecast_horizon = ForecastingHorizon(range(i + 1, i + fcast_horizons + 2), is_relative=False)
+        forecast_horizon = ForecastingHorizon(range(i + 1, i + fcast_horizons + 1), is_relative=False)
         y_hat_multi = forecaster.predict(forecast_horizon)
         resid = (y_hat_multi - df).dropna().reset_index(drop=True).stack()
         resids.append(resid)
     resids = pd.concat(resids, axis=1).T
 
     W_idx = Reconciler.multiindex_from_multiindex_product(
-        pd.Index(range(df.index.max(), df.index.max() + fcast_horizons + 1), name='year'), cols)
+        pd.Index(range(df.index.max() + 1, df.index.max() + fcast_horizons + 1), name='year'), cols)
     resids.columns = W_idx
     return resids
 
