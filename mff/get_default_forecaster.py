@@ -138,6 +138,7 @@ def get_default_forecaster(Tin: int, window_length: int = 1) -> BaseForecaster:
             ],
         },
         tune_by_variable=True,
+        backend='dask'
     )
 
     return gscv
