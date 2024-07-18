@@ -6,6 +6,7 @@ from itertools import product
 import string
 
 
+
 def find_strings_to_replace_wildcard(constraint, variables, wildcard):
     # utilize sympy to extract variables from symbolic equations
     varlist_with_wildcard = ['^' + str(v).replace(wildcard, '(.*)') + '$'
@@ -60,10 +61,35 @@ def generate_constraints_from_equations(constraints_list, variables_list, wildca
 
     A = np.array(A).astype(float)
     b = np.array(b).astype(float)
-    dfA = pd.DataFrame(A, index=constraints, columns=variables_list)
+
+    idx = statespace_str_to_multiindex(variables_list)
+    dfA = pd.DataFrame(A, index=constraints, columns=idx)
     dfB = pd.DataFrame(b, index=constraints, columns=['constant'])['constant']
 
-    return dfA, dfB, constraints
+    return dfA, dfB
+
+
+def split_string(input_str):
+    # Regular expression to match the pattern
+    pattern = re.compile(r'([a-zA-Z0-9_]+)_(\d+)([A-Z]*)(\d*)')
+
+    match = pattern.match(input_str)
+
+    if not match:
+        raise ValueError("Input string does not match the expected pattern.")
+
+    prefix = match.group(1)
+    year = int(match.group(2))
+    period_letter = match.group(3) if match.group(3) else 'A'
+    period_number = int(match.group(4)) if match.group(4) else 1
+
+    return prefix, year, period_letter, period_number
+
+
+def statespace_str_to_multiindex(idx_str):
+    idx_split = [split_string(i) for i in idx_str]
+    idx_multi = pd.MultiIndex.from_tuples(idx_split, names=['variable', 'year', 'freq', 'subperiod'])
+    return idx_multi
 
 
 if __name__ == '__main__':
@@ -96,12 +122,13 @@ if __name__ == '__main__':
 
     variables = variables_a + variables_q
 
-    A, b, constraints = generate_constraints_from_equations(constraints_with_wildcard,
-                                                            variables,
-                                                            wildcard_string='?')
+    A, b = generate_constraints_from_equations(constraints_with_wildcard,
+                                               variables,
+                                               wildcard_string='?',
+                                               )
 
     print("Matrix A:\n", A)
     print("Matrix b:\n", b)
-    print("Constraints:\n", constraints)
+
 
 #    import mff.mff.tests.test_string_parser as tests
