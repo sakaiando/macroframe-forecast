@@ -1,4 +1,5 @@
 import pandas as pd
+import xlwings as xw
 
 ECOS_COLS_TO_DROP = ['Frequency', 'Scale', 'Display_scale']
 
@@ -8,6 +9,7 @@ def drop_ecos_metadata(df):
     df.index.name = 'year'
     df.columns.name = 'variable'
     df = df.drop(cols_to_drop).astype(float)
+    df.index = df.index.astype(int)
     return df
 
 
@@ -38,15 +40,47 @@ def process_ecos_df(df):
     return df
 
 
+def read_excel_sheet_while_open(sheet_name):
+    wb = xw.Book().caller()
+    value = wb.sheets[sheet_name].used_range.value
+    return value
+
+
+def create_dataframe_with_index_and_columns(data):
+    """
+    Creates a pandas DataFrame where the first row is used as the column names
+    and the first column is used as the index.
+
+    Parameters:
+    data (list of list): The input 2D array with the first row as columns
+                         and the first column as index.
+
+    Returns:
+    pd.DataFrame: The constructed DataFrame.
+    """
+    # Extract the columns from the first row (excluding the first element)
+    columns = data[0][1:]
+
+    # Extract the index from the first column (excluding the first element)
+    index = [row[0] for row in data[1:]]
+
+    # Extract the actual data (excluding the first row and first column)
+    data_values = [row[1:] for row in data[1:]]
+
+    # Create the DataFrame
+    df = pd.DataFrame(data=data_values, index=index, columns=columns)
+
+    return df
+
 def load_excel_ecos(dir):
-    data = pd.read_excel(dir, index_col=0, header=0, sheet_name='data').T
-    data = drop_ecos_metadata(data)
+    value = read_excel_sheet_while_open('data')
+    data = create_dataframe_with_index_and_columns(value).T
     data = process_ecos_df(data)
     return data
 
 
 def load_constraints_readable(dir):
-    constraints = pd.read_excel(dir, index_col=0, header=0, sheet_name='constraints')['constraint']
+    constraints = read_excel_sheet_while_open('constraints')
     return constraints
 
 
@@ -84,4 +118,5 @@ def reshape_data(df):
 
 if __name__ == '__main__':
     directory = r'./data/input.xlsx'
+    xw.Book(directory).set_mock_caller()
     d, C = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')
