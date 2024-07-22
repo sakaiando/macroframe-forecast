@@ -9,6 +9,7 @@ from mff.mff.covariance_calc import calculate_residuals, raw_covariance
 from mff.mff.ecos_reader import load_excel
 from mff.mff.string_parser import generate_constraints_from_equations
 
+
 def calculate_state_space(ss_idx):
     ss = ss_idx.to_frame().astype(str)
     ss = ss['variable'] + '_' + ss['year'] + (ss['freq'] + ss['subperiod']).replace({'A1': ''})
@@ -27,6 +28,12 @@ def calculate_initial_inputs(df):
     forecast_start, forecast_end = calculate_forecast_interval(ss_idx)
     n_horizons = int(forecast_end - forecast_start) + 1
     return ss_str, forecast_start, n_horizons
+
+
+def write_to_excel(values_out, out_sheet='data'):
+    wb = xw.Book().caller()
+    sheet = wb.sheets[out_sheet]
+    sheet.range('A1').value = values_out
 
 
 if __name__ == '__main__':
@@ -65,15 +72,17 @@ if __name__ == '__main__':
     y_adj = reconciler._fit()
 
     data.columns = cols
+
+    data_isna = data.isna()
+
     data.update(y_adj.unstack(['freq', 'subperiod']))
-    wb = xw.Book().caller()
-    data_out = data.reset_index().T.reset_index('variable')
-    sheet = wb.sheets['data_out']
-    sheet.range('A1').value = data_out.values
+    df_out = data.reset_index().T.reset_index('variable').values.tolist()
 
-    err = np.abs(y_adj['y'] - y_adj.drop('y', axis=1).sum(axis=1)).mean()
-    print(f'Avg reconcilation error for GDP accounting: {err}')
+    write_to_excel(df_out)
 
-    y_agg = y_adj.groupby(['freq', 'year']).mean()
-    err = (y_agg.loc['q'] - y_agg.loc['a']).mean().mean()
-    print(f'Avg reconciliation error for quarters: {err}')
+    # err = np.abs(y_adj['y'] - y_adj.drop('y', axis=1).sum(axis=1)).mean()
+    # print(f'Avg reconcilation error for GDP accounting: {err}')
+    #
+    # y_agg = y_adj.groupby(['freq', 'year']).mean()
+    # err = (y_agg.loc['q'] - y_agg.loc['a']).mean().mean()
+    # print(f'Avg reconciliation error for quarters: {err}')
