@@ -68,7 +68,7 @@ def create_dataframe_with_index_and_columns(data):
     data_values = [row[1:] for row in data[1:]]
 
     # Create the DataFrame
-    df = pd.DataFrame(data=data_values, index=index, columns=columns)
+    df = pd.DataFrame(data=data_values, index=index, columns=columns).dropna(axis=0, how='all')
 
     return df
 
