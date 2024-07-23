@@ -43,6 +43,8 @@ def process_ecos_df(df):
 def read_excel_sheet_while_open(sheet_name):
     wb = xw.Book().caller()
     value = wb.sheets[sheet_name].used_range.value
+    if isinstance(value, str):
+        value = [value]
     return value
 
 
@@ -69,6 +71,7 @@ def create_dataframe_with_index_and_columns(data):
 
     # Create the DataFrame
     df = pd.DataFrame(data=data_values, index=index, columns=columns).dropna(axis=0, how='all')
+    df = df.loc[:, ~df.columns.isna()]
 
     return df
 
