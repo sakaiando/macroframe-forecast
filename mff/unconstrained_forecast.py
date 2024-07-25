@@ -40,7 +40,8 @@ def unconstrained_forecast(
     if forecaster is None:
         forecaster = get_default_forecaster(Tin=Tin)
 
-    if not df.isna().sum(axis=1).all():
+    n_na = df.isna().sum(axis=1)
+    if not ((n_na == 0) | (n_na == df.shape[0])).any():
         yf = df
         Xf = None
         Xp = None
@@ -66,6 +67,9 @@ def unconstrained_forecast(
     yp = forecaster.fit_predict(y=yf, X=Xf, fh=fh, X_pred=Xp)
 
     df1 = df.copy()
-    df1 = pd.concat([df1, yp])  # TODO: handle when some exogenous are present
+    if Xp is None:
+        df1 = pd.concat([df1, yp])
+    else:
+        df1.loc[mask_predict, unknown_variables] = yp
 
     return df1, forecaster, fh
