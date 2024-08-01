@@ -45,7 +45,7 @@ def delete_exogenous_islands(df):
     return df
 
 
-def staggered_forecast(df, Tin, fh, forecaster=None):
+def staggered_forecast(df, Tin, fh=None, forecaster=None):
     df = delete_exogenous_islands(df)
     step_dates = find_forecast_start_by_col(df).unique() - 1  # TODO: do we want -1 here or a more clever way?
     step_dates.sort()
@@ -112,5 +112,4 @@ if __name__ == '__main__':
     os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype')
     df = pd.read_excel(r'.\data\input.xlsx', sheet_name='data', index_col=0).T
     Tin = 10
-    fh = 2029 - 2024
-    staggered_forecast(df, Tin, fh)
+    staggered_forecast(df, Tin)
