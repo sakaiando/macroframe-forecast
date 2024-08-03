@@ -86,7 +86,9 @@ def unconstrained_forecast(
         Xp = df.loc[mask_predict, known_variables].reset_index(drop=True)
 
     # yp = df.loc[mask_predict, unknown_variables]
-    if isinstance(fh, (int, np.int64)):
+    if Xp is not None:
+        fh = ForecastingHorizon(values=Xp.index + 1, is_relative=True)
+    elif isinstance(fh, (int, np.int64)):
         fh = ForecastingHorizon(values=range(1, fh + 1), is_relative=True)
     elif isinstance(fh, ForecastingHorizon):
         fh = fh
@@ -102,7 +104,6 @@ def unconstrained_forecast(
         df1.update(yp)  # doesn't replace filled values
 
     return df1, forecaster, fh
-
 
 
 if __name__ == '__main__':

@@ -72,6 +72,10 @@ class Reconciler:
 
         self.W = W
 
+        self.endog_idx = self.data.index.drop(self.exog.index)
+        self.n_periods = pd.Series(1, index=self.endog_idx).unstack('year').T.cumsum().max().astype(int)
+
+
         self.state_space_idx = self._make_state_space_idx()
         self.nperiods = len(self.state_space_idx.to_frame(index=False)['year'].drop_duplicates())
         self.relative_freq = self.state_space_idx.to_frame(index=0)[['freq', 'subperiod']].drop_duplicates().groupby(
@@ -212,7 +216,7 @@ class Reconciler:
 
         phis = []
         for k, v in self.relative_freq.items():
-            F_temp = self.make_F(v * (self.nperiods))
+            F_temp = self.make_F(v * (self.n_periods))
             phi_temp = self.make_phi(self.lam ** v, F_temp)
             phis.append(phi_temp)
 
