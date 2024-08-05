@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base import ForecastingHorizon
 from .unconstrained_forecast import delete_exogenous_islands, staggered_forecast
-from .step2 import Reconciler
+from .utils import multiindex_from_multiindex_product
 
 
 def calculate_residuals(df, forecaster, fcast_horizons, cols=None):
@@ -16,19 +16,24 @@ def calculate_residuals(df, forecaster, fcast_horizons, cols=None):
         resids.append(resid)
     resids = pd.concat(resids, axis=1).T
 
-    W_idx = Reconciler.multiindex_from_multiindex_product(
+    W_idx = multiindex_from_multiindex_product(
         pd.Index(range(df.index.max() + 1, df.index.max() + fcast_horizons + 1), name='year'), cols)
     resids.columns = W_idx
     return resids
 
 
-def calculate_oos_residuals(df, forecaster, fh, col_dict=None, n_periods=2):
+def calculate_oos_residuals(df, forecaster, fh, col_dict=None, n_periods=2, add_extra_year=False):
     df = delete_exogenous_islands(df)
     resids = []
     for h in range(fh, fh + n_periods):
+        h = h + add_extra_year
         df_est = df[~df.shift(-h).isna()].dropna(how='all')
-        df_pred, _, _ = staggered_forecast(df_est, 10, fh=fh)
-        resid = (df - df_pred)[df_est.isna()].shift(h).stack().dropna()
+        df_pred, _, _ = staggered_forecast(df_est, 10, fh=fh, add_extra_year=add_extra_year)
+        if add_extra_year:
+            df_est.loc[df_est.index.max() + 1] = np.nan
+        resid = (df - df_pred)[df_est.isna()].shift(h - add_extra_year)
+        resid.index = resid.index + add_extra_year
+        resid = resid.stack().dropna()
         resids.append(resid)
     resids = pd.concat(resids, axis=1).T
 
