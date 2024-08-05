@@ -72,10 +72,6 @@ class Reconciler:
 
         self.W = W
 
-        self.endog_idx = self.data.index.drop(self.exog.index)
-        self.n_periods = pd.Series(1, index=self.endog_idx).unstack('year').T.cumsum().max().astype(int)
-
-
         self.state_space_idx = self._make_state_space_idx()
         self.nperiods = len(self.state_space_idx.to_frame(index=False)['year'].drop_duplicates())
         self.relative_freq = self.state_space_idx.to_frame(index=0)[['freq', 'subperiod']].drop_duplicates().groupby(
@@ -209,6 +205,14 @@ class Reconciler:
         phi = np.kron(lambdas, F)
         return phi
 
+    def W_extended(self):
+        idx_to_add = self.state_space_idx.drop(self.W.index)
+        W = self.W.copy()
+        W[idx_to_add] = 0
+        W = W.T
+        W[idx_to_add] = 0
+        return W
+
     def _fit(self):
         level_order = ['freq', 'variable', 'year', 'subperiod']
         constraints_idx = self.state_space_idx
@@ -216,7 +220,7 @@ class Reconciler:
 
         phis = []
         for k, v in self.relative_freq.items():
-            F_temp = self.make_F(v * (self.n_periods))
+            F_temp = self.make_F(v * (self.nperiods))
             phi_temp = self.make_phi(self.lam ** v, F_temp)
             phis.append(phi_temp)
 
@@ -224,7 +228,7 @@ class Reconciler:
         phi = block_diag(*phis)
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
 
-        W_inv = invert_df(self.W, matrix_name='W')
+        W_inv = invert_df(self.W_extended(), matrix_name='W')
         denom = invert_df(W_inv + phi)
 
         fcasts_stacked = self.data.reorder_levels(denom.index.names)

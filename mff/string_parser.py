@@ -47,7 +47,7 @@ def find_permissible_wildcard(constraints_with_wildcard, size_of_candidates=4):
                        'Consider increasing max_len or revising variable names.')
 
 
-def generate_constraints_from_equations(constraints_list, variables_list, wildcard_string='?'):
+def generate_constraint_mat_from_equations(constraints_list, variables_list, wildcard_string='?'):
     # add error message to say variables_list cannot include *
     wildcard_temp = find_permissible_wildcard(constraints_list)
     # replace wildcard with alphabet to utilize sympy
@@ -122,10 +122,7 @@ if __name__ == '__main__':
 
     variables = variables_a + variables_q
 
-    A, b = generate_constraints_from_equations(constraints_with_wildcard,
-                                               variables,
-                                               wildcard_string='?',
-                                               )
+    A, b = generate_constraint_mat_from_equations(constraints_with_wildcard, variables, wildcard_string='?')
 
     print("Matrix A:\n", A)
     print("Matrix b:\n", b)
