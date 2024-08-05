@@ -45,7 +45,7 @@ def delete_exogenous_islands(df):
     return df
 
 
-def staggered_forecast(df, Tin, fh=None, forecaster=None, add_extra_year=True):
+def staggered_forecast(df, Tin, fh=None, forecaster=None, add_extra_year=False):
     df = delete_exogenous_islands(df)
 
     step_dates = find_forecast_start_by_col(df).unique() - 1  # TODO: do we want -1 here or a more clever way?
