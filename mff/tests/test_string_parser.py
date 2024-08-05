@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 
-from mff.mff.string_parser import generate_constraints_from_equations
+from mff.mff.string_parser import generate_constraint_mat_from_equations
 
 
 def unit_test1():
@@ -39,7 +39,7 @@ def unit_test1():
 
     ss = variables_a + variables_q
 
-    A, b = generate_constraints_from_equations(constraints, ss)
+    A, b = generate_constraint_mat_from_equations(constraints, ss)
 
     import os
 

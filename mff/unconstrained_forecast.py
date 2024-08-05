@@ -45,11 +45,19 @@ def delete_exogenous_islands(df):
     return df
 
 
-def staggered_forecast(df, Tin, fh=None, forecaster=None):
+def staggered_forecast(df, Tin, fh=None, forecaster=None, add_extra_year=False):
     df = delete_exogenous_islands(df)
+
     step_dates = find_forecast_start_by_col(df).unique() - 1  # TODO: do we want -1 here or a more clever way?
     step_dates.sort()
     step_dates = step_dates[1:]
+
+    # add additional year for smoothing
+    if add_extra_year:
+        extend_date = df.index.max() + 1
+        df.loc[extend_date] = np.nan
+        step_dates = np.append(step_dates, df.index.max())
+
     fcast_dict = {}
     fh_dict = {}
     y_hat = df.copy()
@@ -61,6 +69,7 @@ def staggered_forecast(df, Tin, fh=None, forecaster=None):
                                                                                    )
         y_hat.update(y_hat_temp)
     return y_hat, fcast_dict, fh_dict
+
 
 # @profile
 def unconstrained_forecast(
@@ -86,7 +95,9 @@ def unconstrained_forecast(
         Xp = df.loc[mask_predict, known_variables].reset_index(drop=True)
 
     # yp = df.loc[mask_predict, unknown_variables]
-    if isinstance(fh, (int, np.int64)):
+    if Xp is not None:
+        fh = ForecastingHorizon(values=Xp.index + 1, is_relative=True)
+    elif isinstance(fh, (int, np.int64)):
         fh = ForecastingHorizon(values=range(1, fh + 1), is_relative=True)
     elif isinstance(fh, ForecastingHorizon):
         fh = fh
@@ -102,7 +113,6 @@ def unconstrained_forecast(
         df1.update(yp)  # doesn't replace filled values
 
     return df1, forecaster, fh
-
 
 
 if __name__ == '__main__':

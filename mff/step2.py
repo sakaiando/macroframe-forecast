@@ -205,6 +205,14 @@ class Reconciler:
         phi = np.kron(lambdas, F)
         return phi
 
+    def W_extended(self):
+        idx_to_add = self.state_space_idx.drop(self.W.index)
+        W = self.W.copy()
+        W[idx_to_add] = 0
+        W = W.T
+        W[idx_to_add] = 0
+        return W
+
     def _fit(self):
         level_order = ['freq', 'variable', 'year', 'subperiod']
         constraints_idx = self.state_space_idx
@@ -220,7 +228,7 @@ class Reconciler:
         phi = block_diag(*phis)
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
 
-        W_inv = invert_df(self.W, matrix_name='W')
+        W_inv = invert_df(self.W_extended(), matrix_name='W')
         denom = invert_df(W_inv + phi)
 
         fcasts_stacked = self.data.reorder_levels(denom.index.names)
