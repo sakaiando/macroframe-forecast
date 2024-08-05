@@ -125,7 +125,7 @@ if __name__ == '__main__':
     reconciler = Reconciler(y_hat, y_exog, W, C, b, lam)
     y_adj = reconciler._fit()
 
-    data.update(y_adj.unstack(['freq', 'subperiod']))
+    data.update(y_adj.unstack(['freq', 'subperiod']), overwrite=False)
     df_out = data.reset_index().T.reset_index('variable').values.tolist()
 
     write_to_excel(df_out)
