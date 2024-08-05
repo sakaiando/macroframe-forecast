@@ -5,8 +5,8 @@ import numpy as np
 sys.path.append(r'/mff')
 
 from mff.mff.step2 import Reconciler
-from mff.mff.unconstrained_forecast import unconstrained_forecast
-from mff.mff.covariance_calc import calculate_residuals, raw_covariance
+from mff.mff.unconstrained_forecast import staggered_forecast
+from mff.mff.covariance_calc import calculate_residuals, raw_covariance, calculate_oos_residuals
 from mff.mff.ecos_reader import load_excel
 from mff.mff.string_parser import generate_constraints_from_equations
 from sktime.utils import mlflow_sktime
@@ -92,24 +92,26 @@ if __name__ == '__main__':
     C, b = generate_constraints_from_equations(constraints, state_space)
 
     cols = data.columns  # sktime can't handle MultiIndex columns, so store for later
+    cols_dict = {i: col for i, col in enumerate(cols)}
     data = data.T.reset_index(drop=True).T
-    data_nona = data.dropna()
+
 
     # if check_df_unchanged(data):
     #     forecaster = mlflow_sktime.load_model(r'.\cache\model.pickle')
     #     fh = forecaster.fh
     #
     # else:
-    y_hat, forecaster, fh = unconstrained_forecast(data, Tin, fh=n_horizons, forecaster=None)
+    y_hat, forecaster, fh = staggered_forecast(data, Tin, fh=n_horizons, forecaster=None)
         # create_cache(forecaster, data)
 
-    resids = calculate_residuals(data_nona, forecaster, n_horizons, cols)
+    resids = calculate_oos_residuals(data, forecaster, n_horizons, cols_dict)
     W = raw_covariance(resids)
 
     y_hat.columns = cols
     data.columns = cols
 
-    y_hat = y_hat.loc[forecast_start:]
+    y_hat = y_hat.loc[forecast_start - 1:]
+    data.loc[data.index.max() + 1] = np.nan
     y_exog = data.loc[y_hat.index]
 
     y_hat = y_hat.stack(data.columns.names)
