@@ -2,10 +2,12 @@ import pandas as pd
 import numpy as np
 from scipy.linalg import block_diag
 from sklearn.linear_model import LinearRegression
-
-from itertools import product, combinations
+from itertools import combinations
+from .utils import multiindex_from_multiindex_product
 
 import warnings
+
+from .covariance_calc import delete_exogenous_islands
 
 
 def make_linear_extrapolation(series):
@@ -73,11 +75,9 @@ class Reconciler:
         self.W = W
 
         self.endog_idx = self.data.index.drop(self.exog.index)
-        self.n_periods = pd.Series(1, index=self.endog_idx).unstack('year').T.cumsum().max().astype(int)
-
-
         self.state_space_idx = self._make_state_space_idx()
-        self.nperiods = len(self.state_space_idx.to_frame(index=False)['year'].drop_duplicates())
+        self.filled_endog_idx = self._make_filled_endog_idx()
+
         self.relative_freq = self.state_space_idx.to_frame(index=0)[['freq', 'subperiod']].drop_duplicates().groupby(
             'freq').count().to_dict()['subperiod']
         self.nvars = len(self.state_space_idx.to_frame(index=0)[['variable']].drop_duplicates())
@@ -89,6 +89,27 @@ class Reconciler:
 
         assert isinstance(lam, (int, float, complex)) and not isinstance(lam, bool), 'lambda should be a numeric value'
         self._lam = lam
+
+    def _make_filled_endog_idx(self):
+        temp_grouper = self.endog_idx.to_frame(index=False).groupby(['variable', 'freq'])['year'].agg(['max', 'min'])
+        temp_grouper_freq = self.state_space_idx.to_frame().reset_index(drop=True).groupby('freq')['subperiod'].max().to_dict()
+        self.n_periods = temp_grouper['max'] - (temp_grouper['min'] - 1)
+        idx = []
+        for row in temp_grouper.iterrows():
+            lower = row[1]['min']
+            upper = row[1]['max']
+            freq = row[0][1]  # pull out freq - order fixed from groupby above
+            n_subperiods = temp_grouper_freq[freq]
+            idx_temp = pd.DataFrame([row[0]] * (upper - lower + 1) * n_subperiods,
+                                    index=pd.MultiIndex.from_product([range(lower, upper + 1),
+                                                                      range(1, n_subperiods + 1)],
+                                                                     names=['year', 'subperiod']
+                                                                     ),
+                                    columns=['variable', 'freq'])
+            idx_temp = idx_temp.reset_index()
+            idx.append(idx_temp)
+        return pd.concat(idx).set_index(['year', 'subperiod', 'variable', 'freq']).index
+
 
     @property
     def lam(self):
@@ -104,23 +125,6 @@ class Reconciler:
     @staticmethod
     def collapse_multiindex(index, separator='_'):
         return [separator.join(map(str, idx)) for idx in index]
-
-    @staticmethod
-    def multiindex_from_multiindex_product(idx_left, idx_right):
-        concat_list = []
-        left_is_multiindex = isinstance(idx_left, pd.MultiIndex)
-        right_is_multiindex = isinstance(idx_right, pd.MultiIndex)
-        for a, b in product(idx_left, idx_right):
-            if left_is_multiindex and right_is_multiindex:
-                item = (*a, *b)
-            elif left_is_multiindex and not right_is_multiindex:
-                item = (*a, b)
-            elif not left_is_multiindex and right_is_multiindex:
-                item = (a, *b)
-            else:
-                item = (a, b)
-            concat_list.append(item)
-        return pd.MultiIndex.from_tuples(concat_list, names=list(idx_left.names) + list(idx_right.names))
 
     def _extend_constraints_matrix(self):
         state_space_idx = self.state_space_idx
@@ -150,8 +154,8 @@ class Reconciler:
                 C_np = np.kron(np.eye(len(temp_idx)), C_subset)
 
                 # Convert numpy to dataframe
-                constraints_col = self.multiindex_from_multiindex_product(temp_idx, C_subset.columns)
-                constraints_idx = self.multiindex_from_multiindex_product(temp_idx, C_subset.index)
+                constraints_col = multiindex_from_multiindex_product(temp_idx, C_subset.columns)
+                constraints_idx = multiindex_from_multiindex_product(temp_idx, C_subset.index)
                 C_extended = pd.DataFrame(C_np, index=constraints_idx,
                                           columns=constraints_col).reorder_levels(state_space_idx.names, axis=1)
 
@@ -188,7 +192,10 @@ class Reconciler:
 
         return C, d
 
-    def make_F(self, nobs):
+    def make_F_single(self, nobs):
+        return np.eye(nobs)
+
+    def make_F_full(self, nobs):
         # make (off) diagonal elements
         F = np.zeros((nobs, nobs))
         for i, v in enumerate([1., -4, 6., -4., 1.]):
@@ -204,23 +211,31 @@ class Reconciler:
         F[-2, -4:] = row2[::-1]
         return F
 
+    def make_F(self, nobs):
+        if nobs >= 4:
+            F = self.make_F_full(nobs)
+        else:
+            F = self.make_F_single(nobs)
+        return F
+
     def make_phi(self, lam, F):
         lambdas = np.diag(self.nvars * [lam])
         phi = np.kron(lambdas, F)
         return phi
 
     def _fit(self):
-        level_order = ['freq', 'variable', 'year', 'subperiod']
+        level_order = ['variable', 'freq', 'year', 'subperiod']
         constraints_idx = self.state_space_idx
         C = self.C_extended
 
         phis = []
-        for k, v in self.relative_freq.items():
-            F_temp = self.make_F(v * (self.n_periods))
-            phi_temp = self.make_phi(self.lam ** v, F_temp)
+        n_periods = self.n_periods.sort_index(level=['variable', 'freq'])
+        for v in n_periods.values:
+            F_temp = self.make_F(v)
+            phi_temp = F_temp  # self.make_phi(self.lam ** v, F_temp)
             phis.append(phi_temp)
 
-        sorted_idx = constraints_idx.sortlevel(level_order)[0]
+        sorted_idx = self.filled_endog_idx.to_frame().sort_index(level=['variable', 'freq', 'year', 'subperiod']).index
         phi = block_diag(*phis)
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
 

@@ -45,11 +45,19 @@ def delete_exogenous_islands(df):
     return df
 
 
-def staggered_forecast(df, Tin, fh=None, forecaster=None):
+def staggered_forecast(df, Tin, fh=None, forecaster=None, add_extra_year=True):
     df = delete_exogenous_islands(df)
+
     step_dates = find_forecast_start_by_col(df).unique() - 1  # TODO: do we want -1 here or a more clever way?
     step_dates.sort()
     step_dates = step_dates[1:]
+
+    # add additional year for smoothing
+    if add_extra_year:
+        extend_date = df.index.max() + 1
+        df.loc[extend_date] = np.nan
+        step_dates = np.append(step_dates, df.index.max())
+
     fcast_dict = {}
     fh_dict = {}
     y_hat = df.copy()
@@ -61,6 +69,7 @@ def staggered_forecast(df, Tin, fh=None, forecaster=None):
                                                                                    )
         y_hat.update(y_hat_temp)
     return y_hat, fcast_dict, fh_dict
+
 
 # @profile
 def unconstrained_forecast(
