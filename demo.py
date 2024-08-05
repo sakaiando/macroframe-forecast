@@ -3,6 +3,7 @@ import sys
 import shutil
 import numpy as np
 
+
 sys.path.append(r'')
 
 from mff.step2 import Reconciler
@@ -13,6 +14,7 @@ from mff.string_parser import generate_constraint_mat_from_equations
 from sktime.utils import mlflow_sktime
 
 
+=
 def calculate_state_space(ss_idx):
     ss = ss_idx.to_frame().astype(str)
     ss = ss['variable'] + '_' + ss['year'] + (ss['freq'] + ss['subperiod']).replace({'A1': ''})
@@ -75,6 +77,7 @@ def check_df_unchanged(df, checksum_dir=r'.\cache\df_checksum.txt'):
     return checksum == int(checkcurrent)
 
 
+
 def step1_with_multiindex_col_data(data):
     cols = data.columns  # sktime can't handle MultiIndex columns, so store for later
     cols_dict = {i: col for i, col in enumerate(cols)}
@@ -119,9 +122,6 @@ if __name__ == '__main__':
     y_hat, W = step1_with_multiindex_col_data(data)
 
     y_hat, y_exog = prep_fcast_and_exog(y_hat, data, forecast_start)
-
-    reconciler = Reconciler(y_hat, y_exog, W, C, b, lam)
-    y_adj = reconciler._fit()
 
     data.update(y_adj.unstack(['freq', 'subperiod']))
     df_out = data.reset_index().T.reset_index('variable').values.tolist()
