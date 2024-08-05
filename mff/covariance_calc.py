@@ -26,7 +26,7 @@ def calculate_oos_residuals(df, forecaster, fh, col_dict=None, n_periods=2, add_
     df = delete_exogenous_islands(df)
     resids = []
     for h in range(fh, fh + n_periods):
-        h = h + add_extra_year
+        h = h + 1 + add_extra_year
         df_est = df[~df.shift(-h).isna()].dropna(how='all')
         df_pred, _, _ = staggered_forecast(df_est, 10, fh=fh, add_extra_year=add_extra_year)
         if add_extra_year:

@@ -2,15 +2,19 @@ import pandas as pd
 import sys
 import shutil
 import numpy as np
-sys.path.append(r'/mff')
 
-from mff.mff.step2 import Reconciler
-from mff.mff.unconstrained_forecast import staggered_forecast
-from mff.mff.covariance_calc import calculate_residuals, raw_covariance, calculate_oos_residuals
-from mff.mff.ecos_reader import load_excel
-from mff.mff.string_parser import generate_constraints_from_equations
+
+sys.path.append(r'')
+
+from mff.step2 import Reconciler
+from mff.unconstrained_forecast import staggered_forecast
+from mff.covariance_calc import raw_covariance, calculate_oos_residuals
+from mff.ecos_reader import load_excel
+from mff.string_parser import generate_constraint_mat_from_equations
 from sktime.utils import mlflow_sktime
 
+
+=
 def calculate_state_space(ss_idx):
     ss = ss_idx.to_frame().astype(str)
     ss = ss['variable'] + '_' + ss['year'] + (ss['freq'] + ss['subperiod']).replace({'A1': ''})
@@ -21,25 +25,24 @@ def calculate_forecast_interval(ss):
     return ss.get_level_values('year').min(), ss.get_level_values('year').max()
 
 
-def calculate_initial_inputs(df):
+def calculate_initial_inputs(df, n_start_years=1):
     na_years = df.index[df.isna().any(axis=1)]
     forecast_start, forecast_end = calculate_forecast_interval(na_years)
-    n_horizons = int(forecast_end - forecast_start) + 1
-
+    n_horizons = int(forecast_end - forecast_start)
 
     df_stacked = df.stack(df.columns.names, dropna=False)
-    fcast_stacked = df_stacked[df_stacked.index.get_level_values('year') >= forecast_start]
+    fcast_stacked = df_stacked[df_stacked.index.get_level_values('year') >= forecast_start - n_start_years]
     ss_str = calculate_state_space(fcast_stacked.index)
 
     fixed_fcasts = fcast_stacked.dropna()
-    conditional_fcast_constraints = [f'{i} - {j}' for i, j in zip(calculate_state_space(fixed_fcasts.index), fixed_fcasts.values)]
+    conditional_fcast_constraints = [f'{i} - {j}' for i, j in
+                                     zip(calculate_state_space(fixed_fcasts.index), fixed_fcasts.values)]
     return ss_str, conditional_fcast_constraints, forecast_start, n_horizons
 
 
 def write_to_excel(values_out, out_sheet='data'):
     wb = xw.Book().caller()
     sheet = wb.sheets[out_sheet]
-
 
     num_rows = len(values_out)
     num_cols = len(values_out[0]) if values_out else 0
@@ -74,55 +77,51 @@ def check_df_unchanged(df, checksum_dir=r'.\cache\df_checksum.txt'):
     return checksum == int(checkcurrent)
 
 
-if __name__ == '__main__':
-    import xlwings as xw
-    import os
-    os.chdir(r'C:\users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype')
 
-    Tin = 10
-    lam = 100
-
-    directory = r'./data/input.xlsm'
-    xw.Book(directory).set_mock_caller()
-
-    data, constraints_raw = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')
-    state_space, conditional_constraints, forecast_start, n_horizons = calculate_initial_inputs(data)
-
-    constraints = conditional_constraints + constraints_raw
-    C, b = generate_constraints_from_equations(constraints, state_space)
-
+def step1_with_multiindex_col_data(data):
     cols = data.columns  # sktime can't handle MultiIndex columns, so store for later
     cols_dict = {i: col for i, col in enumerate(cols)}
     data = data.T.reset_index(drop=True).T
 
-
-    # if check_df_unchanged(data):
-    #     forecaster = mlflow_sktime.load_model(r'.\cache\model.pickle')
-    #     fh = forecaster.fh
-    #
-    # else:
-    y_hat, forecaster, fh = staggered_forecast(data, Tin, fh=n_horizons, forecaster=None)
-        # create_cache(forecaster, data)
+    y_hat, forecaster, fh = staggered_forecast(data, Tin, forecaster=None)
 
     resids = calculate_oos_residuals(data, forecaster, n_horizons, cols_dict)
     W = raw_covariance(resids)
 
     y_hat.columns = cols
     data.columns = cols
+    return y_hat, W
 
-    y_hat = y_hat.loc[forecast_start - 1:]
-    data.loc[data.index.max() + 1] = np.nan
+
+def prep_fcast_and_exog(y_hat, data, forecast_start, n_start_years=1):
+    y_hat = y_hat.loc[forecast_start - n_start_years:]
     y_exog = data.loc[y_hat.index]
 
     y_hat = y_hat.stack(data.columns.names)
     y_exog = y_exog.stack(data.columns.names)
+    return y_hat, y_exog
 
-    reconciler = Reconciler(y_hat, y_exog, W, C, b, lam)
-    y_adj = reconciler._fit()
 
-    data.columns = cols
+if __name__ == '__main__':
+    import xlwings as xw
+    import os
 
-    data_isna = data.isna()
+    os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
+    Tin = 10
+
+    lam = 100
+    directory = r'./data/input.xlsm'
+
+    xw.Book(directory).set_mock_caller()
+    data, constraints_raw = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')
+
+    state_space, conditional_constraints, forecast_start, n_horizons = calculate_initial_inputs(data)
+    constraints = conditional_constraints + constraints_raw
+    C, b = generate_constraint_mat_from_equations(constraints, state_space)
+
+    y_hat, W = step1_with_multiindex_col_data(data)
+
+    y_hat, y_exog = prep_fcast_and_exog(y_hat, data, forecast_start)
 
     data.update(y_adj.unstack(['freq', 'subperiod']))
     df_out = data.reset_index().T.reset_index('variable').values.tolist()
