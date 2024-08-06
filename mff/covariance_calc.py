@@ -49,6 +49,26 @@ def raw_covariance(resids):
     return resids.cov()
 
 
+def oasd_covariance(resids):
+    sig_hat = raw_covariance(resids)
+
+    def phi():
+        diag = np.diag(np.diag(sig_hat))
+        numerator = np.trace(sig_hat @ sig_hat) - np.trace(diag @ diag)
+        denom = np.trace(sig_hat @ sig_hat) + np.trace(sig_hat) ** 2 - 2 * np.trace(diag @ diag)
+        return numerator / denom
+
+    rho = min(1/(len(resids) * phi()), 1)
+
+    return rho * sig_hat + (1 - rho) * np.diag(np.diag(sig_hat))
+
+
+def calc_covariance(resids, how='oasd'):
+    calculator = {'oasd': oasd_covariance,
+                  'raw': raw_covariance}
+    return calculator[how](resids)
+
+
 def concatenate_index_on_levels(index1, index2):
     """
     Concatenates two MultiIndexes on the levels dimension.

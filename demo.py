@@ -8,7 +8,7 @@ sys.path.append(r'')
 
 from mff.step2 import Reconciler
 from mff.unconstrained_forecast import staggered_forecast
-from mff.covariance_calc import raw_covariance, calculate_oos_residuals
+from mff.covariance_calc import calc_covariance, calculate_oos_residuals
 from mff.ecos_reader import load_excel
 from mff.string_parser import generate_constraint_mat_from_equations
 from sktime.utils import mlflow_sktime
@@ -77,15 +77,15 @@ def check_df_unchanged(df, checksum_dir=r'.\cache\df_checksum.txt'):
 
 
 
-def step1_with_multiindex_col_data(data):
+def step1_with_multiindex_col_data(data, n_horizons):
     cols = data.columns  # sktime can't handle MultiIndex columns, so store for later
     cols_dict = {i: col for i, col in enumerate(cols)}
     data = data.T.reset_index(drop=True).T
 
-    y_hat, forecaster, fh = staggered_forecast(data, Tin, forecaster=None)
+    y_hat, forecaster, fh = staggered_forecast(data, forecaster=None)
 
     resids = calculate_oos_residuals(data, forecaster, n_horizons, cols_dict)
-    W = raw_covariance(resids)
+    W = calc_covariance(resids)
 
     y_hat.columns = cols
     data.columns = cols
@@ -101,34 +101,84 @@ def prep_fcast_and_exog(y_hat, data, forecast_start, n_start_years=1):
     return y_hat, y_exog
 
 
+def run(Tin, lam):
+    import xlwings as xw
+    import os
+
+    os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
+
+    directory = r'./data/input.xlsm'
+
+    print('Reading data')
+    with xw.App(visible=False) as app:
+        wb = xw.Book.caller()  # xw.Book(directory).set_mock_caller() for calling from script
+        data, constraints_raw = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')
+        print('Read data')
+        state_space, conditional_constraints, forecast_start, n_horizons = calculate_initial_inputs(data)
+        constraints = conditional_constraints + constraints_raw
+        C, b = generate_constraint_mat_from_equations(constraints, state_space)
+
+        print('Constraints compiled')
+        y_hat, W = step1_with_multiindex_col_data(data, n_horizons)
+
+        y_hat, y_exog = prep_fcast_and_exog(y_hat, data, forecast_start)
+        print('Forecasts generated')
+
+        reconciler = Reconciler(y_hat, y_exog, W, C, b, lam)
+        y_adj = reconciler._fit()
+
+        data.update(y_adj.unstack(['freq', 'subperiod']), overwrite=False)
+        df_out = data.reset_index().T.reset_index('variable').values.tolist()
+
+        write_to_excel(df_out)
+
+
+def close_extra_workbooks(wb_not_close):
+    # Get a reference to the current application
+    app = xw.apps.active
+
+    # Loop through all open workbooks
+    for wb in app.books:
+        # Define your criteria for closing workbooks
+        # For example, close any workbook that is not named 'MainWorkbook.xlsx'
+        if wb.name != wb_not_close:
+            wb.close()
+
+
 if __name__ == '__main__':
     import xlwings as xw
     import os
 
     os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
-    Tin = 10
+    Tin = 5
 
-    lam = 100
+    lam = 1e7
     directory = r'./data/input.xlsm'
 
-    xw.Book(directory).set_mock_caller()
-    data, constraints_raw = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')
+    with xw.App(visible=True, add_book=False) as app:
+        print('Reading data')
+        wb = xw.Book(directory).set_mock_caller()
 
-    state_space, conditional_constraints, forecast_start, n_horizons = calculate_initial_inputs(data)
-    constraints = conditional_constraints + constraints_raw
-    C, b = generate_constraint_mat_from_equations(constraints, state_space)
+        data, constraints_raw = load_excel(directory, data_fmt='ecos', constraint_fmt='readable')
+        print('Read data')
+        state_space, conditional_constraints, forecast_start, n_horizons = calculate_initial_inputs(data)
+        constraints = conditional_constraints + constraints_raw
+        C, b = generate_constraint_mat_from_equations(constraints, state_space)
 
-    y_hat, W = step1_with_multiindex_col_data(data)
+        print('Constraints compiled')
+        y_hat, W = step1_with_multiindex_col_data(data, n_horizons)
 
-    y_hat, y_exog = prep_fcast_and_exog(y_hat, data, forecast_start)
+        y_hat, y_exog = prep_fcast_and_exog(y_hat, data, forecast_start)
+        print('Forecasts generated')
 
-    reconciler = Reconciler(y_hat, y_exog, W, C, b, lam)
-    y_adj = reconciler._fit()
+        #y_hat.update(y_exog)
+        reconciler = Reconciler(y_hat, y_exog, W, C, b, lam)
+        y_adj = reconciler._fit()
 
-    data.update(y_adj.unstack(['freq', 'subperiod']), overwrite=False)
-    df_out = data.reset_index().T.reset_index('variable').values.tolist()
+        data.update(y_adj.unstack(['freq', 'subperiod']), overwrite=False)
+        df_out = data.reset_index().T.reset_index('variable').values.tolist()
 
-    write_to_excel(df_out)
+        write_to_excel(df_out)
 
     # err = np.abs(y_adj['y'] - y_adj.drop('y', axis=1).sum(axis=1)).mean()
     # print(f'Avg reconcilation error for GDP accounting: {err}')
