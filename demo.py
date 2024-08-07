@@ -84,7 +84,7 @@ def step1_with_multiindex_col_data(data, n_horizons):
 
     y_hat, forecaster, fh = staggered_forecast(data, forecaster=None)
 
-    resids = calculate_oos_residuals(data, forecaster, n_horizons, cols_dict)
+    resids = calculate_oos_residuals(data, forecaster, n_horizons, cols_dict, n_periods=4)
     W = calc_covariance(resids)
 
     y_hat.columns = cols
@@ -150,9 +150,9 @@ if __name__ == '__main__':
     import os
 
     os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
-    Tin = 5
+    Tin = 1
 
-    lam = 1e7
+    lam = 1e2
     directory = r'./data/input.xlsm'
 
     with xw.App(visible=True, add_book=False) as app:

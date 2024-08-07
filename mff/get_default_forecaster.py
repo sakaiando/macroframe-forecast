@@ -26,7 +26,7 @@ def get_default_forecaster(Tin: int, window_length: int = 1) -> BaseForecaster:
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "forecaster",
-                NaiveForecaster(strategy="drift"),
+                NaiveForecaster(strategy="last"),
             ),
         ]
     )
@@ -118,12 +118,12 @@ def get_default_forecaster(Tin: int, window_length: int = 1) -> BaseForecaster:
         forecasters=[
             ("naive", pipe_X_naive),
 #            ("linear_reg", pipe_X_linear_regression),
-#            ("elasticnet", pipe_X_elastic_net),
+            ("elasticnet", pipe_X_elastic_net),
 #            ("kernel_ridge", gridsearch_cv_kernel_ridge),
         ],
     )
 
-    cv = ExpandingGreedySplitter(test_size=4, folds=3)  # TODO: allow more customization here
+    cv = ExpandingGreedySplitter(test_size=2, folds=3)  # TODO: allow more customization here
 
     # choose among the provided forecasters
     gscv = ForecastingGridSearchCV(
@@ -131,9 +131,9 @@ def get_default_forecaster(Tin: int, window_length: int = 1) -> BaseForecaster:
         cv=cv,
         param_grid={
             "selected_forecaster": [
-                "naive",
+#                "naive",
 #                "linear_reg",
-#                "elasticnet",
+                "elasticnet",
 #                "kernel_ridge",
             ],
         },
