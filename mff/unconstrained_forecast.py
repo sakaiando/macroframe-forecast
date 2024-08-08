@@ -63,10 +63,10 @@ def staggered_forecast(df, Tin=10, fh=None, forecaster=None, add_extra_year=Fals
     y_hat = df.copy()
     for step in step_dates:
         y_hat_temp, fcast_dict[step], fh_dict[step] = unconstrained_forecast(df.loc[:step],
-                                                                                   Tin=Tin,
-                                                                                   fh=fh,
-                                                                                   forecaster=forecaster
-                                                                                   )
+                                                                             Tin=Tin,
+                                                                             fh=fh,
+                                                                             forecaster=forecaster
+                                                                             )
         y_hat.update(y_hat_temp)
     return y_hat, fcast_dict, fh_dict
 
@@ -79,7 +79,11 @@ def unconstrained_forecast(
         forecaster = get_default_forecaster(Tin=Tin)
 
     n_na = df.isna().sum(axis=1)
-    if not ((n_na == 0) | (n_na == df.shape[0])).any():
+    if not ((n_na > 0) & (n_na < df.shape[0])).any():
+        yf = df
+        Xf = None
+        Xp = None
+    elif ((n_na == 0) | (n_na == df.shape[0])).all():
         yf = df
         Xf = None
         Xp = None
