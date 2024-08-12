@@ -58,11 +58,7 @@ def load_synthetic_data():
                   [np.nan, np.nan, np.nan, 1.1, 3.49],
                   [np.nan, np.nan, np.nan, 1.1, 3.39],
                   [np.nan, np.nan, np.nan, 1.1, 3.30]])
-    idx = pd.Int64Index([1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-                         2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
-                         2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026,
-                         2027, 2028, 2029, 2030],
-                        dtype='int64', name='year')
+    idx = pd.Index(range(1994, 2031), dtype='int64', name='year')
     col = pd.MultiIndex.from_tuples([('CA', 'A', 1),
                                      ('TA', 'A', 1),
                                      ('IA', 'A', 1),
