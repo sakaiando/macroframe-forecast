@@ -213,7 +213,7 @@ class Reconciler:
         W[idx_to_add] = 0
         return W
 
-    def _fit(self):
+    def fit(self):
         level_order = ['freq', 'variable', 'year', 'subperiod']
         constraints_idx = self.state_space_idx
         C = self.C_extended
@@ -244,7 +244,7 @@ class Reconciler:
 
         y_adj = hp_component + reconciliation_component
         y_adj = y_adj.unstack('variable')
-
+        y_adj = y_adj.unstack(['freq', 'subperiod'])
         return y_adj
 
 
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     exog_data = data
     W = pd.DataFrame(np.eye(len(full_data)), index=full_data.index, columns=full_data.index)
     reconciler = Reconciler(full_data, exog_data, W, C, lam)
-    y_adj = reconciler._fit()
+    y_adj = reconciler.fit()
 
     err = np.abs(y_adj['y'] - y_adj.drop('y', axis=1).sum(axis=1)).mean()
     print(f'Avg reconcilation error for GDP accounting: {err}')

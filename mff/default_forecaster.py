@@ -16,7 +16,7 @@ from sktime.split import ExpandingGreedySplitter, SlidingWindowSplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 
-def get_default_forecaster(Tin: int, window_length: int = 1) -> BaseForecaster:
+def get_default_forecaster(window_length: int = 1) -> BaseForecaster:
     """Returns a default forecaster (grid search with cross validation) that will
     be used if the user did not specify a specific list of estimators to use.
     :param window_length: """
