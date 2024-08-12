@@ -19,7 +19,7 @@ class UnconditionalForecaster:
         self.fh = None
         self.fcast_dict = None
         self.y_hat = None
-        self.cov_mat = None
+        self.cov = None
         self.oos_resids = None
 
     def calculate_forecast_interval(self):
@@ -107,9 +107,9 @@ class UnconditionalForecaster:
         return df1, fh, forecaster
 
     def fit_covariance(self,
-                       n_periods):  # TODO: could construct a covariance class here instead of putting in the UnconstraintedForecaster object
+                       n_periods, how):
         self.oos_resids = self.calculate_oos_residuals(n_periods)
-        self.cov_mat = self.oos_resids.cov()
+        self.cov = CovarianceMatrix(self.oos_resids, how)
 
     def calculate_oos_residuals(self, n_periods):
         df = self.df_no_islands
@@ -150,6 +150,43 @@ class UnconditionalForecaster:
         return new_index
 
 
+class CovarianceMatrix:
+    def __init__(self, resids, how):
+        self._how = how
+        self.resids = resids
+        self.cov_mat = self.calc_covariance()
+
+    def raw_covariance(self):
+        return self.resids.cov()
+
+    def oasd_covariance(self):
+        sig_hat = self.raw_covariance()
+
+        def phi():
+            diag = np.diag(np.diag(sig_hat))
+            numerator = np.trace(sig_hat @ sig_hat) - np.trace(diag @ diag)
+            denom = np.trace(sig_hat @ sig_hat) + np.trace(sig_hat) ** 2 - 2 * np.trace(diag @ diag)
+            return numerator / denom
+
+        rho = min(1 / (len(self.resids) * phi()), 1)
+
+        return rho * sig_hat + (1 - rho) * np.diag(np.diag(sig_hat))
+
+    def calc_covariance(self):
+        calculator = {'oasd': self.oasd_covariance,
+                      'raw': self.raw_covariance}
+        return calculator[self.how]()
+
+    @property
+    def how(self):
+        return self._how
+
+    @how.setter
+    def how(self, how):
+        self._how = how
+        self.cov_mat = self.calc_covariance()
+
+
 if __name__ == '__main__':
     import pandas as pd
     from mff.mff.default_forecaster import get_default_forecaster
@@ -159,3 +196,4 @@ if __name__ == '__main__':
     forecaster = get_default_forecaster(10)
     forecaster = UnconditionalForecaster(df, forecaster)
     forecaster.fit()
+    forecaster.fit_covariance(2, 'oasd')

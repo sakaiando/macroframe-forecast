@@ -16,10 +16,10 @@ from sktime.split import ExpandingGreedySplitter, SlidingWindowSplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 
-def get_default_forecaster(window_length: int = 1) -> BaseForecaster:
+def get_default_forecaster(n_lags: int = 1) -> BaseForecaster:
     """Returns a default forecaster (grid search with cross validation) that will
     be used if the user did not specify a specific list of estimators to use.
-    :param window_length: """
+    :param n_lags: """
 
     pipe_y_naive = TransformedTargetForecaster(
         steps=[
@@ -44,7 +44,7 @@ def get_default_forecaster(window_length: int = 1) -> BaseForecaster:
             (
                 "forecaster",
                 DirectReductionForecaster(
-                    estimator=LinearRegression(fit_intercept=False), window_length=window_length
+                    estimator=LinearRegression(fit_intercept=False), window_length=n_lags
                 ),
             ),
         ]
@@ -66,7 +66,7 @@ def get_default_forecaster(window_length: int = 1) -> BaseForecaster:
             (
                 "forecaster",
                 DirectReductionForecaster(
-                    estimator=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=window_length
+                    estimator=ElasticNetCV(fit_intercept=False, max_iter=500), window_length=n_lags
                 ),
             ),
         ]
@@ -87,7 +87,7 @@ def get_default_forecaster(window_length: int = 1) -> BaseForecaster:
             (
                 "forecaster",
                 DirectReductionForecaster(
-                    estimator=KernelRidge(kernel="rbf"), window_length=window_length
+                    estimator=KernelRidge(kernel="rbf"), window_length=n_lags
                 ),
             ),
         ]

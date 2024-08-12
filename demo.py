@@ -88,7 +88,7 @@ def run(lam, n_resid=5, n_lags=4):
 
         forecaster = get_default_forecaster(n_lags)
         uncond_forecaster = UnconditionalForecaster(data, forecaster)
-        uncond_forecaster.fit_covariance(n_resid)
+        uncond_forecaster.fit_covariance(n_resid, 'oasd')
         uncond_forecaster.fit()
 
         print('Generating constraints')
@@ -103,7 +103,7 @@ def run(lam, n_resid=5, n_lags=4):
         y_hat = uncond_forecaster.y_hat.loc[start_date:].T.stack()
         y_exog = uncond_forecaster.df.loc[start_date:].T.stack()
 
-        reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov_mat, C, b, lam)
+        reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov.cov_mat, C, b, lam)
         y_adj = reconciler.fit()
 
         data.update(y_adj, overwrite=False)
@@ -111,6 +111,32 @@ def run(lam, n_resid=5, n_lags=4):
         df_out = data.reset_index().T.reset_index('variable').values.tolist()
         write_to_excel(df_out)
 
+def main():
+    print('Generating forecasts')
+
+    forecaster = get_default_forecaster(n_lags)
+    uncond_forecaster = UnconditionalForecaster(data, forecaster)
+    uncond_forecaster.fit_covariance(n_resid, 'oasd')
+    uncond_forecaster.fit()
+
+    print('Generating constraints')
+
+    state_space, conditional_constraints = convert_exog_to_constraint(data,
+                                                                      uncond_forecaster.forecast_start.min() - 1)
+    constraints = conditional_constraints + constraints_raw
+    C, b = generate_constraint_mat_from_equations(constraints, state_space)
+
+    print('Constraints compiled')
+    start_date = uncond_forecaster.forecast_start.min() - 1
+    y_hat = uncond_forecaster.y_hat.loc[start_date:].T.stack()
+    y_exog = uncond_forecaster.df.loc[start_date:].T.stack()
+
+    reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov.cov_mat, C, b, lam)
+    y_adj = reconciler.fit()
+
+    data.update(y_adj, overwrite=False)
+
+    df_out = data.reset_index().T.reset_index('variable').values.tolist()
 
 def close_extra_workbooks(wb_not_close):
     # Get a reference to the current application
@@ -133,8 +159,7 @@ if __name__ == '__main__':
     lam = 1e2
     n_lags = 4
     n_resid = 2
-
-    run(n_lags, n_resid)
+    cov_matrix_calc = 'oasd'
 
     use_excel = False
     directory = r'./data/input.xlsm'
@@ -150,7 +175,7 @@ if __name__ == '__main__':
 
     forecaster = get_default_forecaster(n_lags)
     uncond_forecaster = UnconditionalForecaster(data, forecaster)
-    uncond_forecaster.fit_covariance(n_resid)
+    uncond_forecaster.fit_covariance(n_resid, 'oasd')
     uncond_forecaster.fit()
 
     print('Generating constraints')
@@ -164,7 +189,7 @@ if __name__ == '__main__':
     y_hat = uncond_forecaster.y_hat.loc[start_date:].T.stack()
     y_exog = uncond_forecaster.df.loc[start_date:].T.stack()
 
-    reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov_mat, C, b, lam)
+    reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov.cov_mat, C, b, lam)
     y_adj = reconciler.fit()
 
     data.update(y_adj, overwrite=False)
