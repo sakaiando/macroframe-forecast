@@ -72,7 +72,7 @@ class Reconciler:
 
         self.W = W
 
-        self.state_space_idx = self._make_state_space_idx()
+        self.state_space_idx = self.data.index
         self.nperiods = len(self.state_space_idx.to_frame(index=False)['year'].drop_duplicates())
         self.relative_freq = self.state_space_idx.to_frame(index=0)[['freq', 'subperiod']].drop_duplicates().groupby(
             'freq').count().to_dict()['subperiod']
@@ -93,9 +93,6 @@ class Reconciler:
     @lam.setter
     def lam(self, value):
         self._lam = value
-
-    def _make_state_space_idx(self):
-        return self.data.index
 
     @staticmethod
     def collapse_multiindex(index, separator='_'):

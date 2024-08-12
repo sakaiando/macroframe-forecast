@@ -155,7 +155,6 @@ if __name__ == '__main__':
     from mff.utils import load_synthetic_data
 
     os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
-    Tin = 1
     lam = 1e2
     n_lags = 4
     n_resid = 2

@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-
 class UnconditionalForecaster:
     def __init__(self, df, forecaster, forecast_start=None, forecast_end=None):
 
@@ -70,7 +69,7 @@ class UnconditionalForecaster:
                                df: pd.DataFrame,
                                fh: ForecastingHorizon or int = None
                                ) -> tuple[pd.DataFrame | ForecastingHorizon | BaseForecaster]:
-        forecaster = self.forecaster_base  # TODO: does this need to be copied?
+        forecaster = self.forecaster_base
         # if df.isna().any().sum() < df.shape[1] or (df.isna().sum().sum() == 0):
         #     yf = df
         #     Xf = None
@@ -148,6 +147,16 @@ class UnconditionalForecaster:
         # Convert the concatenated DataFrame back to a MultiIndex
         new_index = pd.MultiIndex.from_frame(concatenated_df)
         return new_index
+
+    def get_best_forecaster(self):
+        best_params = {}
+        for k, v in self.forecaster_trained.items():
+            if hasattr(v, 'best_params_'):
+                model = v.best_params_['selected_forecaster']
+            else:
+                model = v.forecasters_.applymap(lambda x: x.best_params_['selected_forecaster'])
+            best_params[k] = model
+        return best_params
 
 
 class CovarianceMatrix:
