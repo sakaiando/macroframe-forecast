@@ -80,8 +80,6 @@ class Reconciler:
 
         self.C_extended = constraints
         self.d_extended = constants
-#        self.C_extended, self.d_extended = self._extend_constraints_matrix()
-#        warn_lin_dep_rows(self.C_extended)
 
         assert isinstance(lam, (int, float, complex)) and not isinstance(lam, bool), 'lambda should be a numeric value'
         self._lam = lam
@@ -114,72 +112,6 @@ class Reconciler:
                 item = (a, b)
             concat_list.append(item)
         return pd.MultiIndex.from_tuples(concat_list, names=list(idx_left.names) + list(idx_right.names))
-
-    def _extend_constraints_matrix(self):
-        state_space_idx = self.state_space_idx
-
-        C_dict = {}
-        d_dict = {}
-        constraints = self.constraints.copy()
-        d = constraints['constant']
-        C = constraints.drop('constant', axis=1, level='variable')
-
-        for i in range(len(state_space_idx.names) - 1, 0,
-                       -1):  # TODO: Append when no wildcards  # Backwards from most wildcards (if you start from narrow, you will get the multivariable wildcards too)
-            for cols in combinations(state_space_idx.names, i):
-                cols_to_extend = C.T.reset_index()[list(cols)].isna().all(axis=1).values
-
-                C_subset = C.iloc[:, cols_to_extend].droplevel(cols, axis=1)
-                C_subset = C_subset[(C_subset != 0).any(axis=1)]
-
-                if len(C_subset) == 0:  # go next combination if there's no subset using combination
-                    continue
-
-                C = C.drop(C_subset.index)
-
-                # Broadcast constraint coefficients over the wildcards
-                drop_cols = state_space_idx.names.difference(cols)
-                temp_idx = state_space_idx.droplevel(drop_cols).unique()
-                C_np = np.kron(np.eye(len(temp_idx)), C_subset)
-
-                # Convert numpy to dataframe
-                constraints_col = self.multiindex_from_multiindex_product(temp_idx, C_subset.columns)
-                constraints_idx = self.multiindex_from_multiindex_product(temp_idx, C_subset.index)
-                C_extended = pd.DataFrame(C_np, index=constraints_idx,
-                                          columns=constraints_col).reorder_levels(state_space_idx.names, axis=1)
-
-                C_extended.index = self.collapse_multiindex(C_extended.index)
-                name = ','.join(list(drop_cols))  # collapse for dict key
-                C_dict[name] = C_extended
-
-                # Broadcast constant over wildcards
-                d_extended = pd.concat([d.loc[C_subset.index]] * len(temp_idx))
-                d_extended.index = C_extended.index
-                d_dict[name] = d_extended.iloc[:, 0]
-
-                if len(C) == 0:  # stop if gone through all the constraints
-                    break
-            if len(C) == 0:
-                break
-
-        C_exog = pd.DataFrame((np.diag(self.exog) != 0).astype(float),
-                              columns=self.exog.index,
-                              index=self.exog.index
-                              )  # TODO: standardize order of columns
-        d_exog = self.exog
-        C_exog.index = self.collapse_multiindex(C_exog.index)
-        d_exog.index = self.collapse_multiindex(d_exog.index)
-
-        endog_cols = state_space_idx.difference(C_exog.columns)
-        C_exog[endog_cols] = 0.
-
-        C_dict['exog'] = C_exog
-        d_dict['exog'] = d_exog
-
-        C = pd.concat(C_dict, axis=0).fillna(0)
-        d = pd.concat(d_dict, axis=0).fillna(0)
-
-        return C, d
 
     def make_F(self, nobs):
         # make (off) diagonal elements
