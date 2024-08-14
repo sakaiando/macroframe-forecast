@@ -116,10 +116,10 @@ def convert_exog_to_constraint(df, forecast_start=None):
     return ss_str, conditional_fcast_constraints
 
 
-def generate_constraints(df, constraints_list, forecast_start=None):
+def generate_constraints(df, constraints_list, forecast_start=None, n_hist_points=2):
     if forecast_start is None:
         forecast_start = find_first_na_in_df(df)
-    state_space, conditional_constraints = convert_exog_to_constraint(df, forecast_start - 2)
+    state_space, conditional_constraints = convert_exog_to_constraint(df, forecast_start - n_hist_points)
     constraints = conditional_constraints + constraints_list
     C, b = generate_constraint_mat_from_equations(constraints, state_space)
     return C, b

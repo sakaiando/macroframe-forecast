@@ -62,10 +62,10 @@ def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
 
 
 class Reconciler:
-    def __init__(self, data_all, exog, W, constraints, constants, lam):
-        self.start_date = find_first_na_in_df(exog) - 2
+    def __init__(self, fcast_all, exog, W, constraints, constants, lam, n_hist_points=2):
+        self.start_date = find_first_na_in_df(exog) - n_hist_points
 
-        self.data = data_all.copy().loc[self.start_date:].T.stack()
+        self.data = fcast_all.copy().loc[self.start_date:].T.stack()
         self.exog = exog.copy().loc[self.start_date:].T.stack()
         self.constraints = constraints
         self.constants = constants
@@ -161,7 +161,7 @@ class Reconciler:
         phi = block_diag(*phis)
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
 
-        W_inv = invert_df(self.W_extended(), matrix_name='W')
+        W_inv = invert_df(self.W_extended())
         denom = invert_df(W_inv + phi)
 
         fcasts_stacked = self.data.reorder_levels(denom.index.names)
@@ -175,10 +175,11 @@ class Reconciler:
         hp_component = (identity_df - (denom @ C.T @ cWc_inv @ C)) @ denom @ W_inv @ fcasts_stacked
         reconciliation_component = denom @ C.T @ cWc_inv @ self.d_extended
 
+        # note that y_adj may not contain correct values for known variables due to indeterminacy. this does not affect forecasts for unknown variables
         y_adj = hp_component + reconciliation_component
         y_adj = y_adj.unstack('variable')
         y_adj = y_adj.unstack(['freq', 'subperiod'])
-        self.y_reconciled = y_adj
+        self.y_reconciled = y_adj.update(self.exog.unstack('year').T)
 
 
 if __name__ == '__main__':
