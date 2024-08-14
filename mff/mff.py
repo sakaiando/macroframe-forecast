@@ -1,10 +1,18 @@
 from .constraint_parser import generate_constraints
 from .step2_reconciler import Reconciler
 from .step1_forecast import UnconditionalForecaster
+from .default_forecaster import get_default_forecaster
 
 
 class MFF:  # TODO: this can probably be done more smartly using inheritance
-    def __init__(self, df, constraints_list, forecaster, lam, n_resid=5, cov_calc_method='oasd'):
+    def __init__(self,
+                 df,
+                 constraints_list,
+                 lam=100,
+                 forecaster=get_default_forecaster(1),
+                 n_resid=5,
+                 cov_calc_method='oasd'
+                 ):
         self.df = df
         self.constraints_list = constraints_list
         self.forecaster = forecaster
