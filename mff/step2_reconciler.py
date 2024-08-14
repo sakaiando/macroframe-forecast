@@ -4,6 +4,7 @@ from scipy.linalg import block_diag
 from sklearn.linear_model import LinearRegression
 
 from itertools import product, combinations
+from .constraint_parser import find_first_na_in_df
 
 import warnings
 
@@ -62,8 +63,10 @@ def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
 
 class Reconciler:
     def __init__(self, data_all, exog, W, constraints, constants, lam):
-        self.data = data_all.copy()
-        self.exog = exog.copy()
+        self.start_date = find_first_na_in_df(exog) - 2
+
+        self.data = data_all.copy().loc[self.start_date:].T.stack()
+        self.exog = exog.copy().loc[self.start_date:].T.stack()
         self.constraints = constraints
         self.constants = constants
 
@@ -83,6 +86,7 @@ class Reconciler:
 
         assert isinstance(lam, (int, float, complex)) and not isinstance(lam, bool), 'lambda should be a numeric value'
         self._lam = lam
+        self.y_reconciled = None
 
     @property
     def lam(self):
@@ -174,7 +178,7 @@ class Reconciler:
         y_adj = hp_component + reconciliation_component
         y_adj = y_adj.unstack('variable')
         y_adj = y_adj.unstack(['freq', 'subperiod'])
-        return y_adj
+        self.y_reconciled = y_adj
 
 
 if __name__ == '__main__':

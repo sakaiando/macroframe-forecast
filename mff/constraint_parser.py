@@ -92,6 +92,39 @@ def statespace_str_to_multiindex(idx_str):
     return idx_multi
 
 
+def find_first_na_in_df(df):
+    forecast_start = df.isna().idxmax()[df.isna().any()].min()  # find first NA
+    return forecast_start
+
+
+def calculate_state_space(ss_idx):
+    ss = ss_idx.to_frame().astype(str)
+    ss = ss['variable'] + '_' + ss['year'] + (ss['freq'] + ss['subperiod']).replace({'A1': ''})
+    return ss.tolist()
+
+
+def convert_exog_to_constraint(df, forecast_start=None):
+    if forecast_start is None:
+        forecast_start = df.index.min()
+    df_stacked = df.stack(df.columns.names, dropna=False)
+    fcast_stacked = df_stacked[df_stacked.index.get_level_values('year') >= forecast_start]
+    ss_str = calculate_state_space(fcast_stacked.index)
+
+    fixed_fcasts = fcast_stacked.dropna()
+    conditional_fcast_constraints = [f'{i} - {j}' for i, j in
+                                     zip(calculate_state_space(fixed_fcasts.index), fixed_fcasts.values)]
+    return ss_str, conditional_fcast_constraints
+
+
+def generate_constraints(df, constraints_list, forecast_start=None):
+    if forecast_start is None:
+        forecast_start = find_first_na_in_df(df)
+    state_space, conditional_constraints = convert_exog_to_constraint(df, forecast_start - 2)
+    constraints = conditional_constraints + constraints_list
+    C, b = generate_constraint_mat_from_equations(constraints, state_space)
+    return C, b
+
+
 if __name__ == '__main__':
     constraints_with_wildcard = ['a1_2022 - a2_2023',
                                  'a1? + a2? - 1',

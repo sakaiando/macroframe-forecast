@@ -23,7 +23,7 @@ class UnconditionalForecaster:
 
     def calculate_forecast_interval(self):
         ss = self.df.index[self.df.isna().any(axis=1)]
-        return ss.get_level_values('year').min(), ss.get_level_values('year').max
+        return ss.get_level_values('year').min(), ss.get_level_values('year').max()
 
     def delete_exogenous_islands(self, forecast_start):
         if forecast_start is None:

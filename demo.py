@@ -3,33 +3,15 @@ import sys
 import shutil
 import xlwings as xw
 
-sys.path.append(r'')
+sys.path.append(r'mff')
 
+from mff.constraint_parser import generate_constraints
 from mff.step2_reconciler import Reconciler
 from mff.step1_forecast import UnconditionalForecaster
 from mff.ecos_reader import load_excel
-from mff.string_parser import generate_constraint_mat_from_equations
+from mff.constraint_parser import generate_constraint_mat_from_equations
 from sktime.utils import mlflow_sktime
 from mff.default_forecaster import get_default_forecaster
-
-
-def calculate_state_space(ss_idx):
-    ss = ss_idx.to_frame().astype(str)
-    ss = ss['variable'] + '_' + ss['year'] + (ss['freq'] + ss['subperiod']).replace({'A1': ''})
-    return ss.tolist()
-
-
-def convert_exog_to_constraint(df, forecast_start=None):
-    if forecast_start is None:
-        forecast_start = df.index.min()
-    df_stacked = df.stack(df.columns.names, dropna=False)
-    fcast_stacked = df_stacked[df_stacked.index.get_level_values('year') >= forecast_start]
-    ss_str = calculate_state_space(fcast_stacked.index)
-
-    fixed_fcasts = fcast_stacked.dropna()
-    conditional_fcast_constraints = [f'{i} - {j}' for i, j in
-                                     zip(calculate_state_space(fixed_fcasts.index), fixed_fcasts.values)]
-    return ss_str, conditional_fcast_constraints
 
 
 def write_to_excel(values_out, out_sheet='data'):
@@ -69,15 +51,6 @@ def check_df_unchanged(df, checksum_dir=r'.\cache\df_checksum.txt'):
     return checksum == int(checkcurrent)
 
 
-def prep_fcast_and_exog(y_hat, data, forecast_start, n_start_years=1):
-    y_hat = y_hat.loc[forecast_start - n_start_years:]
-    y_exog = data.loc[y_hat.index]
-
-    y_hat = y_hat.stack(data.columns.names)
-    y_exog = y_exog.stack(data.columns.names)
-    return y_hat, y_exog
-
-
 def run(lam, n_resid=5, n_lags=4):
     print('Reading data')
     with xw.App(visible=False) as app:
@@ -111,32 +84,6 @@ def run(lam, n_resid=5, n_lags=4):
         df_out = data.reset_index().T.reset_index('variable').values.tolist()
         write_to_excel(df_out)
 
-def main():
-    print('Generating forecasts')
-
-    forecaster = get_default_forecaster(n_lags)
-    uncond_forecaster = UnconditionalForecaster(data, forecaster)
-    uncond_forecaster.fit_covariance(n_resid, 'oasd')
-    uncond_forecaster.fit()
-
-    print('Generating constraints')
-
-    state_space, conditional_constraints = convert_exog_to_constraint(data,
-                                                                      uncond_forecaster.forecast_start.min() - 1)
-    constraints = conditional_constraints + constraints_raw
-    C, b = generate_constraint_mat_from_equations(constraints, state_space)
-
-    print('Constraints compiled')
-    start_date = uncond_forecaster.forecast_start.min() - 1
-    y_hat = uncond_forecaster.y_hat.loc[start_date:].T.stack()
-    y_exog = uncond_forecaster.df.loc[start_date:].T.stack()
-
-    reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov.cov_mat, C, b, lam)
-    y_adj = reconciler.fit()
-
-    data.update(y_adj, overwrite=False)
-
-    df_out = data.reset_index().T.reset_index('variable').values.tolist()
 
 def close_extra_workbooks(wb_not_close):
     # Get a reference to the current application
@@ -153,6 +100,8 @@ def close_extra_workbooks(wb_not_close):
 if __name__ == '__main__':
     import os
     from mff.utils import load_synthetic_data
+    from mff.mff import MFF
+    import matplotlib.pyplot as plt
 
     os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
     lam = 1e2
@@ -170,31 +119,12 @@ if __name__ == '__main__':
     else:
         data, constraints_raw = load_synthetic_data()
 
-    print('Generating forecasts')
-
     forecaster = get_default_forecaster(n_lags)
-    uncond_forecaster = UnconditionalForecaster(data, forecaster)
-    uncond_forecaster.fit_covariance(n_resid, 'oasd')
-    uncond_forecaster.fit()
+    mff = MFF(data, constraints_raw, forecaster, lam, n_resid=n_resid, cov_calc_method=cov_matrix_calc)
+    mff.fit()
 
-    print('Generating constraints')
-
-    state_space, conditional_constraints = convert_exog_to_constraint(data, uncond_forecaster.forecast_start.min() - 1)
-    constraints = conditional_constraints + constraints_raw
-    C, b = generate_constraint_mat_from_equations(constraints, state_space)
-
-    print('Constraints compiled')
-    start_date = uncond_forecaster.forecast_start.min() - 1
-    y_hat = uncond_forecaster.y_hat.loc[start_date:].T.stack()
-    y_exog = uncond_forecaster.df.loc[start_date:].T.stack()
-
-    reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov.cov_mat, C, b, lam)
-    y_adj = reconciler.fit()
-
-    data.update(y_adj, overwrite=False)
-
+    data.update(mff.y_hat, overwrite=False)
     df_out = data.reset_index().T.reset_index('variable').values.tolist()
-
     if use_excel:
         write_to_excel(df_out)
 
