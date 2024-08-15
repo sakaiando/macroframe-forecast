@@ -62,7 +62,7 @@ if __name__ == '__main__':
     lam = 1e2
     n_lags = 4
     n_resid = 2
-    cov_matrix_calc = 'oasd'
+    cov_matrix_calc = 'monotone_diagonal'
 
     use_excel = False
     directory = r'./data/input.xlsm'
