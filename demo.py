@@ -1,16 +1,9 @@
-import pandas as pd
 import sys
-import shutil
 import xlwings as xw
 
 sys.path.append(r'mff')
 
-from mff.constraint_parser import generate_constraints
-from mff.step2_reconciler import Reconciler
-from mff.step1_forecast import UnconditionalForecaster
 from mff.ecos_reader import load_excel
-from mff.constraint_parser import generate_constraint_mat_from_equations
-from sktime.utils import mlflow_sktime
 from mff.default_forecaster import get_default_forecaster
 
 
@@ -31,55 +24,18 @@ def write_to_excel(values_out, out_sheet='data'):
     sheet.range('A1').value = values_out
 
 
-def make_df_checksum(df):
-    return pd.util.hash_pandas_object(df).sum()
-
-
-def create_cache(forecaster, df, dir=r'cache'):
-    shutil.rmtree(dir)
-    os.mkdir(dir)
-    mlflow_sktime.save_model(forecaster, os.path.join(dir, 'model.pickle'))
-    checksum = make_df_checksum(df)
-    with open(os.path.join(dir, 'df_checksum.txt'), 'w') as f:
-        f.write(str(checksum))
-
-
-def check_df_unchanged(df, checksum_dir=r'.\cache\df_checksum.txt'):
-    checksum = make_df_checksum(df)
-    with open(checksum_dir) as f:
-        checkcurrent = f.read()
-    return checksum == int(checkcurrent)
-
-
-def run(lam, n_resid=5, n_lags=4):
+def run(lam, n_resid=5, n_lags=4, cov_matrix_calc='oasd'):
     print('Reading data')
     with xw.App(visible=False) as app:
         wb = xw.Book.caller()  # xw.Book(directory).set_mock_caller() for calling from script
         data, constraints_raw = load_excel(data_fmt='ecos', constraint_fmt='readable')
 
         print('Generating forecasts')
-
         forecaster = get_default_forecaster(n_lags)
-        uncond_forecaster = UnconditionalForecaster(data, forecaster)
-        uncond_forecaster.fit_covariance(n_resid, 'oasd')
-        uncond_forecaster.fit()
+        mff = MFF(data, constraints_raw, lam, forecaster, n_resid=n_resid, cov_calc_method=cov_matrix_calc)
+        mff.fit()
 
-        print('Generating constraints')
-
-        state_space, conditional_constraints = convert_exog_to_constraint(data,
-                                                                          uncond_forecaster.forecast_start.min() - 1)
-        constraints = conditional_constraints + constraints_raw
-        C, b = generate_constraint_mat_from_equations(constraints, state_space)
-
-        print('Constraints compiled')
-        start_date = uncond_forecaster.forecast_start.min() - 1
-        y_hat = uncond_forecaster.y_hat.loc[start_date:].T.stack()
-        y_exog = uncond_forecaster.df.loc[start_date:].T.stack()
-
-        reconciler = Reconciler(y_hat, y_exog, uncond_forecaster.cov.cov_mat, C, b, lam)
-        y_adj = reconciler.fit()
-
-        data.update(y_adj, overwrite=False)
+        data.update(mff.y_reconciled, overwrite=False)
 
         df_out = data.reset_index().T.reset_index('variable').values.tolist()
         write_to_excel(df_out)
@@ -101,7 +57,6 @@ if __name__ == '__main__':
     import os
     from mff.utils import load_synthetic_data
     from mff.mff import MFF
-    import matplotlib.pyplot as plt
 
     os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
     lam = 1e2
@@ -120,10 +75,10 @@ if __name__ == '__main__':
         data, constraints_raw = load_synthetic_data()
 
     forecaster = get_default_forecaster(n_lags)
-    mff = MFF(data, constraints_raw, forecaster, lam, n_resid=n_resid, cov_calc_method=cov_matrix_calc)
+    mff = MFF(data, constraints_raw, lam=lam, forecaster=forecaster, n_resid=n_resid, cov_calc_method=cov_matrix_calc)
     mff.fit()
 
-    data.update(mff.y_hat, overwrite=False)
+    data.update(mff.y_reconciled, overwrite=False)
     df_out = data.reset_index().T.reset_index('variable').values.tolist()
     if use_excel:
         write_to_excel(df_out)

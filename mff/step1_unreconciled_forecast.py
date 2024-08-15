@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-class UnconditionalForecaster:
+
+class UnreconciledForecaster:
     def __init__(self, df, forecaster, forecast_start=None, forecast_end=None):
 
         self.df = df
@@ -20,10 +21,6 @@ class UnconditionalForecaster:
         self.y_hat = None
         self.cov = None
         self.oos_resids = None
-
-    def calculate_forecast_interval(self):
-        ss = self.df.index[self.df.isna().any(axis=1)]
-        return ss.get_level_values('year').min(), ss.get_level_values('year').max()
 
     def delete_exogenous_islands(self, forecast_start):
         if forecast_start is None:
@@ -86,15 +83,7 @@ class UnconditionalForecaster:
         Xp = df.loc[mask_predict, known_variables].reset_index(drop=True)
 
         # yp = df.loc[mask_predict, unknown_variables]
-        if Xp is not None:
-            fh = ForecastingHorizon(values=Xp.index + 1, is_relative=True)
-        elif isinstance(fh, (int, np.int64)):
-            fh = ForecastingHorizon(values=range(1, fh + 1), is_relative=True)
-        elif isinstance(fh, ForecastingHorizon):
-            fh = fh
-        else:
-            fh = ForecastingHorizon(values=Xp.index + 1, is_relative=True)
-
+        fh = ForecastingHorizon(values=Xp.index + 1, is_relative=True)
         yp = forecaster.fit_predict(y=yf, X=Xf, fh=fh, X_pred=Xp)
 
         df1 = df.copy()
@@ -117,7 +106,7 @@ class UnconditionalForecaster:
         for h in range(n_horizons, n_horizons + n_periods):
             h = h + 1
             df_est = df[~df.shift(-h).isna()].dropna(how='all')
-            pred = UnconditionalForecaster(df_est, self.forecaster_base)
+            pred = UnreconciledForecaster(df_est, self.forecaster_base)
             pred.fit()
             resid = (df - pred.y_hat)[df_est.isna()].shift(h)
             resid.index = resid.index
@@ -203,6 +192,6 @@ if __name__ == '__main__':
 
     df, _ = load_synthetic_data()
     forecaster = get_default_forecaster(10)
-    forecaster = UnconditionalForecaster(df, forecaster)
+    forecaster = UnreconciledForecaster(df, forecaster)
     forecaster.fit()
     forecaster.fit_covariance(2, 'oasd')

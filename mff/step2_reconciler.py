@@ -4,61 +4,9 @@ from scipy.linalg import block_diag
 from sklearn.linear_model import LinearRegression
 
 from itertools import product, combinations
-from .constraint_parser import find_first_na_in_df
+from .step0_parse_constraints import find_first_na_in_df
 
 import warnings
-
-
-def make_linear_extrapolation(series):
-    # find missing years to fill in - should move out
-    series.index = series.index.droplevel('subperiod')
-    x_pred = series[series.isna()].index.values.reshape(-1, 1)
-
-    # observed years
-    d = series.dropna()
-    x = d.index.values.reshape(-1, 1)
-    y = d.values.reshape(-1, 1)
-
-    # fit model
-    model = LinearRegression()
-    model.fit(x, y)
-
-    # generate prediction
-    y_hat = model.predict(x_pred)
-    y_hat = pd.Series(y_hat.flatten(), index=x_pred.flatten(), name=d.name)
-    return y_hat
-
-
-def make_single_series_forecast(series):
-    y_hat = make_linear_extrapolation(series)
-    return y_hat
-
-
-def make_forecasts(data, endog_list):
-    endog_fcasts = [make_single_series_forecast(data[endog]) for endog in endog_list]
-    endog_fcasts = pd.concat(endog_fcasts, axis=1)
-    return endog_fcasts
-
-
-def warn_lin_dep_rows(df, tol=1e-8):
-    u, eigval, v = np.linalg.svd(df)
-    for i in np.where(eigval < tol)[0]:
-        lin_dep_idx = np.where(np.abs(v[i]) > tol)[0]
-        warnings.warn(f'The rows {df.iloc[lin_dep_idx].index.to_list()} are linearly dependent')
-
-
-def invert_df(df, matrix_name=None):
-    if matrix_name is not None:
-        warn_lin_dep_rows(df)
-    return pd.DataFrame(np.linalg.pinv(df), columns=df.columns, index=df.index)
-
-
-def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
-    constraints = constraints_raw.T.set_index(constraints_raw.index[
-                                                  index_iloc].to_list()).T  # pick levels for columns (can't do in read_excel because it propegates the values where subsequent columns are missing)
-    constraints = constraints.fillna(0)
-
-    return constraints
 
 
 class Reconciler:
@@ -179,7 +127,28 @@ class Reconciler:
         y_adj = hp_component + reconciliation_component
         y_adj = y_adj.unstack('variable')
         y_adj = y_adj.unstack(['freq', 'subperiod'])
-        self.y_reconciled = y_adj.update(self.exog.unstack('year').T)
+        y_adj.update(self.exog.unstack('year').T)
+        self.y_reconciled = y_adj
+
+def warn_lin_dep_rows(df, tol=1e-8):
+    u, eigval, v = np.linalg.svd(df)
+    for i in np.where(eigval < tol)[0]:
+        lin_dep_idx = np.where(np.abs(v[i]) > tol)[0]
+        warnings.warn(f'The rows {df.iloc[lin_dep_idx].index.to_list()} are linearly dependent')
+
+
+def invert_df(df, matrix_name=None):
+    if matrix_name is not None:
+        warn_lin_dep_rows(df)
+    return pd.DataFrame(np.linalg.pinv(df), columns=df.columns, index=df.index)
+
+
+def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
+    constraints = constraints_raw.T.set_index(constraints_raw.index[
+                                                  index_iloc].to_list()).T  # pick levels for columns (can't do in read_excel because it propegates the values where subsequent columns are missing)
+    constraints = constraints.fillna(0)
+
+    return constraints
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from itertools import product
 
-from mff.mff.constraint_parser import generate_constraint_mat_from_equations
+from mff.mff.step0_parse_constraints import generate_constraint_mat_from_equations
 
 
 def unit_test1():
