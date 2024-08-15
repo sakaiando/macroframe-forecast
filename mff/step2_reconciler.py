@@ -120,11 +120,9 @@ class Reconciler:
                                    columns=sorted_idx,
                                    index=sorted_idx)
 
-        hp_component = (identity_df - (denom @ C.T @ cWc_inv @ C)) @ denom @ W_inv @ fcasts_stacked
-        reconciliation_component = denom @ C.T @ cWc_inv @ self.d_extended
+        y_adj = (identity_df - (denom @ C.T @ cWc_inv @ C)) @ denom @ W_inv @ fcasts_stacked + denom @ C.T @ cWc_inv @ self.d_extended
 
         # note that y_adj may not contain correct values for known variables due to indeterminacy. this does not affect forecasts for unknown variables
-        y_adj = hp_component + reconciliation_component
         y_adj = y_adj.unstack('variable')
         y_adj = y_adj.unstack(['freq', 'subperiod'])
         y_adj.update(self.exog.unstack('year').T)

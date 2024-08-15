@@ -172,8 +172,21 @@ class CovarianceMatrix:
 
     def calc_covariance(self):
         calculator = {'oasd': self.oasd_covariance,
-                      'raw': self.raw_covariance}
+                      'raw': self.raw_covariance,
+                      'montone_diagonal': self.monotone_diag_covariance}
         return calculator[self.how]()
+
+    def monotone_diag_covariance(self):
+        sig_hat = self.raw_covariance()
+
+        sig_hat_diags = np.diag(sig_hat)
+        sig_hat_diags = pd.Series(sig_hat_diags, index=sig_hat.index
+                                  ).sort_index(level=['variable', 'freq', 'subperiod', 'year']
+                                               ).groupby(['variable', 'freq', 'subperiod']
+                                                         ).cummax()
+        sig_hat_adj = pd.DataFrame(np.diag(sig_hat_diags), index=sig_hat_diags.index, columns=sig_hat_diags.index).replace({0: np.nan})
+        sig_hat_adj.update(sig_hat, overwrite=False)
+        return sig_hat_adj
 
     @property
     def how(self):
@@ -194,4 +207,6 @@ if __name__ == '__main__':
     forecaster = get_default_forecaster(10)
     forecaster = UnreconciledForecaster(df, forecaster)
     forecaster.fit()
-    forecaster.fit_covariance(2, 'oasd')
+    forecaster.fit_covariance(2, 'monotone_diagonal')
+    forecaster.cov.how = 'oasd'
+
