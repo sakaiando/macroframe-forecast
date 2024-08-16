@@ -3,6 +3,7 @@ from .step2_reconciler import Reconciler
 from .step1_unreconciled_forecast import UnreconciledForecaster
 from .default_forecaster import get_default_forecaster
 
+import warnings
 
 class MFF:  # TODO: this can probably be done more smartly using inheritance
     def __init__(self,
@@ -11,7 +12,8 @@ class MFF:  # TODO: this can probably be done more smartly using inheritance
                  lam=100,
                  forecaster=get_default_forecaster(1),
                  n_resid=5,
-                 cov_calc_method='oasd'
+                 cov_calc_method='oasd',
+                 ignore_forecaster_warnings=True
                  ):
         self.df = df
         self.constraints_list = constraints_list
@@ -19,6 +21,7 @@ class MFF:  # TODO: this can probably be done more smartly using inheritance
         self.lam = lam
         self.n_resid = n_resid
         self.cov_calc_method = cov_calc_method
+        self.ignore_warnings = ignore_forecaster_warnings
 
         self.reconciler = None
         self.unconditional_forecaster = None
@@ -35,8 +38,14 @@ class MFF:  # TODO: this can probably be done more smartly using inheritance
 
     def fit_unconditional_forecaster(self):
         self.unconditional_forecaster = UnreconciledForecaster(self.df, self.forecaster)
-        self.unconditional_forecaster.fit()
-        self.unconditional_forecaster.fit_covariance(self.n_resid, self.cov_calc_method)
+        if self.ignore_warnings:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.unconditional_forecaster.fit()
+                self.unconditional_forecaster.fit_covariance(self.n_resid, self.cov_calc_method)
+        else:
+            self.unconditional_forecaster.fit()
+            self.unconditional_forecaster.fit_covariance(self.n_resid, self.cov_calc_method)
         self.y_unreconciled = self.unconditional_forecaster.y_hat
         self.W = self.unconditional_forecaster.cov.cov_mat
 
