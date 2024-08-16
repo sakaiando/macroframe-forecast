@@ -105,9 +105,13 @@ class Reconciler:
             phi_temp = self.make_phi(self.lam ** v, F_temp)
             phis.append(phi_temp)
 
+        phi_rescaler = pd.Series(1/np.diag(self.W_extended().replace({0: 1})), index=self.W_extended().index).groupby(['variable', 'freq', 'subperiod']).min()
+
         sorted_idx = constraints_idx.sortlevel(level_order)[0]
         phi = block_diag(*phis)
         phi = pd.DataFrame(phi, index=sorted_idx, columns=sorted_idx)
+
+        phi = phi.multiply(phi_rescaler)
 
         W_inv = invert_df(self.W_extended())
         denom = invert_df(W_inv + phi)
