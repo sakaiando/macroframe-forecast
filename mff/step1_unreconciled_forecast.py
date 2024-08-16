@@ -173,7 +173,7 @@ class CovarianceMatrix:
     def calc_covariance(self):
         calculator = {'oasd': self.oasd_covariance,
                       'raw': self.raw_covariance,
-                      'montone_diagonal': self.monotone_diag_covariance}
+                      'monotone_diagonal': self.monotone_diag_covariance}
         return calculator[self.how]()
 
     def monotone_diag_covariance(self):
