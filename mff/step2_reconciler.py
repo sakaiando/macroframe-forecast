@@ -259,14 +259,6 @@ def invert_df(df, matrix_name=None):
     return pd.DataFrame(np.linalg.pinv(df), columns=df.columns, index=df.index)
 
 
-def process_raw_constraints(constraints_raw, index_iloc=range(0, 3)):
-    constraints = constraints_raw.T.set_index(constraints_raw.index[
-                                                  index_iloc].to_list()).T  # pick levels for columns (can't do in read_excel because it propegates the values where subsequent columns are missing)
-    constraints = constraints.fillna(0)
-
-    return constraints
-
-
 if __name__ == '__main__':
     data = pd.read_excel(r'./data/input.xlsx', index_col=0, header=list(range(0, 3)), sheet_name='data').T
     data.columns.name = 'variable'
@@ -276,17 +268,4 @@ if __name__ == '__main__':
     forecast_start = 2023
     lam = 100
 
-    C = process_raw_constraints(constraints_raw, index_iloc=range(0, 4))
-
-    full_data = data.unstack().stack(dropna=False).fillna(0)
-    exog_data = data
-    W = pd.DataFrame(np.eye(len(full_data)), index=full_data.index, columns=full_data.index)
-    reconciler = Reconciler(full_data, exog_data, W, C, lam)
-    y_adj = reconciler.fit()
-
-    err = np.abs(y_adj['y'] - y_adj.drop('y', axis=1).sum(axis=1)).mean()
-    print(f'Avg reconcilation error for GDP accounting: {err}')
-
-    y_agg = y_adj.groupby(['freq', 'year']).mean()
-    err = (y_agg.loc['q'] - y_agg.loc['a']).mean().mean()
-    print(f'Avg reconciliation error for quarters: {err}')
+    # TODO: Unit test still to be implemented

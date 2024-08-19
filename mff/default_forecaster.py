@@ -123,7 +123,7 @@ def get_default_forecaster(n_lags: int = 1) -> BaseForecaster:
         ],
     )
 
-    cv = ExpandingGreedySplitter(test_size=2, folds=3)  # TODO: allow more customization here
+    cv = ExpandingGreedySplitter(test_size=5, folds=1)  # TODO: allow more customization here
 
     # choose among the provided forecasters
     gscv = ForecastingGridSearchCV(

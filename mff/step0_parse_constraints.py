@@ -8,7 +8,17 @@ import string
 
 
 def find_strings_to_replace_wildcard(constraint, variables, wildcard):
-    # utilize sympy to extract variables from symbolic equations
+    """
+    Utilize sympy to extract variables from constraint, find wildcard to fill.
+
+    Args:
+        constraint (str): The constraint equation string containing the wildcard.
+        variables (list): List of variable names.
+        wildcard (str): The wildcard character to be replaced.
+
+    Returns:
+        set: A set of strings that can replace the wildcard.
+    """
     varlist_with_wildcard = ['^' + str(v).replace(wildcard, '(.*)') + '$'
                              for v in sp.sympify(constraint).free_symbols]
     missing_string_set_list = []
@@ -24,6 +34,17 @@ def find_strings_to_replace_wildcard(constraint, variables, wildcard):
 
 
 def expand_wildcard(constraints_with_alphabet_wildcard, variables, wildcard):
+    """
+       Expand constraints containing wildcards by replacing the wildcard with actual variable names.
+
+       Args:
+           constraints_with_alphabet_wildcard (list): List of constraints where wildcard is alphanumeric.
+           variables (list): List of sympy variable names.
+           wildcard (str): The wildcard string to be replaced.
+
+       Returns:
+           list: List of constraints with wildcards extended and replaced.
+       """
     extended_constraints = []
     for constraint in constraints_with_alphabet_wildcard:
         if wildcard not in constraint:
@@ -35,7 +56,17 @@ def expand_wildcard(constraints_with_alphabet_wildcard, variables, wildcard):
 
 
 def find_permissible_wildcard(constraints_with_wildcard, size_of_candidates=4):
-    # string a,b,...,aa,ab,...,zzzz
+    """
+        Find a permissible wildcard string that does not conflict with existing variable names by cycling over sequences
+        a, b, ..., z, ab, ac, ... zy, abc, abd, ...
+
+        Args:
+            constraints_with_wildcard (list): List of constraints containing wildcards.
+            size_of_candidates (int): Maximum length of wildcard search.
+
+        Returns:
+            str: A permissible wildcard string.
+        """
     wildcard_candidates = [''.join(p) for n in range(1, size_of_candidates + 1)
                            for p in product(string.ascii_lowercase, repeat=n)]
 
@@ -44,10 +75,21 @@ def find_permissible_wildcard(constraints_with_wildcard, size_of_candidates=4):
             if w not in ''.join(constraints_with_wildcard):
                 return w
     raise RuntimeError('Failed to find a unique sequence.'
-                       'Consider increasing max_len or revising variable names.')
+                       'Consider increasing size_of_candidates or revising variable names.')
 
 
 def generate_constraint_mat_from_equations(constraints_list, variables_list, wildcard_string='?'):
+    """
+       Generate constraint matrix (A) and vector (b) from a list of constraint equations.
+
+       Args:
+           constraints_list (list): List of constraint equations.
+           variables_list (list): List of variable names.
+           wildcard_string (str): The wildcard character in the constraints.
+
+       Returns:
+           DataFrame, Series: Constraint matrix (A) and vector (b).
+       """
     # add error message to say variables_list cannot include *
     wildcard_temp = find_permissible_wildcard(constraints_list)
     # replace wildcard with alphabet to utilize sympy
@@ -70,6 +112,16 @@ def generate_constraint_mat_from_equations(constraints_list, variables_list, wil
 
 
 def split_string(input_str):
+    """
+    Split a string into the variable name, date and subperiod components based on the pattern
+    (variablename)_(year)(freq)(subperiod)
+
+    Args:
+        input_str (str): The input string to be split.
+
+    Returns:
+        tuple: Components of the split string.
+    """
     # Regular expression to match the pattern
     pattern = re.compile(r'([a-zA-Z0-9_]+)_(\d+)([A-Z]*)(\d*)')
 
@@ -87,23 +139,60 @@ def split_string(input_str):
 
 
 def statespace_str_to_multiindex(idx_str):
+    """
+    Convert a list of state space strings with format (variablename)_(year)(freq)(subperiod) to a MultiIndex.
+
+    Args:
+       idx_str (list): List of state space strings.
+
+    Returns:
+       MultiIndex: MultiIndex object.
+    """
     idx_split = [split_string(i) for i in idx_str]
     idx_multi = pd.MultiIndex.from_tuples(idx_split, names=['variable', 'year', 'freq', 'subperiod'])
     return idx_multi
 
 
 def find_first_na_in_df(df):
+    """
+      Find the first occurrence of NA in a DataFrame.
+
+      Args:
+          df (DataFrame): The input DataFrame.
+
+      Returns:
+          int: The index of the first NA.
+      """
     forecast_start = df.isna().idxmax()[df.isna().any()].min()  # find first NA
     return forecast_start
 
 
 def calculate_state_space(ss_idx):
+    """
+    Calculate the string state space from a MultiIndex with columns ['variable', 'year', 'freq', 'subperiod'].
+
+    Args:
+        ss_idx (MultiIndex): The input MultiIndex.
+
+    Returns:
+        list: List of state space strings.
+    """
     ss = ss_idx.to_frame().astype(str)
     ss = ss['variable'] + '_' + ss['year'] + (ss['freq'] + ss['subperiod']).replace({'A1': ''})
     return ss.tolist()
 
 
 def convert_exog_to_constraint(df, forecast_start=None):
+    """
+    Convert exogenous variables to constraints.
+
+    Args:
+        df (DataFrame): The input DataFrame.
+        forecast_start (int, optional): The start index for forecasting. Defaults to None.
+
+    Returns:
+        tuple: State space strings and conditional forecast constraints.
+    """
     if forecast_start is None:
         forecast_start = df.index.min()
     df_stacked = df.stack(df.columns.names, dropna=False)
@@ -117,6 +206,21 @@ def convert_exog_to_constraint(df, forecast_start=None):
 
 
 def generate_constraints(df, constraints_list, forecast_start=None, n_hist_points=2):
+    """
+    Generate constraints for the forecasting model. These are generated using 3 sources:
+    - non-NA values of rows of df containing NAs
+    - n_hist_points rows preceeding the first row containing an NA
+    - list of strings in constraints_list
+
+    Args:
+        df (DataFrame): The input DataFrame containing historical data and forecast dates (indicated by rows containing NA).
+        constraints_list (list): List of string constraints.
+        forecast_start (int, optional): The start index for forecasting. Defaults to None, which finds the first row containing an NA.
+        n_hist_points (int, optional): Number of historical points to pad constraints. Defaults to 2.
+
+    Returns:
+        tuple: Constraint matrix (C) and vector (b).
+    """
     if forecast_start is None:
         forecast_start = find_first_na_in_df(df)
     state_space, conditional_constraints = convert_exog_to_constraint(df, forecast_start - n_hist_points)
