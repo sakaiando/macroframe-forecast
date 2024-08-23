@@ -1,7 +1,7 @@
 import sys
 import xlwings as xw
 
-sys.path.append(r'mff')
+sys.path.append(r'../mff')
 
 from mff.ecos_reader import load_excel
 from mff.default_forecaster import get_default_forecaster
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     import os
     from mff.utils import load_synthetic_data
 
-    os.chdir(r'C:\Users\dbilgin\OneDrive - International Monetary Fund (PRD)\prototype\mff')
+    os.chdir(r'/mff')
     lam = 1e4
     n_lags = 4
     n_resid = 2
@@ -84,19 +84,3 @@ if __name__ == '__main__':
     df_out = data.reset_index().T.reset_index('variable').values.tolist()
     if use_excel:
         write_to_excel(df_out, wb)
-
-    import matplotlib.pyplot as plt
-    import matplotlib
-
-    matplotlib.use("Qt5Agg")
-
-    mff.y_reconciled.plot()
-    mff.y_unreconciled.plot()
-
-    plt.show()
-    # err = np.abs(y_adj['y'] - y_adj.drop('y', axis=1).sum(axis=1)).mean()
-    # print(f'Avg reconcilation error for GDP accounting: {err}')
-    #
-    # y_agg = y_adj.groupby(['freq', 'year']).mean()
-    # err = (y_agg.loc['q'] - y_agg.loc['a']).mean().mean()
-    # print(f'Avg reconciliation error for quarters: {err}')

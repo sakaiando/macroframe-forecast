@@ -21,11 +21,10 @@ del version
 extensions = [
     "sphinx.ext.autodoc",
     "numpydoc",
-    "nbsphinx",
     "sphinx.ext.mathjax",
 ]
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+exclude_patterns = ["_build", "**.ipynb_checkpoints", "**.ipynb"]
 
 
 # -- Options for HTML output -------------------------------------------------
