@@ -90,7 +90,7 @@ def generate_constraint_mat_from_equations(constraints_list, variables_list, wil
        Returns:
            DataFrame, Series: Constraint matrix (A) and vector (b).
        """
-    # add error message to say variables_list cannot include *
+    assert not wildcard_string == '*'
     wildcard_temp = find_permissible_wildcard(constraints_list)
     # replace wildcard with alphabet to utilize sympy
     constraints_with_alphabet_wildcard = [c.replace(wildcard_string, wildcard_temp) for c in constraints_list]

@@ -63,17 +63,11 @@ class UnreconciledForecaster:
         self.y_hat.columns = self.df.columns
 
     def unconstrained_forecast(self,
-                               df: pd.DataFrame,
-                               fh: ForecastingHorizon or int = None
+                               df: pd.DataFrame
                                ) -> tuple[pd.DataFrame | ForecastingHorizon | BaseForecaster]:
         forecaster = self.forecaster_base
-        # if df.isna().any().sum() < df.shape[1] or (df.isna().sum().sum() == 0):
-        #     yf = df
-        #     Xf = None
-        #     Xp = None
-        # else:
         unknown_variables = df.columns[df.isna().sum(axis=0) > 0]
-        known_variables = df.columns.drop(unknown_variables)  # df.columns[df.isna().sum(axis=0) == 0]
+        known_variables = df.columns.drop(unknown_variables)
         mask_fit = df[unknown_variables].notna().sum(axis=1) == len(unknown_variables)
         mask_predict = ~mask_fit
 
@@ -149,7 +143,7 @@ class UnreconciledForecaster:
 
 
 class CovarianceMatrix:
-    def __init__(self, resids, how):
+    def __init__(self, resids, how='raw'):
         self._how = how
         self.resids = resids
         self.cov_mat = self.calc_covariance()
@@ -171,10 +165,13 @@ class CovarianceMatrix:
         return rho * sig_hat + (1 - rho) * np.diag(np.diag(sig_hat))
 
     def calc_covariance(self):
-        calculator = {'oasd': self.oasd_covariance,
-                      'raw': self.raw_covariance,
-                      'monotone_diagonal': self.monotone_diag_covariance}
-        return calculator[self.how]()
+        if isinstance(self.how, str):
+            calculator = {'oasd': self.oasd_covariance,
+                          'raw': self.raw_covariance,
+                          'monotone_diagonal': self.monotone_diag_covariance}
+            return calculator[self.how]()
+        else:
+            self.how(self.resids)
 
     def monotone_diag_covariance(self):
         sig_hat = self.raw_covariance()

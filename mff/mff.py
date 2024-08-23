@@ -105,7 +105,8 @@ class MFF:  # TODO: this can probably be done more smartly using inheritance
 
     def fit(self):
         """
-        Fits the entire MFF model by generating constraint matrices, fitting the unconditional forecaster, and reconciling forecasts.
+        Fits the entire MFF model by generating constraint matrices, fitting the unconditional forecaster, and
+        reconciling forecasts.
         """
         print('Generating constraints')
         self.parse_constraints()
