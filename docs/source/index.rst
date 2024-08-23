@@ -25,6 +25,7 @@ To install the `mff` package, run the following from the repository root:
    :maxdepth: 2
    :caption: Contents:
 
+   getting_started/index
    api_reference/index
 
 * :ref:`genindex`
