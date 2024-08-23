@@ -11,39 +11,66 @@ import warnings
 
 class Reconciler:
     """
-        A class to reconcile forecast data with exogenous variables and constraints based on Ando (2024)
+    A class to reconcile forecast data with exogenous variables and constraints based on Ando (2024).
 
-        References:
-            Ando, Sakai (2024), “Smooth Forecast Reconciliation,” IMF Working Paper.
+    References
+    ----------
+    Ando, Sakai (2024), “Smooth Forecast Reconciliation,” IMF Working Paper.
 
-        Attributes:
-            start_date (datetime): The start date for the reconciliation dataframe.
-            data (pd.Series): A vector containing all forecasted values (should be the full state-space of forecasts).
-            exog (pd.Series): A vector containing individual forecast values that should be constrained.
-            constraints (pd.DataFrame): Matrix containing constraint coefficents.
-            constants (pd.DataFrame): Vector containing constants for constraints.
-            W (pd.DataFrame): Covariance matrix of unknown variable forecast errors. Dimensions should be the full forecast horizon for any variable that is unknown at any point in the forecast horizon.
-            state_space_idx (pd.MultiIndex): pd.MultiIndex containing the state space with columns ['variable', 'year', 'freq', 'subperiod'].
-            nperiods (int): The number of forecast periods.
-            relative_freq (dict): The relative frequency of subperiods.
-            nvars (int): The number of distinct variables.
-            _lam (float): Smoothing parameter based on HP filter smoothing. Default is 100.
-            y_reconciled (pd.DataFrame): Datafrane of reconciled forecasts.
-        """
+    Attributes
+    ----------
+    start_date : pd.Period or int
+        The start date for the reconciliation dataframe.
+    data : pd.DataFrame
+        A vector containing all forecasted values (should be the full state-space of forecasts).
+    exog : pd.DataFrame
+        A vector containing individual forecast values that should be constrained.
+    constraints : pd.DataFrame
+        Matrix containing constraint coefficients.
+    constants : pd.DataFrame
+        Vector containing constants for constraints.
+    W : pd.DataFrame
+        Covariance matrix of unknown variable forecast errors. Dimensions should be the full forecast horizon for any
+        variable that is unknown at any point in the forecast horizon.
+    state_space_idx : pd.MultiIndex
+        pd.MultiIndex containing the state space with columns ['variable', 'year', 'freq', 'subperiod'].
+    nperiods : int
+        The number of forecast periods.
+    relative_freq : dict
+        The relative frequency of subperiods.
+    nvars : int
+        The number of distinct variables.
+    _lam : float, default=100
+        Smoothing parameter based on HP filter smoothing.
+    y_reconciled : pd.DataFrame
+        Dataframe of reconciled forecasts.
+    """
 
     def __init__(self, fcast_all, exog, W, constraints, constants, lam, n_hist_points=2):
         """
-        Initializes the Reconciler class with forecast data, exogenous variables, constraints, and other parameters. Infers the number of variables, forecast horizons and relative frequencies of 'freq'
+        Initializes the Reconciler class with forecast data, exogenous variables, constraints, and other parameters.
+        Infers the number of variables, forecast horizons, and relative frequencies of 'freq'.
 
-        Args:
-           fcast_all (pd.DataFrame): Dataframe containing forecasted values. Must not have NAs and contain columns/indexes with names ['variable', 'year', 'freq', 'subperiod'].
-           exog (pd.DataFrame): Dataframe containing individual values to fix.
-           W (pd.DataFrame): Covariance matrix of unknown variable forecast errors. Dimensions should be the full forecast horizon for any variable that is unknown at any point in the forecast horizon.
-           constraints (pd.DataFrame): The constraints for the reconciliation.
-           constants (pd.DataFrame): The constants for the reconciliation.
-           lam (float): The lambda value for the reconciliation.
-           n_hist_points (int, optional): The number of historical points to consider. Defaults to 2.
+        Parameters
+        ----------
+        fcast_all : pd.DataFrame
+            Dataframe containing forecasted values. Must not have NAs and indexes labelled 'year', and MultiIndex
+            columns named ['variables', 'freq', 'subperiod'].
+        exog : pd.DataFrame
+            Dataframe containing individual values to fix with the same index and column names as fcast_all.
+        W : pd.DataFrame
+            Dataframe of covariance matrix of unknown variable forecast errors. Dimensions should be the full forecast
+            horizon for any variable that is unknown at any point in the forecast horizon.
+        constraints : pd.DataFrame
+            The constraints for the reconciliation.
+        constants : pd.DataFrame
+            The constants for the reconciliation.
+        lam : float
+            The lambda value for the reconciliation.
+        n_hist_points : int, default=2
+            The number of historical points to consider.
         """
+
         self.start_date = find_first_na_in_df(exog) - n_hist_points
 
         self.data = fcast_all.copy().loc[self.start_date:].T.stack()
@@ -71,32 +98,43 @@ class Reconciler:
         """
         Gets the lambda value.
 
-        Returns:
-            float: The lambda value.
+        Returns
+        -------
+            float
+                The lambda value.
         """
         return self._lam
 
     @lam.setter
     def lam(self, value):
         """
-        Sets the lambda value.
+        Sets the lambda value and reestimates model if it is already estimated.
 
-        Returns:
-            float: The lambda value.
+            Parameters
+            ----------
+        value : float
+            The lambda value for the reconciliation.
         """
         self._lam = value
+        if not self.y_reconciled is None:
+            self.fit()
 
     @staticmethod
     def collapse_multiindex(index, separator='_'):
         """
-        Collapses a MultiIndex into a single index with a specified separator.
+        Collapses a MultiIndex into a single-level list with a specified separator.
 
-        Args:
-           index (pd.MultiIndex): The MultiIndex to collapse.
-           separator (str, optional): The separator to use. Defaults to '_'.
+        Parameters
+        ----------
+        index : pd.MultiIndex
+            The MultiIndex to collapse.
+        separator : str, default='_'
+            The separator to use.
 
-        Returns:
-           list: The collapsed index.
+        Returns
+        -------
+        list
+            The collapsed index.
         """
         return [separator.join(map(str, idx)) for idx in index]
 
@@ -105,12 +143,17 @@ class Reconciler:
         """
         Creates a MultiIndex from the product of two MultiIndexes.
 
-        Args:
-           idx_left (pd.MultiIndex): The left MultiIndex.
-           idx_right (pd.MultiIndex): The right MultiIndex.
+        Parameters
+        ----------
+        idx_left : pd.MultiIndex
+            The left MultiIndex.
+        idx_right : pd.MultiIndex
+            The right MultiIndex.
 
-        Returns:
-           pd.MultiIndex: The resulting MultiIndex.
+        Returns
+        -------
+        pd.MultiIndex
+            The resulting MultiIndex.
         """
         concat_list = []
         left_is_multiindex = isinstance(idx_left, pd.MultiIndex)
@@ -131,12 +174,17 @@ class Reconciler:
         """
         Creates the HP filter smoothing matrix for the reconciliation process. (Equation 4, Ando 2023)
 
-        Args:
-            nobs (int): The number of observations.
+        Parameters
+        ----------
+        nobs : int
+            The number of observations.
 
-        Returns:
-            np.ndarray: The F matrix.
+        Returns
+        -------
+        np.ndarray
+            The F matrix.
         """
+
         # make (off) diagonal elements
         F = np.zeros((nobs, nobs))
         for i, v in enumerate([1., -4, 6., -4., 1.]):
@@ -156,12 +204,17 @@ class Reconciler:
         """
         Creates the phi matrix for the reconciliation process. (Equation 8, Ando 2024)
 
-        Args:
-            lam (float): The lambda value.
-            F (np.ndarray): The F matrix.
+        Parameters
+        ----------
+        lam : float
+            The lambda value.
+        F : np.ndarray
+            The F matrix.
 
-        Returns:
-            np.ndarray: The phi matrix.
+        Returns
+        -------
+        np.ndarray
+            The phi matrix.
         """
         lambdas = np.diag(self.nvars * [lam])
         phi = np.kron(lambdas, F)
@@ -171,8 +224,10 @@ class Reconciler:
         """
         Extends the weight matrix W to match the state space index. Fills in missing values with identity matrix.
 
-        Returns:
-            pd.DataFrame: The extended weight matrix.
+        Returns
+        -------
+        pd.DataFrame
+            The extended weight matrix.
         """
         idx_to_add = self.state_space_idx.drop(self.W.index)
         W = self.W.copy()
@@ -227,35 +282,21 @@ class Reconciler:
         y_adj.update(self.exog.unstack('year').T)
         self.y_reconciled = y_adj
 
-def warn_lin_dep_rows(df, tol=1e-8):
+
+def invert_df(df):
     """
-        Warns about linearly dependent rows in a DataFrame. Linear dependence is determined using Singular Value
-        Decomposition, returning eigenvectors corresponding to 0 eigenvalues.
+        Inverts a DataFrame using the pseudo-inverse retaining the index and column names.
 
-        Args:
-            df (pd.DataFrame): The DataFrame to check.
-            tol (float, optional): The tolerance for detecting linear dependence. Defaults to 1e-8.
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The DataFrame to invert.
+
+        Returns
+        -------
+        pd.DataFrame
+            The inverted DataFrame.
         """
-    u, eigval, v = np.linalg.svd(df)
-    for i in np.where(eigval < tol)[0]:
-        lin_dep_idx = np.where(np.abs(v[i]) > tol)[0]
-        warnings.warn(f'The rows {df.iloc[lin_dep_idx].index.to_list()} are linearly dependent')
-
-
-def invert_df(df, matrix_name=None):
-    """
-        Inverts a DataFrame using the pseudo-inverse. Will warn about linearly independent rows if matrix_name is not
-        None.
-
-        Args:
-            df (pd.DataFrame): The DataFrame to invert.
-            matrix_name (str, optional): The name of the matrix for warning purposes. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The inverted DataFrame.
-        """
-    if matrix_name is not None:
-        warn_lin_dep_rows(df)
     return pd.DataFrame(np.linalg.pinv(df), columns=df.columns, index=df.index)
 
 
