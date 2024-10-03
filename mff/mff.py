@@ -32,7 +32,7 @@ class MFF:
     def fit(self,df,constraints_with_wildcard=[],ineq_constraints_with_wildcard=[]):
        
         # modify inputs into machine-friendly shape
-        df0, all_cells, unknown_cells, known_cells, islands = OrganizeCellsInForecastHorizon(df)
+        df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
         C,d = StringToMatrixConstraints(df0.T.stack(),
                                         all_cells,
                                         unknown_cells,
@@ -93,7 +93,7 @@ class MFF:
         
         return self.df2
 
-def OrganizeCellsInForecastHorizon(df):
+def OrganizeCells(df):
     """
     
 
