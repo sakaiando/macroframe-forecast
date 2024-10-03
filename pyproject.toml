@@ -1,6 +1,6 @@
 [project]
 name = "mff"
-dynamic = ["version"]
+version = "0.1"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
 requires-python = ">=3.11.9"
@@ -41,7 +41,7 @@ dependencies = [
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools >=64", "setuptools-git-versioning"]
+requires = ["setuptools >=64"]
 
 
 [project.urls]
@@ -55,8 +55,6 @@ repository = "https://github.com/sakaiando/mff"
 # $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
 packages = ["mff"]
 
-[tool.setuptools_scm]
-version_file = "mff/_version.py"
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
