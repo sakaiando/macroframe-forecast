@@ -5,8 +5,8 @@ description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
 requires-python = ">=3.11.9"
 maintainers = [
-    {name = "Sakai Ando", email = "sando@imf.org"},
-    {name = "Sultan Orazbayev", email = "sorazbayev@imf.org"},
+    { name = "Sakai Ando", email = "sando@imf.org" },
+    { name = "Sultan Orazbayev", email = "sorazbayev@imf.org" },
 ]
 keywords = [
     "macroframework",
@@ -36,15 +36,12 @@ dependencies = [
     "scikit-learn >= 1.4.0",
     "dask >= 2024.2.0",
     "sktime >= 0.27.0",
-    "sympy >= 1.12"
+    "sympy >= 1.12",
 ]
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [
-    "setuptools >=64",
-    "setuptools-git-versioning",
-]
+requires = ["setuptools >=64", "setuptools-git-versioning"]
 
 
 [project.urls]
@@ -56,14 +53,10 @@ repository = "https://github.com/sakaiando/mff"
 # $ python -c 'from setuptools import find_packages ; [print(x) for x in sorted(find_packages())]'
 # $ find mff/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
 # $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
-packages = [
-    "mff",
-]
+packages = ["mff"]
 
-[tool.setuptools-git-versioning]
-enabled = true
-dev_template = "{tag}+{ccount}.g{sha}"
-dirty_template = "{tag}+{ccount}.g{sha}.dirty"
+[tool.setuptools_scm]
+version_file = "mff/_version.py"
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
@@ -77,17 +70,13 @@ line_length = 100
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = "tests"
-pythonpath = [
-  "."
-]
+pythonpath = ["."]
 addopts = [
     "--strict-config",  # Force error if config is mispelled
-    "--strict-markers",  # Force error if marker is mispelled (must be defined in config)
-    "-ra",  # Print summary of all fails/errors
+    "--strict-markers", # Force error if marker is mispelled (must be defined in config)
+    "-ra",              # Print summary of all fails/errors
 ]
-markers = [
-    "slow: Skipped unless --runslow passed",
-]
+markers = ["slow: Skipped unless --runslow passed"]
 log_cli_level = "info"
 filterwarnings = [
     # See: https://docs.python.org/3/library/warnings.html#describing-warning-filters
