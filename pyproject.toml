@@ -1,5 +1,5 @@
 [project]
-name = "mff"
+name = "macroframe-forecast"
 version = "0.1"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
