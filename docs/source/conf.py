@@ -9,11 +9,7 @@
 project = "mff"
 copyright = "2024, IMF"
 author = "Ando Sakai, Doga Bilgin and Sultan Orazbayev"
-
-# automatic update of the version
-from mff import __version__
-
-release = __version__
+release = "0.1"
 
 
 # -- General configuration ---------------------------------------------------
