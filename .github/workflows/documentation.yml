@@ -11,12 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' 
       - name: Install dependencies
         run: |
           pip install sphinx sphinx_rtd_theme myst_parser numpydoc
       - name: Install the package
-        run: |
-          pip install .
+        run: pip install .
       - name: Sphinx build
         run: |
           sphinx-build docs/source docs_ready

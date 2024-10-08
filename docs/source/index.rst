@@ -21,7 +21,7 @@ To install the `mff` package, run the following from the repository root:
 
    python -m pip install .
 
-.. autofunction:: mff.OrganizeCells
+.. autofunction:: mff.mff.OrganizeCells
 
 .. toctree::
    :maxdepth: 2

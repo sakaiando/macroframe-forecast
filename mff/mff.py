@@ -95,16 +95,16 @@ class MFF:
 
 def OrganizeCells(df):
     """
-    
+    Function that accepts a dataframe and performs a series of operations.
 
     Parameters
     ----------
-    df : pd.DataFrame()
+    df : pd.DataFrame
         DESCRIPTION.
 
     Returns
     -------
-    TYPE
+    tuple[pd.DataFrame, pd.Series, pd.Series, pd.Series, pd.DataFrame]
         DESCRIPTION.
 
     """
