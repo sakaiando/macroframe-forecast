@@ -29,7 +29,9 @@ class MFF:
     def __init__(self):
         pass
         
-    def fit(self,df,constraints_with_wildcard=[],ineq_constraints_with_wildcard=[]):
+    def fit(self,df,
+            constraints_with_wildcard=[],
+            ineq_constraints_with_wildcard=[]):
        
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
@@ -45,10 +47,10 @@ class MFF:
                                                   known_cells,
                                                   ineq_constraints_with_wildcard)
         # 1st stage forecast and its model
-        df1,df1_model = FillAllEmptyCells(df0)
+        df1,df1_model = FillAllEmptyCells(df0,parallelize = True)
 
         # get pseudo out-of-sample prediction, true values, and prediction models
-        pred,true,model = GenPredTrueData(df0)
+        pred,true,model = GenPredTrueData(df0,parallelize = True)
         
         # break dataframe into list of time series
         ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
@@ -95,16 +97,16 @@ class MFF:
 
 def OrganizeCells(df):
     """
-    Function that accepts a dataframe and performs a series of operations.
+    
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df : pd.DataFrame()
         DESCRIPTION.
 
     Returns
     -------
-    tuple[pd.DataFrame, pd.Series, pd.Series, pd.Series, pd.DataFrame]
+    TYPE
         DESCRIPTION.
 
     """
@@ -187,6 +189,7 @@ def StringToMatrixConstraints(df0_stacked, # stack df0 to accomodate mixed frequ
         DESCRIPTION.
 
     """
+
     def find_permissible_wildcard(constraints_with_wildcard):
         wild_card_length = 1
         candidate = ''.join(random.sample(ascii_lowercase,wild_card_length))
@@ -319,18 +322,21 @@ def FillAnEmptyCell(df,row,col,forecaster):
     """  
     import numpy as np
     import pandas as pd
+    from sktime.forecasting.compose import YfromX
+    from sktime.forecasting.base import ForecastingHorizon
+    from sklearn.linear_model import ElasticNetCV
     
     n = 30
     p = 2
-    df = pd.DataFrame(random.sample([n,p]),
+    df = pd.DataFrame(np.random.sample([n,p]),
                       columns=['a','b'],
                       index=pd.date_range(start='2000',periods=n,freq='YE').year)
     df.iloc[-5:,:1] = np.nan
     
     row = df.index[-1]
     col = df.columns[0]
-    forecaseter = YfromX(ElasticNetCV())
-    y_pred, forecaster, y_hist, X_hist, X_pred = FillAnEmptyCell(df,row,col,forecaseter)
+    forecaster = YfromX(ElasticNetCV())
+    y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)
     
     """
 
@@ -347,7 +353,7 @@ def FillAnEmptyCell(df,row,col,forecaster):
 
 
 
-def FillAllEmptyCells(df,init_forecaster=init_forecaster, parallelize=False):
+def FillAllEmptyCells(df,forecaster=init_forecaster(),parallelize = True):
     """  
     n = 30
     p = 2
@@ -367,14 +373,15 @@ def FillAllEmptyCells(df,init_forecaster=init_forecaster, parallelize=False):
     # apply dask
     if parallelize == True:
         start = time()
-        results = dask.compute(*[delayed(FillAnEmptyCell)(df,row,col,init_forecaster()) 
-                                  for (row,col) in na_cells])
+        results = dask.compute(*[delayed(FillAnEmptyCell)(df,row,col,copy.deepcopy(forecaster)) 
+                                  for (row,col) in na_cells],
+                               scheduler = 'processes')
         end = time()
         print('Dask filled',len(results),'out-of-sample cells:',round(end-start,3),'seconds')
         
     else:
         start = time()
-        results = [FillAnEmptyCell(df,row,col,init_forecaster()) for row,col in na_cells]
+        results = [FillAnEmptyCell(df,row,col,forecaster) for row,col in na_cells]
         end = time()
         print('Forecast',len(results),'cells:',round(end-start,3),'seconds')
         
@@ -382,13 +389,13 @@ def FillAllEmptyCells(df,init_forecaster=init_forecaster, parallelize=False):
     df1 = df.copy()
     df1_models = df.copy().astype(object)
     for idx, rowcol in enumerate(na_cells):
-        df1.loc[rowcol] = results[idx][0].values
+        df1.loc[rowcol] = results[idx][0].iloc[0,0]
         df1_models.loc[rowcol] = results[idx][1]
     
     return df1, df1_models
 
 
-def GenPredTrueData(df,init_forecaster=init_forecaster,n_sample=5,parallelize=False):
+def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True):
     """
     
 
@@ -427,17 +434,17 @@ def GenPredTrueData(df,init_forecaster=init_forecaster,n_sample=5,parallelize=Fa
              for dfi,df in enumerate(df_list) \
              for (rowi,coli) in np.argwhere(df.isna())]
     
-    # apply dask
     if parallelize == True:
         start = time()
-        results = dask.compute(*[delayed(FillAnEmptyCell)(df_list[dfi],row,col,init_forecaster()) \
-                                     for (dfi,row,col) in tasks]) # processes, multiprocesses, threads won't work
+        results = dask.compute(*[delayed(FillAnEmptyCell)(df_list[dfi],row,col,copy.deepcopy(forecaster)) \
+                                      for (dfi,row,col) in tasks],
+                               scheduler='processes') # processes, multiprocesses, threads won't work
         end = time()
         print('Dask filled',len(results),'in-sample cells:',round(end-start,3),'seconds')
     else:
         start = time()
         results = [FillAnEmptyCell(df_list[dfi],row,col,init_forecaster()) \
-                   for (dfi,row,col) in tasks]
+                    for (dfi,row,col) in tasks]
         end = time()
         print('Fill',len(results),'in-sample cells:',round(end-start,3),'seconds')
 
@@ -446,7 +453,7 @@ def GenPredTrueData(df,init_forecaster=init_forecaster,n_sample=5,parallelize=Fa
     model_list = [df.astype(object) for df in copy.deepcopy(df_list)]
     for task_idx,task in enumerate(tasks):
         dfi,row,col = task
-        filled_list[dfi].loc[row,col] = results[task_idx][0].values
+        filled_list[dfi].loc[row,col] = results[task_idx][0].iloc[0,0]
         model_list[dfi].loc[row,col] = results[task_idx][1]
     
     # reduce n samples into a dataframe
@@ -810,7 +817,8 @@ def example1():
     from sktime.datasets import load_macroeconomic
     import warnings
     warnings.filterwarnings("ignore", category=UserWarning)
-
+    warnings.filterwarnings(action='ignore', category=np.VisibleDeprecationWarning)
+    
     df_true = load_macroeconomic().iloc[:,:5]
     #df_true = df_true.pct_change().dropna()*100
     df = df_true.copy()
@@ -834,7 +842,7 @@ def example1():
     df_true.iloc[t0:,0].plot(ax=ax,label='df_true')
     ax.axvline(x = df0.index[-fh])
     ax.legend()
-    print(smoothness)
+    print('smoothness',smoothness)
 
 # example 2: with constraints
 def example2():

@@ -1,0 +1,9 @@
+pandas>=2.2.0
+numpy>=1.26.3
+scipy>=1.12.0
+scikit-learn>=1.4.0
+dask>=2024.8.1
+distributed>=2024.2.0
+sktime>=0.27.0
+sympy>=1.12
+cvxpy>=1.5.3

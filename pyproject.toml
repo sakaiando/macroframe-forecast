@@ -1,6 +1,6 @@
 [project]
 name = "macroframe-forecast"
-version = "0.1.1"
+version = "0.1.2"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
 requires-python = ">=3.11.9"
@@ -34,7 +34,7 @@ dependencies = [
     "numpy >= 1.26.3",
     "scipy >= 1.12.0",
     "scikit-learn >= 1.4.0",
-    "dask >= 2024.2.0",
+    "dask >= 2024.8.1",
     "distributed >= 2024.2.0",
     "sktime >= 0.27.0",
     "sympy >= 1.12",
@@ -47,14 +47,10 @@ requires = ["setuptools >=64"]
 
 
 [project.urls]
-homepage = "https://github.com/sakaiando/mff"
-repository = "https://github.com/sakaiando/mff"
+homepage = "https://github.com/sakaiando/macroframe-forecast"
+repository = "https://github.com/sakaiando/macroframe-forecast"
 
 [tool.setuptools]
-# Let's be explicit
-# $ python -c 'from setuptools import find_packages ; [print(x) for x in sorted(find_packages())]'
-# $ find mff/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
-# $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
 packages = ["mff"]
 
 
