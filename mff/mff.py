@@ -12,7 +12,7 @@ from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.forecasting.compose import TransformedTargetForecaster
 from string import ascii_uppercase, ascii_lowercase
 from time import time
-from typing import Tuple
+from typing import Tuple, List
 
 import copy
 import dask
@@ -28,13 +28,22 @@ import warnings
 #%% MFF
 class MFF:
     
-    def __init__(self):
-        pass
+    def __init__(self,
+                 df: pd.DataFrame,
+                 forecaseter = DefaultForecaster(),
+                 constraints:List[str] = [],
+                 ineq_constraints:List[str] = []):
         
-    def fit(self,df,
-            constraints_with_wildcard=[],
-            ineq_constraints_with_wildcard=[]):
-       
+        self.df = df
+        self.constraints = constraints
+        self.ineq_constraints = ineq_constraints
+        
+    def fit(self):
+        
+        df = self.df
+        constraints_with_wildcard = self.constraints
+        ineq_constraints_with_wildcard = self.ineq_constraints
+        
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
         C,d = StringToMatrixConstraints(df0.T.stack(),
@@ -49,10 +58,10 @@ class MFF:
                                                   known_cells,
                                                   ineq_constraints_with_wildcard)
         # 1st stage forecast and its model
-        df1,df1_model = FillAllEmptyCells(df0,parallelize = True)
+        df1,df1_model = FillAllEmptyCells(df0,forecaster,parallelize = True)
 
         # get pseudo out-of-sample prediction, true values, and prediction models
-        pred,true,model = GenPredTrueData(df0,parallelize = True)
+        pred,true,model = GenPredTrueData(df0,forecaster,parallelize = True)
         
         # break dataframe into list of time series
         ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
@@ -97,14 +106,13 @@ class MFF:
         
         return self.df2
 
-
-def OrganizeCells(df):
+def OrganizeCells(df:pd.DataFrame):
     """
     
 
     Parameters
     ----------
-    df : pd.DataFrame()
+    df : pd.DataFrame
         DESCRIPTION.
 
     Returns
@@ -112,8 +120,7 @@ def OrganizeCells(df):
     TYPE
         DESCRIPTION.
 
-    """
-    
+    """    
     def CleanIslands(df):
         """
         
@@ -162,12 +169,12 @@ def OrganizeCells(df):
     return df0, all_cells, unknown_cells, known_cells, islands
 
 
-def StringToMatrixConstraints(df0_stacked, # stack df0 to accomodate mixed frequency
-                              all_cells,
-                              unknown_cells,
-                              known_cells,
-                              constraints_with_wildcard=[],
-                              wildcard_string = '?'):
+def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodate mixed frequency
+                              all_cells:pd.Series,
+                              unknown_cells:pd.Series,
+                              known_cells:pd.Series,
+                              constraints_with_wildcard:List[str] = [],
+                              wildcard_string:str = '?'):
     """
     
 
@@ -258,15 +265,17 @@ def StringToMatrixConstraints(df0_stacked, # stack df0 to accomodate mixed frequ
     return C,d
 
 
-def AddIslandsToConstraints(C,d,islands):
+def AddIslandsToConstraints(C:pd.DataFrame,
+                            d:pd.DataFrame,
+                            islands):
     """
     
 
     Parameters
     ----------
-    C : TYPE
+    C : pd.DataFrame
         DESCRIPTION.
-    d : TYPE
+    d : pd.DataFrame
         DESCRIPTION.
     islands : TYPE
         DESCRIPTION.
@@ -294,7 +303,7 @@ def AddIslandsToConstraints(C,d,islands):
     return C_aug,d_aug
 
 
-def init_forecaster():
+def DefaultForecaster():
     """
     
 
@@ -319,7 +328,6 @@ def init_forecaster():
     #YfromX(ElasticNetCV(max_iter=5000))
     #pipe_yX
     return pipe_yX
-
 
 def FillAnEmptyCell(df,row,col,forecaster):
     """  
@@ -361,7 +369,7 @@ def FillAnEmptyCell(df,row,col,forecaster):
 
 
 
-def FillAllEmptyCells(df,forecaster=init_forecaster(),parallelize = True):
+def FillAllEmptyCells(df,forecaster,parallelize = True):
     """  
     n = 30
     p = 2
@@ -369,9 +377,9 @@ def FillAllEmptyCells(df,forecaster=init_forecaster(),parallelize = True):
                       columns=['a','b'],
                       index=pd.date_range(start='2000',periods=n,freq='YE').year)
     df.iloc[-5:,:1] = np.nan
-    def init_forecaster():
+    def DefaultForecaster():
         return YfromX(ElasticNetCV(max_iter=5000))
-    df1,df1_models = FillAllEmptyCells(df,init_forecaster)
+    df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
     
     """
 
@@ -403,7 +411,7 @@ def FillAllEmptyCells(df,forecaster=init_forecaster(),parallelize = True):
     return df1, df1_models
 
 
-def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True):
+def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     """
     
 
@@ -411,12 +419,12 @@ def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True)
     ----------
     df : TYPE
         DESCRIPTION.
-    init_forecaster : TYPE, optional
-        DESCRIPTION. The default is init_forecaster.
+    forecaster : TYPE
+        DESCRIPTION.
     n_sample : TYPE, optional
         DESCRIPTION. The default is 5.
     parallelize : TYPE, optional
-        DESCRIPTION. The default is False.
+        DESCRIPTION. The default is True.
 
     Returns
     -------
@@ -428,7 +436,7 @@ def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True)
         DESCRIPTION.
 
     """
-
+  
     # last historical data and length of forecast horizon
     T = min(np.argwhere(df.isna())[:,0]) - 1
     h = max(np.argwhere(df.isna())[:,0]) - T
@@ -451,7 +459,7 @@ def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True)
         print('Dask filled',len(results),'in-sample cells:',round(end-start,3),'seconds')
     else:
         start = time()
-        results = [FillAnEmptyCell(df_list[dfi],row,col,init_forecaster()) \
+        results = [FillAnEmptyCell(df_list[dfi],row,col,forecaster) \
                     for (dfi,row,col) in tasks]
         end = time()
         print('Fill',len(results),'in-sample cells:',round(end-start,3),'seconds')
@@ -477,7 +485,6 @@ def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True)
                          for n in range(n_sample)],index=idxname,columns=colname)
     
     return pred,true,model
-
 
 def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
     """
@@ -509,7 +516,6 @@ def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
     true_list = [true.loc[:,ts.index] for ts in ts_list]
     
     return ts_list,pred_list,true_list
-
 
 def HP_matrix(size):
     """
@@ -837,8 +843,8 @@ def example1():
     df.iloc[-fh:,0] = np.nan
     #df.iloc[-1,0] = 13000 # islands
     
-    mff = MFF()
-    df2 = mff.fit(df,[])
+    mff = MFF(df,constraints=[])
+    df2 = mff.fit()
     df0 = mff.df0
     df1 = mff.df1
     smoothness = mff.smoothness
@@ -878,8 +884,8 @@ def example2():
     #ineq_constraints_with_wildcard = ['A0?-0.5'] # A0 <=0.5 for all years
     
     # fit data
-    mff = MFF()
-    df2 = mff.fit(df,constraints_with_wildcard)
+    mff = MFF(df,constraints = constraints_with_wildcard)
+    df2 = mff.fit()
     df0 = mff.df0
     df1 = mff.df1
     shrinkage = mff.shrinkage
@@ -907,6 +913,9 @@ def example2():
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
     # #pd.DataFrame(np.diag(W),index=W.index).plot()
+    
+    
+    
 #%% MFF mixed freq
 class MFF_mixed_freqency:
     
