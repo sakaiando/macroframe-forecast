@@ -30,7 +30,7 @@ class MFF:
     
     def __init__(self,
                  df: pd.DataFrame,
-                 forecaseter = DefaultForecaster(),
+                 forecaster = DefaultForecaster(),
                  constraints:List[str] = [],
                  ineq_constraints:List[str] = []):
         
