@@ -10,7 +10,10 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.forecasting.compose import TransformedTargetForecaster
+from string import ascii_uppercase, ascii_lowercase
 from time import time
+from typing import Tuple
+
 import copy
 import dask
 import random
@@ -20,8 +23,7 @@ import cvxpy as cp
 import numpy as np
 import pandas as pd
 import sympy as sp
-from string import ascii_uppercase, ascii_lowercase
-from typing import Tuple
+import warnings
 
 #%% MFF
 class MFF:
@@ -94,6 +96,7 @@ class MFF:
         self.df2 = df2
         
         return self.df2
+
 
 def OrganizeCells(df):
     """
@@ -189,7 +192,6 @@ def StringToMatrixConstraints(df0_stacked, # stack df0 to accomodate mixed frequ
         DESCRIPTION.
 
     """
-
     def find_permissible_wildcard(constraints_with_wildcard):
         wild_card_length = 1
         candidate = ''.join(random.sample(ascii_lowercase,wild_card_length))
@@ -318,6 +320,7 @@ def init_forecaster():
     #pipe_yX
     return pipe_yX
 
+
 def FillAnEmptyCell(df,row,col,forecaster):
     """  
     import numpy as np
@@ -339,15 +342,20 @@ def FillAnEmptyCell(df,row,col,forecaster):
     y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)
     
     """
+    warnings.filterwarnings('ignore', category=UserWarning)
+    warnings.filterwarnings(action='ignore', category=np.VisibleDeprecationWarning)
 
     # last historical data and forecast horizon in num
     T = np.argwhere(df.loc[:,col].isna()).min() -1 
     h = np.where(df.index==row)[0][0] - T
     
     y = df.iloc[:T,:].loc[:,[col]]
-    X = df.iloc[:T+h].drop(columns = [col]).dropna(axis=1)
-    fh = ForecastingHorizon(h,is_relative=True)
-    y_pred = forecaster.fit_predict(y=y,X=X,fh=fh)
+    
+    X = df.iloc[:T+h].drop(columns = [col]).dropna(axis=1) 
+    X_train = X.iloc[:T,:]
+    X_pred  = X.iloc[T:,:]
+    
+    y_pred  = forecaster.fit(y=y,X=X_train,fh=h).predict(X=X_pred)
     
     return y_pred, forecaster
 
@@ -470,6 +478,7 @@ def GenPredTrueData(df,forecaster=init_forecaster(),n_sample=5,parallelize=True)
     
     return pred,true,model
 
+
 def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
     """
     
@@ -500,6 +509,7 @@ def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
     true_list = [true.loc[:,ts.index] for ts in ts_list]
     
     return ts_list,pred_list,true_list
+
 
 def HP_matrix(size):
     """
@@ -555,6 +565,7 @@ def GenVecForecastWithIslands(ts_list,islands):
     y1.update(islands)
         
     return y1
+
 
 def GenWeightMatrix(pred_list,true_list,method='oas'):
     """
@@ -620,6 +631,7 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
             rho = np.nan
             
         return W, rho
+
 
 def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
     """
@@ -812,12 +824,10 @@ def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
 
     return y2
 
+
 def example1():
     # example 1: no constraints
     from sktime.datasets import load_macroeconomic
-    import warnings
-    warnings.filterwarnings("ignore", category=UserWarning)
-    warnings.filterwarnings(action='ignore', category=np.VisibleDeprecationWarning)
     
     df_true = load_macroeconomic().iloc[:,:5]
     #df_true = df_true.pct_change().dropna()*100
@@ -832,7 +842,7 @@ def example1():
     df0 = mff.df0
     df1 = mff.df1
     smoothness = mff.smoothness
-    dir(mff)
+    shrinkage = mff.shrinkage
     
     # plot results
     t0 = -30
@@ -842,13 +852,13 @@ def example1():
     df_true.iloc[t0:,0].plot(ax=ax,label='df_true')
     ax.axvline(x = df0.index[-fh])
     ax.legend()
-    print('smoothness',smoothness)
+    
+    print('smoothness',smoothness.values)
+    print('shrinkage',np.round(shrinkage,3))
+
 
 # example 2: with constraints
 def example2():
-    
-    import warnings
-    warnings.filterwarnings("ignore", category=UserWarning)
     
     # create data
     n = 30
@@ -897,7 +907,6 @@ def example2():
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
     # #pd.DataFrame(np.diag(W),index=W.index).plot()
-
 #%% MFF mixed freq
 class MFF_mixed_freqency:
     
