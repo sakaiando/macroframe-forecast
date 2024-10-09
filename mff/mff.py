@@ -26,6 +26,34 @@ import sympy as sp
 import warnings
 
 #%% MFF
+
+def DefaultForecaster():
+    """
+    
+
+    Returns
+    -------
+    pipe_yX : TYPE
+        DESCRIPTION.
+
+    """
+    pipe_y = TransformedTargetForecaster(
+        steps=[
+            ('scaler', TabularToSeriesAdaptor(StandardScaler())),
+            ('forecaster',DirectReductionForecaster(ElasticNetCV(max_iter=5000))),
+        ]
+    )
+    pipe_yX = ForecastingPipeline(
+        steps=[
+            ('scaler', TabularToSeriesAdaptor(StandardScaler())),
+            ('pipe_y', pipe_y),
+        ]
+    )
+    #YfromX(ElasticNetCV(max_iter=5000))
+    #pipe_yX
+    return pipe_yX
+
+
 class MFF:
     
     def __init__(self,
@@ -35,12 +63,14 @@ class MFF:
                  ineq_constraints:List[str] = []):
         
         self.df = df
+        self.forecaster = forecaster
         self.constraints = constraints
         self.ineq_constraints = ineq_constraints
         
     def fit(self):
         
         df = self.df
+        forecaster = self.forecaster
         constraints_with_wildcard = self.constraints
         ineq_constraints_with_wildcard = self.ineq_constraints
         
@@ -302,32 +332,6 @@ def AddIslandsToConstraints(C:pd.DataFrame,
     
     return C_aug,d_aug
 
-
-def DefaultForecaster():
-    """
-    
-
-    Returns
-    -------
-    pipe_yX : TYPE
-        DESCRIPTION.
-
-    """
-    pipe_y = TransformedTargetForecaster(
-        steps=[
-            ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('forecaster',DirectReductionForecaster(ElasticNetCV(max_iter=5000))),
-        ]
-    )
-    pipe_yX = ForecastingPipeline(
-        steps=[
-            ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('pipe_y', pipe_y),
-        ]
-    )
-    #YfromX(ElasticNetCV(max_iter=5000))
-    #pipe_yX
-    return pipe_yX
 
 def FillAnEmptyCell(df,row,col,forecaster):
     """  
@@ -913,7 +917,6 @@ def example2():
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
     # #pd.DataFrame(np.diag(W),index=W.index).plot()
-    
     
     
 #%% MFF mixed freq
