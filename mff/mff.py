@@ -15,7 +15,7 @@ from time import time
 from typing import Tuple, List
 
 import copy
-import dask
+import dask.dataframe
 import random
 import re
 import scipy
@@ -59,20 +59,23 @@ class MFF:
     def __init__(self,
                  df: pd.DataFrame,
                  forecaster = DefaultForecaster(),
-                 constraints:List[str] = [],
-                 ineq_constraints:List[str] = []):
+                 constraints_with_wildcard:List[str] = [],
+                 ineq_constraints_with_wildcard:List[str] = [],
+                 parallelize:bool = True):
         
         self.df = df
         self.forecaster = forecaster
-        self.constraints = constraints
-        self.ineq_constraints = ineq_constraints
+        self.constraints_with_wildcard = constraints_with_wildcard
+        self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
+        self.parallelize = parallelize
         
     def fit(self):
         
         df = self.df
         forecaster = self.forecaster
-        constraints_with_wildcard = self.constraints
-        ineq_constraints_with_wildcard = self.ineq_constraints
+        constraints_with_wildcard = self.constraints_with_wildcard
+        ineq_constraints_with_wildcard = self.ineq_constraints_with_wildcard
+        parallelize = self.parallelize
         
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
@@ -88,10 +91,10 @@ class MFF:
                                                   known_cells,
                                                   ineq_constraints_with_wildcard)
         # 1st stage forecast and its model
-        df1,df1_model = FillAllEmptyCells(df0,forecaster,parallelize = True)
+        df1,df1_model = FillAllEmptyCells(df0,forecaster,parallelize=parallelize)
 
         # get pseudo out-of-sample prediction, true values, and prediction models
-        pred,true,model = GenPredTrueData(df0,forecaster,parallelize = True)
+        pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
         
         # break dataframe into list of time series
         ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
@@ -569,8 +572,7 @@ def GenVecForecastWithIslands(ts_list,islands):
         y1 = pd.concat(ts_list,axis=0)
     
     except: # only used in mixed-freq, pd.concat cann't process 4 mix-freq series
-        
-       y1 = ConcatMixFreqMultiIndexSeries(ts_list,axis=0)
+        y1 = ConcatMixFreqMultiIndexSeries(ts_list,axis=0)
         
     y1.update(islands)
         
@@ -847,12 +849,12 @@ def example1():
     df.iloc[-fh:,0] = np.nan
     #df.iloc[-1,0] = 13000 # islands
     
-    mff = MFF(df,constraints=[])
-    df2 = mff.fit()
-    df0 = mff.df0
-    df1 = mff.df1
-    smoothness = mff.smoothness
-    shrinkage = mff.shrinkage
+    m = MFF(df,constraints=[])
+    df2 = m.fit()
+    df0 = m.df0
+    df1 = m.df1
+    smoothness = m.smoothness
+    shrinkage = m.shrinkage
     
     # plot results
     t0 = -30
@@ -888,13 +890,13 @@ def example2():
     #ineq_constraints_with_wildcard = ['A0?-0.5'] # A0 <=0.5 for all years
     
     # fit data
-    mff = MFF(df,constraints = constraints_with_wildcard)
-    df2 = mff.fit()
-    df0 = mff.df0
-    df1 = mff.df1
-    shrinkage = mff.shrinkage
-    smoothness = mff.smoothness
-    dir(mff)
+    m = MFF(df,constraints = constraints_with_wildcard)
+    df2 = m.fit()
+    df0 = m.df0
+    df1 = m.df1
+    shrinkage = m.shrinkage
+    smoothness = m.smoothness
+    dir(m)
     
     import matplotlib.pyplot as plt
     plt.figure()
@@ -917,6 +919,7 @@ def example2():
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
     # #pd.DataFrame(np.diag(W),index=W.index).plot()
+    
     
     
 #%% MFF mixed freq
