@@ -1,21 +1,18 @@
 from scipy.linalg import block_diag
 from dask import delayed
-from dask.distributed import Client, LocalCluster
 from numpy.linalg import inv
 from sklearn.linear_model import ElasticNetCV
 from sklearn.preprocessing import StandardScaler
 from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.compose import DirectReductionForecaster
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.forecasting.compose import TransformedTargetForecaster
 from string import ascii_uppercase, ascii_lowercase
 from time import time
-from typing import Tuple, List
+from typing import List
 
 import copy
-import dask.dataframe
+import dask
 import random
 import re
 import scipy
@@ -395,6 +392,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     
     # apply dask
     if parallelize == True:
+
         start = time()
         results = dask.compute(*[delayed(FillAnEmptyCell)(df,row,col,copy.deepcopy(forecaster)) 
                                   for (row,col) in na_cells],
@@ -849,7 +847,7 @@ def example1():
     df.iloc[-fh:,0] = np.nan
     #df.iloc[-1,0] = 13000 # islands
     
-    m = MFF(df,constraints=[])
+    m = MFF(df,constraints_with_wildcard=[])
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
@@ -890,7 +888,7 @@ def example2():
     #ineq_constraints_with_wildcard = ['A0?-0.5'] # A0 <=0.5 for all years
     
     # fit data
-    m = MFF(df,constraints = constraints_with_wildcard)
+    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard)
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
@@ -925,13 +923,22 @@ def example2():
 #%% MFF mixed freq
 class MFF_mixed_freqency:
     
-    def __init__(self):
-        pass
+    def __init__(self,
+                 df_dict,
+                 forecaster = DefaultForecaster(),
+                 constraints_with_wildcard=[],
+                 ineq_constraints_with_wildcard=[]):
         
-    def fit(self,
-            df_dict,
-            constraints_with_wildcard=[],
-            ineq_constraints_with_wildcard=[]):
+        self.df_dict = df_dict
+        self.forecaster=forecaster
+        self.constraints_with_wildcard=constraints_with_wildcard
+        self.ineq_constraints_with_wildcard=ineq_constraints_with_wildcard
+        
+    def fit(self):
+        df_dict = self.df_dict
+        forecaster=self.forecaster
+        constraints_with_wildcard=self.constraints_with_wildcard
+        ineq_constraints_with_wildcard=self.ineq_constraints_with_wildcard
         
         # create constraints
         freq_order = ['Y', 'Q', 'M', 'W', 'D', 'H', 'T', 'S']    
@@ -944,7 +951,7 @@ class MFF_mixed_freqency:
         islands_list = []
         for k in df_dict.keys():
             df0_k, all_cells_k, unknown_cells_k, known_cells_k, islands_k = \
-                OrganizeCellsInForecastHorizon(df_dict[k])
+                OrganizeCells(df_dict[k])
             df0_list.append(df0_k)
             all_cells_list.append(all_cells_k)
             unknown_cells_list.append(unknown_cells_k)
@@ -993,8 +1000,8 @@ class MFF_mixed_freqency:
 
         # 1st step forecast
         df0wide.columns = df0wide_colflat.values.tolist() # colname has to be single index
-        df1wide,df1wide_model = FillAllEmptyCells(df0wide)
-        predwide,truewide,modelwide = GenPredTrueData(df0wide)
+        df1wide,df1wide_model = FillAllEmptyCells(df0wide,forecaster)
+        predwide,truewide,modelwide = GenPredTrueData(df0wide,forecaster)
 
         # get df1_list by breaking wide dataframe into different frequencies
         df1_list = []
@@ -1168,8 +1175,9 @@ def example3():
     df_dict = {'Y':dfA,'Q':dfQ}
     constraints_with_wildcard = ['A0?+B0?-C0?','?Q1+?Q2+?Q3+?Q4-?']
     
-    mff = MFF_mixed_freqency()
-    df2_list = mff.fit(df_dict,constraints_with_wildcard)
+    mff = MFF_mixed_freqency(df_dict,
+                             constraints_with_wildcard=constraints_with_wildcard)
+    df2_list = mff.fit()
     df1_list = mff.df1_list
     df0_list = mff.df0_list
     
@@ -1196,4 +1204,4 @@ def example3():
     df2A = df2_list[0]
     df2Q = df2_list[1]
     df2A.eval('A0+B0-C0')
-    df2Q.resample('Y').sum()-df2A
+    (df2Q.resample('Y').sum()-df2A).dropna()
