@@ -1,13 +1,19 @@
+from scipy.linalg import block_diag
 from dask import delayed
 from numpy.linalg import inv
-from scipy.linalg import block_diag
 from sklearn.linear_model import ElasticNetCV
 from sklearn.preprocessing import StandardScaler
-from sktime.forecasting.compose import ForecastingPipeline
-from sktime.forecasting.compose import DirectReductionForecaster
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.compose import ( 
+    DirectReductionForecaster,
+    ForecastingPipeline,
+    MultiplexForecaster,
+    TransformedTargetForecaster
+)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingGreedySplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.forecasting.compose import TransformedTargetForecaster
-from sklearn.model_selection import TimeSeriesSplit
 from string import ascii_uppercase, ascii_lowercase
 from time import time
 from typing import List
@@ -17,7 +23,6 @@ import dask
 import random
 import re
 import scipy
-
 import cvxpy as cp
 import numpy as np
 import pandas as pd
@@ -26,7 +31,7 @@ import warnings
 
 #%% MFF
 
-def DefaultForecaster():
+def DefaultForecaster()->BaseForecaster:
     """
     
 
@@ -36,25 +41,40 @@ def DefaultForecaster():
         DESCRIPTION.
 
     """
-    pipe_y = TransformedTargetForecaster(
+    pipe_y_elasticnet = TransformedTargetForecaster(
         steps=[
             ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('forecaster',DirectReductionForecaster(
-                ElasticNetCV(max_iter=5000,
-                             cv = TimeSeriesSplit())
-                                                    )
-            ),
+            ('forecaster',DirectReductionForecaster(ElasticNetCV(max_iter=5000))),
         ]
     )
-    pipe_yX = ForecastingPipeline(
+    pipe_yX_elasticnet = ForecastingPipeline(
         steps=[
             ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('pipe_y', pipe_y),
+            ('pipe_y', pipe_y_elasticnet),
         ]
     )
-    #YfromX(ElasticNetCV(max_iter=5000))
-    #pipe_yX
-    return pipe_yX
+    
+    # forecaster representation for selection among the listed models
+    forecaster = MultiplexForecaster(
+        forecasters=[
+            ('naive', NaiveForecaster(strategy='mean',window_length=5)),
+            ('elasticnetcv', pipe_yX_elasticnet)
+        ],
+    )
+    
+    cv = ExpandingGreedySplitter(test_size=1, folds=5)
+    
+    gscv = ForecastingGridSearchCV(
+        forecaster=forecaster,
+        cv=cv,
+        param_grid={'selected_forecaster':[
+                'naive',
+                'elasticnetcv'
+                ],},
+        backend='dask'
+    )
+
+    return gscv
 
 
 class MFF:
@@ -857,6 +877,7 @@ def example1():
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
+    df1_model = m.df1_model
     smoothness = m.smoothness
     shrinkage = m.shrinkage
     
@@ -872,6 +893,10 @@ def example1():
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
 
+    # na_cells = [(df.index[rowi],df.columns[coli]) for rowi,coli in np.argwhere(df.isna())]
+    # for idx in na_cells:
+    #     print(idx)
+    #     print(df1_model.loc[idx].best_params_)
 
 # example 2: with constraints
 def example2():
@@ -898,6 +923,7 @@ def example2():
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
+    df1_model = m.df1_model
     shrinkage = m.shrinkage
     smoothness = m.smoothness
     dir(m)
@@ -923,6 +949,297 @@ def example2():
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
     # #pd.DataFrame(np.diag(W),index=W.index).plot()
+    
+    na_cells = [(df.index[rowi],df.columns[coli]) for rowi,coli in np.argwhere(df.isna())]
+    for idx in na_cells:
+        print(idx)
+        print(df1_model.loc[idx].best_params_)
+    
+#%% MFF mixed freq
+class MFF_mixed_freqency:
+    
+    def __init__(self,
+                 df_dict,
+                 forecaster = DefaultForecaster(),
+                 constraints_with_wildcard=[],
+                 ineq_constraints_with_wildcard=[]):
+        
+        self.df_dict = df_dict
+        self.forecaster=forecaster
+        self.constraints_with_wildcard=constraints_with_wildcard
+        self.ineq_constraints_with_wildcard=ineq_constraints_with_wildcard
+        
+    def fit(self):
+        df_dict = self.df_dict
+        forecaster=self.forecaster
+        constraints_with_wildcard=self.constraints_with_wildcard
+        ineq_constraints_with_wildcard=self.ineq_constraints_with_wildcard
+        
+        # create constraints
+        freq_order = ['Y', 'Q', 'M', 'W', 'D', 'H', 'T', 'S']    
+        lowest_freq = freq_order[min([freq_order.index(k) for k in df_dict.keys()])]
+
+        df0_list = []
+        all_cells_list = []
+        unknown_cells_list = []
+        known_cells_list = []
+        islands_list = []
+        for k in df_dict.keys():
+            df0_k, all_cells_k, unknown_cells_k, known_cells_k, islands_k = \
+                OrganizeCells(df_dict[k])
+            df0_list.append(df0_k)
+            all_cells_list.append(all_cells_k)
+            unknown_cells_list.append(unknown_cells_k)
+            known_cells_list.append(known_cells_k)
+            islands_list.append(islands_k)
+
+        df0_stacked = ConcatMixFreqMultiIndexSeries([df0.T.stack() for df0 in df0_list], axis=0)
+        all_cells = pd.concat(all_cells_list,axis=0)
+        unknown_cells = pd.concat(unknown_cells_list,axis=0)
+        known_cells = pd.concat(known_cells_list,axis=0)
+        islands = pd.concat(islands_list,axis=0)
+
+        C,d = StringToMatrixConstraints(df0_stacked,
+                                        all_cells,
+                                        unknown_cells,
+                                        known_cells,
+                                        constraints_with_wildcard)
+
+        # combine all frequncies into the lowest frequency dataframe
+        df0wide_list = []
+        df0wide_colflat_list = []
+        for df in df0_list:
+            
+            df0 = df.copy() # don't want to change df0_list
+            df0_freq = df0.index.freqstr[0] 
+            
+            if df0_freq == lowest_freq:
+                df0wide_freq = df0.copy()
+                df0wide_colfat_freq = pd.Series(df0wide_freq.columns,
+                                              index = df0wide_freq.columns)
+                
+            else:
+                index_freq = df0.index.asfreq(lowest_freq)
+                col_freq = df0_freq + get_freq_of_freq(df0.index,df0_freq).astype(str)
+                df0.index = pd.MultiIndex.from_arrays([index_freq,col_freq])
+                df0wide_freq = df0.unstack()
+                df0wide_colfat_freq = pd.Series(df0wide_freq.columns.map('_'.join), 
+                                                   index = df0wide_freq.columns)
+                
+            df0wide_list.append(df0wide_freq)
+            df0wide_colflat_list.append(df0wide_colfat_freq)
+
+        df0wide = pd.concat(df0wide_list,axis=1)
+        df0wide_col = df0wide.columns
+        df0wide_colflat = pd.concat(df0wide_colflat_list)
+
+        # 1st step forecast
+        df0wide.columns = df0wide_colflat.values.tolist() # colname has to be single index
+        df1wide,df1wide_model = FillAllEmptyCells(df0wide,forecaster)
+        predwide,truewide,modelwide = GenPredTrueData(df0wide,forecaster)
+
+        # get df1_list by breaking wide dataframe into different frequencies
+        df1_list = []
+        for df0i,df0 in enumerate(df0_list):
+            if df0.index.freqstr[0] == lowest_freq:
+                df1_freq = df0.copy()
+                df1_freq.update(df1wide.loc[:,df0wide_colflat_list[df0i].values])    
+            else:
+                df1wide_freq = df1wide.loc[:,df0wide_colflat_list[df0i].values]
+                df1wide_freq.columns = pd.MultiIndex.from_tuples(df0wide_colflat_list[df0i].index)
+                df1_freq = df0wide_list[df0i].copy().stack(future_stack=True) # storage
+                df1_freq.update(df1wide_freq.stack(future_stack=True))
+                df1_freq.index = df0_list[df0i].index
+            
+            df1_list.append(df1_freq)
+
+        # get pred_list, true_list by breaking dataframes into different frequencies
+        pred_allfreq = []
+        true_allfreq = []
+        for df0i,df0 in enumerate(df0_list):
+            
+            # get nan cells
+            df0wide_freq = df0wide_list[df0i].copy()
+            df0wide_freq.columns = df0wide_colflat_list[df0i].values
+            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().index
+            
+            # slice predwide
+            pred_freq = predwide.loc[:,na_cells]
+            true_freq = truewide.loc[:,na_cells]
+            
+            if df0.index.freqstr[0] != lowest_freq:
+                    
+                # reshape colname multiindex of (var_freq,lowestfreq) to var_lowestfreqfreq
+                colflat = pred_freq.columns
+                var_list = [v[:v.rfind('_')] for v in colflat.get_level_values(0)]
+                freq_list = [v[v.rfind('_')+1:] for v in colflat.get_level_values(0)]
+                lowest_freq_list = colflat.get_level_values(-1).astype(str)
+                original_time = pd.PeriodIndex([lowest_freq_list[i]+freq_list[i] for i in range(len(colflat))],
+                                               freq=df0.index.freq)
+                pred_freq_colname = pd.MultiIndex.from_arrays([var_list,original_time])
+                pred_freq.columns = pred_freq_colname
+                true_freq.columns = pred_freq_colname
+            
+            # change col order
+            pred_freq = pred_freq.loc[:,df0.isna()[df0.isna()].T.stack().index]
+            true_freq = true_freq.loc[:,pred_freq.columns]
+            
+            # append pred, true for each frequency
+            pred_allfreq.append(pred_freq)
+            true_allfreq.append(true_freq)
+
+        # break dataframes in to lists
+        ts_list = []
+        pred_list = []
+        true_list = []
+        for df0i,df0 in enumerate(df0_list):
+            ts_list_freq,pred_list_freq,true_list_freq = BreakDataFrameIntoTimeSeriesList(
+                df0,df1_list[df0i],pred_allfreq[df0i],true_allfreq[df0i])
+                
+            ts_list += ts_list_freq
+            pred_list += pred_list_freq
+            true_list += true_list_freq
+              
+        # get parts for reconciliation
+        #islands_list_all_freq = pd.concat(islands_list)
+
+        y1 = GenVecForecastWithIslands(ts_list,islands)
+        W,shrinkage = GenWeightMatrix(pred_list, true_list)
+        smoothness = GenLamstar(pred_list,true_list)
+        Phi = GenSmoothingMatrix(W,smoothness)
+        
+        y2 = Reconciliation(y1,W,Phi,C,d)
+
+        # reshape vector y2 into df2
+        y2 = y2.T.stack(future_stack=True)
+        y2.index = y2.index.droplevel(level=0)
+        df2_list=[]
+        for df0 in df0_list:
+            df2_freq = df0.copy()
+            df2_freq.update(y2,overwrite=False) # fill only nan cells of df0
+            df2_list.append(df2_freq)
+
+
+        self.df0_list = df0_list
+        self.df1_list = df1_list
+        self.df2_list = df2_list
+        return self.df2_list
+    
+# used only in mixed freq case, pd.concat doesn't work for more than 4 mix-freq series
+# doesn't work when there are more than 3 freq!
+def ConcatMixFreqMultiIndexSeries(df_list,axis):
+    
+    try:
+        return pd.concat(df_list,axis=axis)
+    except:
+        
+        if axis == 0:
+            
+            # concat by freq
+            freqs = [df.index.get_level_values(1).freqstr[0] for df in df_list]
+            seen = set()
+            freq_unique = [x for x in freqs if not (x in seen or seen.add(x))]
+            dflong_list = []
+            for k in freq_unique:
+                df_list_k = [df for df in df_list if df.index.get_level_values(1).freqstr[0] == k]
+                dflong_k = pd.concat(df_list_k,axis=0)
+                dflong_list.append(dflong_k)
+            
+            dflong = pd.concat(dflong_list,axis=0)           
+            return dflong
+        
+        if axis == 1:
+            
+            # concat by freq
+            freqs = [df.columns.get_level_values(1).freqstr[0] for df in df_list]
+            seen = set()
+            freq_unique = [x for x in freqs if not (x in seen or seen.add(x))]
+            dfwide_list = []
+            for k in freq_unique:
+                df_list_k = [df for df in df_list \
+                             if df.columns.get_level_values(1).freqstr[0] == k]
+                dfwide_k = pd.concat(df_list_k,axis=1)
+                dfwide_list.append(dfwide_k)
+            
+            dfwide = pd.concat(dfwide_list,axis=1)
+            return dfwide
+
+def get_freq_of_freq(periodindex,freqstr):
+    if freqstr == 'Y':
+        return periodindex.year
+    if freqstr == 'Q':
+        return periodindex.quarter
+    if freqstr == 'M':
+        return periodindex.month
+    if freqstr == 'W':
+        return periodindex.week
+    if freqstr == 'D':
+        return periodindex.day
+    if freqstr == 'H':
+        return periodindex.hour
+    if freqstr == 'T':
+        return periodindex.min
+    if freqstr == 'S':
+        return periodindex.second
+
+
+# example, mixed-frequency intra-inter-temporal constraints
+def example3():
+    
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
+    
+    n = 120
+    p = 3
+    fhA = 5
+    fhQ = 7
+    dfQ_true = pd.DataFrame(np.random.rand(n,p),
+                      columns=[f'{L}{i}' for i in range(int(np.ceil(p/26))) for L in ascii_uppercase][:p],
+                      index=pd.period_range(start='2000-1-1',periods=n,freq='Q'))
+    dfQ_true.iloc[:,-1] = dfQ_true.iloc[:,:-1].sum(axis=1)
+    dfA_true = dfQ_true.groupby(dfQ_true.index.year).sum()
+    dfA_true.index = pd.PeriodIndex(dfA_true.index,freq='Y')
+    
+    dfA = dfA_true.copy()
+    dfA.iloc[-fhA:,:np.ceil(p/2).astype(int)] = np.nan
+    
+    dfQ = dfQ_true.iloc[:-12,:].copy()
+    dfQ.iloc[-fhQ:,:np.ceil(p/2).astype(int)] = np.nan
+    
+    # inputs
+    df_dict = {'Y':dfA,'Q':dfQ}
+    constraints_with_wildcard = ['A0?+B0?-C0?','?Q1+?Q2+?Q3+?Q4-?']
+    
+    mff = MFF_mixed_freqency(df_dict,
+                             constraints_with_wildcard=constraints_with_wildcard)
+    df2_list = mff.fit()
+    df1_list = mff.df1_list
+    df0_list = mff.df0_list
+    
+    # plot results
+    import matplotlib.pyplot as plt
+    t0 = -30
+    plt.subplot(2,1,1)
+    ax = df0_list[1].iloc[t0:,0].plot(label='df0')
+    df1_list[1].iloc[t0:,0].plot(ax=ax,label='df1')
+    df2_list[1].iloc[t0:,0].plot(ax=ax,label='df2')
+    dfQ_true.iloc[t0:,0].plot(ax=ax,label='df_true')
+    ax.axvline(x = df0_list[1].index[-fhQ],label='fh=1')
+    ax.legend(loc='lower left')
+    
+    plt.subplot(2,1,2)
+    ax = df0_list[0].iloc[t0:,0].plot(label='df0')
+    df1_list[0].iloc[t0:,0].plot(ax=ax,label='df1')
+    df2_list[0].iloc[t0:,0].plot(ax=ax,label='df2')
+    dfA_true.iloc[t0:,0].plot(ax=ax,label='df_true')
+    ax.axvline(x = df0_list[0].index[-fhQ],label='fh=1')
+    ax.legend(loc='lower left')
+    
+    # check constraints
+    df2A = df2_list[0]
+    df2Q = df2_list[1]
+    df2A.eval('A0+B0-C0')
+    (df2Q.resample('Y').sum()-df2A).dropna()
     
     
     
