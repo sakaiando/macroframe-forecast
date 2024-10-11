@@ -6,6 +6,11 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
+
 project = "mff"
 copyright = "2024, IMF"
 author = "Ando Sakai, Doga Bilgin and Sultan Orazbayev"
@@ -18,6 +23,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "numpydoc",
     "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon"
 ]
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "**.ipynb_checkpoints", "**.ipynb"]
@@ -27,4 +33,4 @@ exclude_patterns = ["_build", "**.ipynb_checkpoints", "**.ipynb"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "alabaster"
-html_static_path = ["_static"]
+html_static_path = []

@@ -21,13 +21,11 @@ To install the `mff` package, run the following from the repository root:
 
    python -m pip install .
 
-.. autofunction:: mff.mff.OrganizeCells
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   getting_started/index
-   api_reference/index
+   modules
 
 * :ref:`genindex`

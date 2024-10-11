@@ -29,12 +29,10 @@ import warnings
 
 def DefaultForecaster():
     """
-    
+    Set up forecasting pipeline, specifying the scaling (transforming) to be 
+    applied and forecasting model to be used.
 
-    Returns
-    -------
-    pipe_yX : TYPE
-        DESCRIPTION.
+    :return pipe_yX : Pipeline for transforming data by scaling, and initialising forecast model.
 
     """
     pipe_y = TransformedTargetForecaster(
@@ -56,6 +54,22 @@ def DefaultForecaster():
 
 class MFF:
     
+    """
+    A class for Macro-Framework Forecasting (MFF). 
+    
+    This class facilitates forecasting of single frequency time series data using a two-step process, applying constraints and smoothening 
+    the forecasts generated.
+
+    :param df: Input dataframe containing time series data.
+    :type df: pd.Dataframe
+    :param forecaster: Forecasting model to be used for predictions.
+    :param constraints_with_wildcard: Constraints that hold with equality.
+    :type constraints_with_wildcard: str 
+    :param ineq_constraints_with_wildcard: Inequality constraints.
+    :type ineq_constraints_with_wildcard: str
+    :param parrallelize: Use parallelization for performance optimization.   
+    :type parallelize: boolean
+    """
     def __init__(self,
                  df: pd.DataFrame,
                  forecaster = DefaultForecaster(),
@@ -70,7 +84,10 @@ class MFF:
         self.parallelize = parallelize
         
     def fit(self):
-        
+        """
+        Fits the model and generates reconclided forecasts for the input dataframe cubject to defined constraints.
+        """
+
         df = self.df
         forecaster = self.forecaster
         constraints_with_wildcard = self.constraints_with_wildcard
@@ -141,35 +158,46 @@ class MFF:
 
 def OrganizeCells(df:pd.DataFrame):
     """
-    
+    Organize raw input data frame into known and unknown values, and identify 
+    islands. Islands are values of known cells, preceded by unknown values.
 
     Parameters
     ----------
     df : pd.DataFrame
-        DESCRIPTION.
+        Input dataframe with raw data.
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    df0 : pd.DataFrame
+        Dataframe with island values replaced by nan.
 
+    all_cells : pd.Series
+        Series containing index of all cells in the input dataframe.
+
+    unknown_cells : pd.Series
+        Series containing index of cells whose values are to be forecasted.
+
+    known_cells : pd.Series
+        Series containing index of cells whose values are known.
+
+    islands : pd.Series
+        Series containing island values.
     """    
     def CleanIslands(df):
         """
-        
+        Separate islands from the raw input dataframe.
 
         Parameters
         ----------
-        df : TYPE
-            DESCRIPTION.
+        df : pd.DataFrame
+            Input dataframe with raw data.
 
         Returns
         -------
-        df_no_islands : TYPE
-            DESCRIPTION.
-        islands : TYPE
-            DESCRIPTION.
-
+        df_no_islands : pd.DataFrame
+            Datafrane with island values replaced by nan.
+        islands : pd.Series
+            Series containing island values.
         """
         df_no_islands = df.copy() # to keep original df as it is
         col_with_islands = df.columns[df.isna().any()]
@@ -209,30 +237,37 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
                               constraints_with_wildcard:List[str] = [],
                               wildcard_string:str = '?'):
     """
-    
+    Convert equality constraints from list to matrix form gor horizons to 
+    be forecasted (Cy = d, where C and d are dataframes containing the 
+    linear constraints).
 
     Parameters
     ----------
-    df0_stacked : TYPE
-        DESCRIPTION.
-    # stack df0 to accomodate mixed frequency                              all_cells : TYPE
-        DESCRIPTION.
-    unknown_cells : TYPE
-        DESCRIPTION.
-    known_cells : TYPE
-        DESCRIPTION.
-    constraints_with_wildcard : TYPE, optional
-        DESCRIPTION. The default is [].
-    wildcard_string : TYPE, optional
-        DESCRIPTION. The default is '?'.
+    df0_stacked : pd.Series
+        Stacked version of df0 (input  dataframe with islands removed), useful 
+        for handling mixed frequency cases. 
+    all_cells : pd.Series
+        Series containing index of all cells in the input dataframe.
+    unknown_cells : pd.Series
+        Series containing index of cells whose values are to be forecasted.
+    known_cells : pd.Series
+        Series containing index of cells whose values are known..
+    constraints_with_wildcard : str, optional
+        String specifying equality constraints that have to hold. 
+        The default is [].
+    wildcard_string : str, optional
+        String that is used as wildcard identifier in constraint. 
+        The default is '?'.
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
-
+    C: pd.DataFrame
+        Dataframe containing linear constraints in matrix form.
+    d: pd.DataFrame
+        Dataframe containing linear constraints in matrix form. (TBC)
     """
     def find_permissible_wildcard(constraints_with_wildcard):
+        """Generate random letter to be used in constraints."""
         wild_card_length = 1
         candidate = ''.join(random.sample(ascii_lowercase,wild_card_length))
         while candidate in ''.join(constraints_with_wildcard):
@@ -243,6 +278,7 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
 
 
     def find_strings_to_replace_wildcard(constraint,var_list,wildcard):
+        """"""
         varlist_regex = ['^' + str(v).replace(wildcard, '(.*)') + '$'
                          for v in sp.sympify(constraint).free_symbols]
         missing_string_set_list = []
@@ -260,6 +296,24 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
 
 
     def expand_wildcard(constraints_with_alphabet_wildcard,var_list,wildcard):
+        """
+        Expand constraints with wildcard to all forecast horizons.
+
+        Parameters
+        ----------
+        constraints_with_alphabet_wildcard : str
+            Linear equality constraints with wildcard string replaced 
+            with alphabets.
+        var_list : list
+            List of indices of all cells (known and unknown) in raw dataframe.
+        wildcard : str
+            Alphabet which has replaced wildcard string in the constraints.
+
+        Return
+        ------
+        expanded_constraints : list
+            Expanded list of constraints over all time periods.
+        """
         expanded_constraints = []
         for constraint in constraints_with_alphabet_wildcard:
             if wildcard not in constraint:
@@ -302,7 +356,8 @@ def AddIslandsToConstraints(C:pd.DataFrame,
                             d:pd.DataFrame,
                             islands):
     """
-    
+    :param C: First matrix
+    :type C: Dataframe
 
     Parameters
     ----------
