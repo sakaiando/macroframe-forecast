@@ -1,12 +1,13 @@
-from scipy.linalg import block_diag
 from dask import delayed
 from numpy.linalg import inv
+from scipy.linalg import block_diag
 from sklearn.linear_model import ElasticNetCV
 from sklearn.preprocessing import StandardScaler
 from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.compose import DirectReductionForecaster
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sklearn.model_selection import TimeSeriesSplit
 from string import ascii_uppercase, ascii_lowercase
 from time import time
 from typing import List
@@ -16,6 +17,7 @@ import dask
 import random
 import re
 import scipy
+
 import cvxpy as cp
 import numpy as np
 import pandas as pd
@@ -37,7 +39,11 @@ def DefaultForecaster():
     pipe_y = TransformedTargetForecaster(
         steps=[
             ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('forecaster',DirectReductionForecaster(ElasticNetCV(max_iter=5000))),
+            ('forecaster',DirectReductionForecaster(
+                ElasticNetCV(max_iter=5000,
+                             cv = TimeSeriesSplit())
+                                                    )
+            ),
         ]
     )
     pipe_yX = ForecastingPipeline(
