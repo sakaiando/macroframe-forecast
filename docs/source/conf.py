@@ -23,14 +23,31 @@ extensions = [
     "sphinx.ext.autodoc",
     "numpydoc",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon"
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
 ]
+
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "**.ipynb_checkpoints", "**.ipynb"]
 
+# generate autosummary even if no references
+autosummary_generate = True
+
+# Members and inherited-members default to showing methods and attributes from a
+# class or those inherited.
+# Member-order orders the documentation in the order of how the members are defined in
+# the source code.
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "member-order": "bysource",
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
+html_theme = "pydata_sphinx_theme"
 html_static_path = []

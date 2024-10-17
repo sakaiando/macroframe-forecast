@@ -30,9 +30,12 @@ import warnings
 def DefaultForecaster():
     """
     Set up forecasting pipeline, specifying the scaling (transforming) to be 
-    applied and forecasting model to be used.
+    applied and forecasting model to be used. Default forecasting model used is 
+    Elastic Net, will soon be changed to incorporate Grid Search methodology.
 
-    :return pipe_yX : Pipeline for transforming data by scaling, and initialising forecast model.
+    Return
+    ------
+    pipe_yX : Pipeline for transforming data by scaling, and initialising forecast model.
 
     """
     pipe_y = TransformedTargetForecaster(
@@ -54,21 +57,44 @@ def DefaultForecaster():
 
 class MFF:
     
-    """
-    A class for Macro-Framework Forecasting (MFF). 
+    """A class for Macro-Framework Forecasting (MFF). 
     
-    This class facilitates forecasting of single frequency time series data using a two-step process, applying constraints and smoothening 
-    the forecasts generated.
+    This class facilitates forecasting of single frequency time series data 
+    using a two-step process. First step of the forecasting procedure generates
+    unconstrained forecasts using the forecaster specified. In the next step, 
+    these forecasts are then reconclied so that they satisfy the supplied 
+    constrants, and smoothness of the forecasts is maintained.
 
-    :param df: Input dataframe containing time series data.
-    :type df: pd.Dataframe
-    :param forecaster: Forecasting model to be used for predictions.
-    :param constraints_with_wildcard: Constraints that hold with equality.
-    :type constraints_with_wildcard: str 
-    :param ineq_constraints_with_wildcard: Inequality constraints.
-    :type ineq_constraints_with_wildcard: str
-    :param parrallelize: Use parallelization for performance optimization.   
-    :type parallelize: boolean
+    Parameters
+    ----------
+    df : pd.DataFrame
+       Input dataframe containing time series data. Data should be in wide
+       format, with each row containing data for one period, and each 
+       column containing data for one variable.
+    
+    forecaster : Forecaster pipeline
+        Forecasting pipeline to be used for predictions. (In development, to change)
+    
+    constraints_with_wildcard : str, optional(default: None)
+        Constraints that hold with equality. Constraints may include wildcard, 
+        in which case constraints will be applied across all horizons, or
+        may be defined for specified time periods.
+     
+    ineq_constraints_with_wildcard : str, optional(default: None)
+        Inequality constraints, comparable to ``constraints_with_wildcard``.
+        Constraints may include wildcard, in which case constraints will be
+        applied across all horizons, or may be defined for specified time 
+        periods.
+       
+    parrallelize : boolean
+        Indicate whether paralellization should be employed for generating 
+        first step forecasts  
+
+    Returns
+    -------
+    df2 : pd.Dataframe
+        Output dataframe with all reconciled forecasts filled into the original
+        input. 
     """
     def __init__(self,
                  df: pd.DataFrame,
@@ -85,7 +111,8 @@ class MFF:
         
     def fit(self):
         """
-        Fits the model and generates reconclided forecasts for the input dataframe cubject to defined constraints.
+        Fits the model and generates reconciled forecasts for the input 
+        dataframe subject to defined constraints.
         """
 
         df = self.df
@@ -157,8 +184,7 @@ class MFF:
         return self.df2
 
 def OrganizeCells(df:pd.DataFrame):
-    """
-    Organize raw input data frame into known and unknown values, and identify 
+    """Organize raw input data frame into known and unknown values, and identify 
     islands. Islands are values of known cells, preceded by unknown values.
 
     Parameters
@@ -296,8 +322,7 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
 
 
     def expand_wildcard(constraints_with_alphabet_wildcard,var_list,wildcard):
-        """
-        Expand constraints with wildcard to all forecast horizons.
+        """Expand constraints with wildcard to all forecast horizons.
 
         Parameters
         ----------
@@ -356,24 +381,26 @@ def AddIslandsToConstraints(C:pd.DataFrame,
                             d:pd.DataFrame,
                             islands):
     """
-    :param C: First matrix
-    :type C: Dataframe
+    Add island values into the matrix form equality constraints which have been
+    constructed by ``StringToMatrixConstraints``.
 
     Parameters
     ----------
     C : pd.DataFrame
-        DESCRIPTION.
+        Dataframe containing matrix of the linear constraints on the left side of
+        equation Cy=d.
     d : pd.DataFrame
-        DESCRIPTION.
-    islands : TYPE
-        DESCRIPTION.
+        Dataframe containing matrix of the linear constraints on the right side of
+        equation Cy=d.
+    islands : pd.Series
+        Series containing island values to be introduced into linear equation.
 
     Returns
     -------
-    C_aug : TYPE
-        DESCRIPTION.
-    d_aug : TYPE
-        DESCRIPTION.
+    C_aug : pd.DataFrame
+        Dataframe containing the augmented C matrix, with island values incorporated.
+    d_aug : pd.DataFrame
+        Dataframe containing the augmented d vector, with island values incorporated.
 
     """
     C_aug_index = islands.index.union(C.index, sort=False) # singleton constraints prioritize over islands
@@ -392,24 +419,45 @@ def AddIslandsToConstraints(C:pd.DataFrame,
 
 
 def FillAnEmptyCell(df,row,col,forecaster):
-    """  
-    import numpy as np
-    import pandas as pd
-    from sktime.forecasting.compose import YfromX
-    from sktime.forecasting.base import ForecastingHorizon
-    from sklearn.linear_model import ElasticNetCV
-    
-    n = 30
-    p = 2
-    df = pd.DataFrame(np.random.sample([n,p]),
-                      columns=['a','b'],
-                      index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    df.iloc[-5:,:1] = np.nan
-    
-    row = df.index[-1]
-    col = df.columns[0]
-    forecaster = YfromX(ElasticNetCV())
-    y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)
+    """Generate a forecast for a given cell based on the latest known value 
+    for the given column (variable) and using the predefined forecasting pipeline.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing known values of all variables and nan for 
+        unknown values.
+    row : str
+        Row index of cell to be forecasted.
+    col : str
+        Column index of cell to be forecasted. 
+    forecaster : pipeline (?)
+        Forecasting pipeline to be used for generating forecast.
+
+    Returns
+    -------
+    y_pred : double
+        Forecasted value of the variable for the given horizon.
+    forecaster : 
+         
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:,:1] = np.nan
+    >>> row = df.index[-1]
+    >>> col = df.columns[0]
+    >>> forecaster = YfromX(ElasticNetCV())
+    >>> y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)
     
     """
     warnings.filterwarnings('ignore', category=UserWarning)
@@ -432,16 +480,40 @@ def FillAnEmptyCell(df,row,col,forecaster):
 
 
 def FillAllEmptyCells(df,forecaster,parallelize = True):
-    """  
-    n = 30
-    p = 2
-    df = pd.DataFrame(random.sample([n,p]),
-                      columns=['a','b'],
-                      index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    df.iloc[-5:,:1] = np.nan
-    def DefaultForecaster():
-        return YfromX(ElasticNetCV(max_iter=5000))
-    df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
+    """
+    Generate forecasts for all unknown cells in the supplied dataframe.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Dataframe containing known values of all variables and nan for 
+        unknown values.
+    forecaster : 
+
+    parrallelize : boolean
+        Indicate whether paralellization should be employed for generating 
+        first step forecasts 
+
+    Return
+    ------
+    df1: pd.DataFrame
+        Dataframe with all known cells, as well as unknown cells filled in by
+        one-step forecasts.
+    df1_model: pd.Dataframe
+        Dataframe with all known cells, with unknown cells containing details 
+        of the forecaster used for generating forecast of that cell.
+    
+    Examples
+    -------- 
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:,:1] = np.nan
+    >>> def DefaultForecaster():
+    >>>     return YfromX(ElasticNetCV(max_iter=5000))
+    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
     
     """
 
@@ -475,27 +547,32 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
 
 def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     """
-    
+    Generate in-sample forecasts from existing data by constructing 
+    pseudo-historical datasets.
 
     Parameters
     ----------
-    df : TYPE
-        DESCRIPTION.
-    forecaster : TYPE
-        DESCRIPTION.
-    n_sample : TYPE, optional
-        DESCRIPTION. The default is 5.
-    parallelize : TYPE, optional
-        DESCRIPTION. The default is True.
+    df : pd.DataFrame
+        Dataframe with all known as well as unknown values.
+    forecaster : pipeline (?)
+        Forecasting pipeline to be used
+    n_sample : int, optional
+        Number of horizons for which in-sample forecasts are generated.
+        The default is 5.
+    parallelize : boolean, optional
+        Indicate whether parallelization should be used. The default is True.
 
     Returns
     -------
-    pred : TYPE
-        DESCRIPTION.
-    true : TYPE
-        DESCRIPTION.
-    model : TYPE
-        DESCRIPTION.
+    pred : pd.DataFrame
+        Dataframe with in-sample predictions generated using pseudo-historical 
+        datasets. Dimensions are n_sample x n_sample.
+    true : pd.DataFrame
+        Dataframe with actual values of the variable corresponding to predicted
+        values contained in pred.
+    model : pd.DataFrame
+        Dataframe with information on the models used for generating each
+        forecast.
 
     """
   
@@ -549,28 +626,32 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     return pred,true,model
 
 def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
-    """
-    
+    """ Transform relevant dataframes into lists for ensuing reconsiliation step.
 
     Parameters
     ----------
-    df0 : TYPE
-        DESCRIPTION.
-    df1 : TYPE
-        DESCRIPTION.
-    pred : TYPE
-        DESCRIPTION.
+    df0 : pd.DataFrame
+        Dataframe with all known and unknown values, without any islands.
+    df1 : pd.DataFrame
+        Dataframe with unknown values as well as islands filled in with 
+        first step forecasts.
+    pred : pd.DataFrame
+        Dataframe with in-sample predictions generated using pseudo-historical 
+        datasets, output from ``GenPredTrueData``.
     true : TYPE
         DESCRIPTION.
 
     Returns
     -------
-    ts_list : TYPE
-        DESCRIPTION.
-    pred_list : TYPE
-        DESCRIPTION.
-    true_list : TYPE
-        DESCRIPTION.
+    ts_list : list
+        List containing all first step out of sample forecasts.
+    pred_list : list
+        List of dataframes, with each dataframe containing in-sample forecasts
+        for one variable.
+    true_list : list
+        List of dataframes, with each dataframe containing the actuall values
+        for a variable corresponding to in-sample predictions stored in
+        pred_list.
 
     """
     ts_list = [df1[df0.isna()].loc[:,col:col].dropna().T.stack() for col in df0.columns[df0.isna().any()]]
@@ -607,20 +688,19 @@ def HP_matrix(size):
     
 
 def GenVecForecastWithIslands(ts_list,islands):
-    """
+    """ Overwrite forecasted values for islands with known island value.
     
-
     Parameters
     ----------
-    ts_list : TYPE
-        DESCRIPTION.
-    islands : TYPE
-        DESCRIPTION.
+    ts_list : list
+        List of all first step forecasted values.
+    islands : pd.Series
+        Series containing island values.
 
     Returns
     -------
-    y1 : TYPE
-        DESCRIPTION.
+    y1 : pd.Series
+        List of forecasted values with island values incorporated.
 
     """
     try:
@@ -635,24 +715,27 @@ def GenVecForecastWithIslands(ts_list,islands):
 
 
 def GenWeightMatrix(pred_list,true_list,method='oas'):
-    """
-    
+    """ Generate weighting matrix based on in-sample forecasts and actual values.    
 
     Parameters
     ----------
-    pred_list : TYPE
-        DESCRIPTION.
-    true_list : TYPE
-        DESCRIPTION.
-    method : TYPE, optional
-        DESCRIPTION. The default is 'oas'.
+    pred_list : list
+        List of dataframes, with each dataframe containing in-sample forecasts
+        for one variable..
+    true_list : Tlist
+        List of dataframes, with each dataframe containing the actual values
+        for a variable corresponding to in-sample predictions stored in
+        pred_list.
+    method : str, optional
+        Type of *Fill in*, with options of identity, oas and oasd. The default is 'oas'.
 
     Returns
     -------
-    W : TYPE
-        DESCRIPTION.
-    TYPE
-        DESCRIPTION.
+    W : pd.DataFrame
+        Weighting matrix to be used for reconciliation.
+    shrinkage: float
+        Shrinkage parameter associated with the weight. Nan in case identity
+        is selected as method.
 
     """
     fe_list = [pred_list[i]-true_list[i] for i in range(len(pred_list))]
@@ -702,23 +785,29 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
 
 def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
     """
+    Calculate the smoothness parameter (lambda) associated with each variable 
+    being forecasted. 
     
 
     Parameters
     ----------
-    pred_list : TYPE
-        DESCRIPTION.
-    true_list : TYPE
-        DESCRIPTION.
-    empirically : TYPE, optional
-        DESCRIPTION. The default is True.
-    default_lam : TYPE, optional
-        DESCRIPTION. The default is 6.25.
+    pred_list : list
+        List of dataframes, with each dataframe containing in-sample forecasts
+        for one variable..
+    true_list : Tlist
+        List of dataframes, with each dataframe containing the actual values
+        for a variable corresponding to in-sample predictions stored in
+        pred_list.
+    empirically : boolean, optional
+        Indicate whether lambda should be calculated emperically, or use
+        commonly used values from the literature. The default is True.
+    default_lam : float, optional
+        The value of lambda to use if none is provided. The default is 6.25.
 
     Returns
     -------
-    lamstar : TYPE
-        DESCRIPTION.
+    lamstar : Series
+        Series containing smoothing parameters to be used for each variable.
 
     """
     # index of time series to deal with mixed-frequency
@@ -762,19 +851,19 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
 
 def GenSmoothingMatrix(W,lamstar):
     """
-    
+    Generate symmetric smoothing matrix using optimal lambda and weighting matrix.
 
     Parameters
     ----------
-    W : TYPE
-        DESCRIPTION.
-    lamstar : TYPE
-        DESCRIPTION.
+    W : pd.DataFrame
+        Dataframe containing the weighting matrix.
+    lamstar : pd.Series
+        Series containing smoothing parameters to be used for each variable.
 
     Returns
     -------
-    Phi : TYPE
-        DESCRIPTION.
+    Phi : pd.DataFrame
+        Dataframe containing the smoothing matrix.
 
     """
     lam = lamstar/[np.diag(W.loc[tsidx,tsidx]).min() 
@@ -787,29 +876,34 @@ def GenSmoothingMatrix(W,lamstar):
 
 def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
     """
-    
+    Reconcile first step forecasts to satisfy constraints, with smoothening
+    parameters implemented.
 
     Parameters
     ----------
-    y1 : TYPE
-        DESCRIPTION.
-    W : TYPE
-        DESCRIPTION.
-    Phi : TYPE
-        DESCRIPTION.
-    C : TYPE
-        DESCRIPTION.
-    d : TYPE
-        DESCRIPTION.
-    C_ineq : TYPE, optional
-        DESCRIPTION. The default is None.
+    y1 : Series
+        Series of all forecasted and island values.
+    W : pd.DataFrame
+        Dataframe containing the weighting matrix.
+    Phi : pd.DataFrame
+        Dataframe containing the smoothing matrix.
+    C : pd.DataFrame
+        Dataframe containing matrix of the linear constraints on the left side of
+        the equality constraint Cy=d.
+    d : pd.DataFrame
+        Dataframe containing matrix of the linear constraints on the right side of
+        the equality constraint Cy=d.
+    C_ineq : pd.DataFrame, optional
+        Dataframe containing matrix of the linear constraints on the left side of
+        the equality constraint Cy <= d. The default is None.
     d_ineq : TYPE, optional
-        DESCRIPTION. The default is None.
+        Dataframe containing matrix of the linear constraints on the left side of
+        the equality constraint Cy <= d. The default is None.
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    y2 : pd.DataFrame
+        Dataframe containing the final reconciled forecasts for all variables.
 
     """
     assert((y1.index == W.index).all())
