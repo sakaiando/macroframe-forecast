@@ -15,7 +15,7 @@ jobs:
           python-version: '3.12' 
       - name: Install dependencies
         run: |
-          pip install sphinx sphinx_rtd_theme myst_parser numpydoc 
+          pip install sphinx sphinx_rtd_theme myst_parser numpydoc pydata_sphinx_theme
       - name: Install the package
         run: pip install .
       - name: Sphinx build
