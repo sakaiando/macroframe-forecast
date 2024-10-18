@@ -1,7 +1,7 @@
-# Reuse of this tool and IMF information does not imply any endorsement 
-# of the research and/or product. Any research presented should not be 
-# reported as representing the views of the IMF, its Executive Board, 
-# member governments.
+# Disclaimer: Reuse of this tool and IMF information does not imply
+# any endorsement  of the research and/or product. Any research presented
+# should not be reported as representing the views of the IMF,
+# its Executive Board, member governments.
 
 from scipy.linalg import block_diag
 from dask import delayed
