@@ -1,21 +1,30 @@
+# Disclaimer: Reuse of this tool and IMF information does not imply
+# any endorsement  of the research and/or product. Any research presented
+# should not be reported as representing the views of the IMF,
+# its Executive Board, member governments.
+
 from scipy.linalg import block_diag
 from dask import delayed
-from dask.distributed import Client, LocalCluster
 from numpy.linalg import inv
 from sklearn.linear_model import ElasticNetCV
 from sklearn.preprocessing import StandardScaler
-from sktime.forecasting.compose import ForecastingPipeline
-from sktime.forecasting.compose import DirectReductionForecaster
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.transformations.base import BaseTransformer
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.compose import ( 
+    DirectReductionForecaster,
+    ForecastingPipeline,
+    MultiplexForecaster,
+    TransformedTargetForecaster
+)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingGreedySplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.forecasting.compose import TransformedTargetForecaster
 from string import ascii_uppercase, ascii_lowercase
 from time import time
-from typing import Tuple, List
+from typing import List
 
 import copy
-import dask.dataframe
+import dask
 import random
 import re
 import scipy
@@ -27,7 +36,7 @@ import warnings
 
 #%% MFF
 
-def DefaultForecaster():
+def DefaultForecaster()->BaseForecaster:
     """
     
 
@@ -37,21 +46,45 @@ def DefaultForecaster():
         DESCRIPTION.
 
     """
-    pipe_y = TransformedTargetForecaster(
+    
+    pipe_y_elasticnet = TransformedTargetForecaster(
         steps=[
             ('scaler', TabularToSeriesAdaptor(StandardScaler())),
             ('forecaster',DirectReductionForecaster(ElasticNetCV(max_iter=5000))),
         ]
     )
-    pipe_yX = ForecastingPipeline(
+    pipe_yX_elasticnet = ForecastingPipeline(
         steps=[
             ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('pipe_y', pipe_y),
+            ('pipe_y', pipe_y_elasticnet),
         ]
     )
-    #YfromX(ElasticNetCV(max_iter=5000))
-    #pipe_yX
-    return pipe_yX
+    
+    # forecaster representation for selection among the listed models
+    forecaster = MultiplexForecaster(
+        forecasters=[
+            ('naive_drift', NaiveForecaster(strategy='drift',window_length=5)),
+            ('naive_last', NaiveForecaster(strategy='last')),
+            ('naive_mean', NaiveForecaster(strategy='mean',window_length=5)),
+            ('elasticnetcv', pipe_yX_elasticnet)
+        ],
+    )
+    
+    cv = ExpandingGreedySplitter(test_size=1, folds=5)
+    
+    gscv = ForecastingGridSearchCV(
+        forecaster=forecaster,
+        cv=cv,
+        param_grid={'selected_forecaster':[
+                'naive_drift',
+                'naive_last',
+                'naive_mean',
+                'elasticnetcv'
+                ],},
+        backend='dask'
+    )
+
+    return gscv
 
 
 class MFF:
@@ -460,7 +493,6 @@ def FillAnEmptyCell(df,row,col,forecaster):
     
     """
     warnings.filterwarnings('ignore', category=UserWarning)
-    warnings.filterwarnings(action='ignore', category=np.VisibleDeprecationWarning)
 
     # last historical data and forecast horizon in num
     T = np.argwhere(df.loc[:,col].isna()).min() -1 
@@ -521,6 +553,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     
     # apply dask
     if parallelize == True:
+
         start = time()
         results = dask.compute(*[delayed(FillAnEmptyCell)(df,row,col,copy.deepcopy(forecaster)) 
                                   for (row,col) in na_cells],
@@ -778,8 +811,19 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
         elif n_vars==1:
             W = sample_cov
             rho = np.nan
-            
         return W, rho
+    
+    if method == 'monotone diagonal':
+        if n_vars>=2:
+            diag = pd.Series(np.diag(sample_cov),
+                             index=sample_cov.index)
+            W = pd.DataFrame(np.diag(diag.groupby(level=0).cummax()),
+                             index = sample_cov.index,
+                             columns=sample_cov.columns)
+        elif n_vars==1:
+            W = sample_cov
+            rho = np.nan
+        return W,np.nan
 
 
 def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
@@ -985,22 +1029,23 @@ def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
     return y2
 
 
-def example1():
-    # example 1: no constraints
+def example1(): # no constraints
+
+    # load data
     from sktime.datasets import load_macroeconomic
-    
     df_true = load_macroeconomic().iloc[:,:5]
-    #df_true = df_true.pct_change().dropna()*100
-    df = df_true.copy()
     
+    # input dataframe
+    df = df_true.copy()
     fh = 5
     df.iloc[-fh:,0] = np.nan
-    #df.iloc[-1,0] = 13000 # islands
     
-    m = MFF(df,constraints=[])
+    # apply MFF
+    m = MFF(df,constraints_with_wildcard=[])
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
+    df1_model = m.df1_model
     smoothness = m.smoothness
     shrinkage = m.shrinkage
     
@@ -1015,8 +1060,12 @@ def example1():
     
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
+    for ri,ci in np.argwhere(df.isna()):
+        print(df1_model.index[ri],
+              df1_model.columns[ci],
+              df1_model.iloc[ri,ci].best_params_)
 
-
+        
 # example 2: with constraints
 def example2():
     
@@ -1038,13 +1087,19 @@ def example2():
     #ineq_constraints_with_wildcard = ['A0?-0.5'] # A0 <=0.5 for all years
     
     # fit data
-    m = MFF(df,constraints = constraints_with_wildcard)
+    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard)
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
+    df1_model = m.df1_model
     shrinkage = m.shrinkage
     smoothness = m.smoothness
-    dir(m)
+    W = m.W
+    for ri,ci in np.argwhere(df.isna()):
+        print(df1_model.index[ri],
+              df1_model.columns[ci],
+              df1_model.iloc[ri,ci].best_params_)
+    
     
     import matplotlib.pyplot as plt
     plt.figure()
@@ -1066,20 +1121,32 @@ def example2():
     
     print('smoothness',smoothness.values)
     print('shrinkage',np.round(shrinkage,3))
-    # #pd.DataFrame(np.diag(W),index=W.index).plot()
     
+    # confirm constraints
+    assert(np.isclose(df2['A0']+df2['B0']-df2['C0'],0).all())
+
     
+
     
 #%% MFF mixed freq
 class MFF_mixed_freqency:
     
-    def __init__(self):
-        pass
+    def __init__(self,
+                 df_dict,
+                 forecaster = DefaultForecaster(),
+                 constraints_with_wildcard=[],
+                 ineq_constraints_with_wildcard=[]):
         
-    def fit(self,
-            df_dict,
-            constraints_with_wildcard=[],
-            ineq_constraints_with_wildcard=[]):
+        self.df_dict = df_dict
+        self.forecaster=forecaster
+        self.constraints_with_wildcard=constraints_with_wildcard
+        self.ineq_constraints_with_wildcard=ineq_constraints_with_wildcard
+        
+    def fit(self):
+        df_dict = self.df_dict
+        forecaster=self.forecaster
+        constraints_with_wildcard=self.constraints_with_wildcard
+        ineq_constraints_with_wildcard=self.ineq_constraints_with_wildcard
         
         # create constraints
         freq_order = ['Y', 'Q', 'M', 'W', 'D', 'H', 'T', 'S']    
@@ -1092,7 +1159,7 @@ class MFF_mixed_freqency:
         islands_list = []
         for k in df_dict.keys():
             df0_k, all_cells_k, unknown_cells_k, known_cells_k, islands_k = \
-                OrganizeCellsInForecastHorizon(df_dict[k])
+                OrganizeCells(df_dict[k])
             df0_list.append(df0_k)
             all_cells_list.append(all_cells_k)
             unknown_cells_list.append(unknown_cells_k)
@@ -1141,8 +1208,8 @@ class MFF_mixed_freqency:
 
         # 1st step forecast
         df0wide.columns = df0wide_colflat.values.tolist() # colname has to be single index
-        df1wide,df1wide_model = FillAllEmptyCells(df0wide)
-        predwide,truewide,modelwide = GenPredTrueData(df0wide)
+        df1wide,df1wide_model = FillAllEmptyCells(df0wide,forecaster)
+        predwide,truewide,modelwide = GenPredTrueData(df0wide,forecaster)
 
         # get df1_list by breaking wide dataframe into different frequencies
         df1_list = []
@@ -1316,8 +1383,9 @@ def example3():
     df_dict = {'Y':dfA,'Q':dfQ}
     constraints_with_wildcard = ['A0?+B0?-C0?','?Q1+?Q2+?Q3+?Q4-?']
     
-    mff = MFF_mixed_freqency()
-    df2_list = mff.fit(df_dict,constraints_with_wildcard)
+    mff = MFF_mixed_freqency(df_dict,
+                             constraints_with_wildcard=constraints_with_wildcard)
+    df2_list = mff.fit()
     df1_list = mff.df1_list
     df0_list = mff.df0_list
     
@@ -1344,4 +1412,4 @@ def example3():
     df2A = df2_list[0]
     df2Q = df2_list[1]
     df2A.eval('A0+B0-C0')
-    df2Q.resample('Y').sum()-df2A
+    (df2Q.resample('Y').sum()-df2A).dropna()
