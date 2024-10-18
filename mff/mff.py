@@ -29,13 +29,12 @@ import warnings
 
 def DefaultForecaster():
     """
-    Set up forecasting pipeline, specifying the scaling (transforming) to be 
-    applied and forecasting model to be used. Default forecasting model used is 
-    Elastic Net, will soon be changed to incorporate Grid Search methodology.
+    
 
-    Return
-    ------
-    pipe_yX : Pipeline for transforming data by scaling, and initialising forecast model.
+    Returns
+    -------
+    BaseForecaster
+        DESCRIPTION.
 
     """
     pipe_y = TransformedTargetForecaster(
