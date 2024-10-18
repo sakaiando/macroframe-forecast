@@ -21,11 +21,17 @@ To install the `mff` package, run the following from the repository root:
 
    python -m pip install .
 
+Alternatively, use the following command to install from pypi.
+
+.. code-block:: console
+   
+   python -m pip install macroframe-forecast
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+   mff_documentation
 
 * :ref:`genindex`
