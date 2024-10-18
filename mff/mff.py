@@ -680,9 +680,12 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
         if n_vars>=2:
             diag = pd.Series(np.diag(sample_cov),
                              index=sample_cov.index)
-            monodiag = pd.DataFrame(np.diag(diag.groupby(level=0).cummax()),
-                                    index = sample_cov.index,
-                                    columns=sample_cov.columns)
+            W = pd.DataFrame(np.diag(diag.groupby(level=0).cummax()),
+                             index = sample_cov.index,
+                             columns=sample_cov.columns)
+        elif n_vars==1:
+            W = sample_cov
+            rho = np.nan
         return W,np.nan
 
 
