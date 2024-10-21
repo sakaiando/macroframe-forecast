@@ -129,6 +129,8 @@ class MFF:
     df2 : pd.Dataframe
         Output dataframe with all reconciled forecasts filled into the original
         input. 
+
+
     """
     def __init__(self,
                  df: pd.DataFrame,
@@ -222,7 +224,8 @@ def OrganizeCells(df:pd.DataFrame):
     Extract island values (if existing) from input dataframe, replacing them
     with nan values. This is useful for generating first step forecasts, which
     disregard known island values for the prediction. Also identifies separate
-    series of indices for known and unknown values in the input dataframe.
+    Pandas series of names of cells for known and unknown values in the input 
+    dataframe.
 
     Parameters
     ----------
@@ -235,13 +238,13 @@ def OrganizeCells(df:pd.DataFrame):
         Dataframe with island values replaced by nan.
 
     all_cells : pd.Series
-        Series containing index of all cells in the input dataframe.
+        Series containing cell names of all cells in the input dataframe.
 
     unknown_cells : pd.Series
-        Series containing index of cells whose values are to be forecasted.
+        Series containing cell names of cells whose values are to be forecasted.
 
     known_cells : pd.Series
-        Series containing index of cells whose values are known.
+        Series containing cell names of cells whose values are known.
 
     islands : pd.Series
         Series containing island values.
@@ -260,7 +263,8 @@ def OrganizeCells(df:pd.DataFrame):
     """    
     def CleanIslands(df):
         """
-        Separate islands from the raw input dataframe.
+        Separate island values from input dataframe, replacing them with nan.
+        Called by ``OrganizeCells``.
 
         Parameters
         ----------
@@ -270,9 +274,23 @@ def OrganizeCells(df:pd.DataFrame):
         Returns
         -------
         df_no_islands : pd.DataFrame
-            Datafrane with island values replaced by nan.
+            Dataframe with island values replaced by nan.
+
         islands : pd.Series
             Series containing island values.
+        
+            Examples
+            -------- 
+            >>> import numpy as np
+            >>> import pandas as pd
+            >>> n = 30
+            >>> p = 2
+            >>> df = pd.DataFrame(np.random.sample([n,p]),
+            >>>                   columns=['a','b'],
+            >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+            >>> df.iloc[-5:-1,:1] = np.nan
+            >>> df0, islands = CleanIslands(df)  
+        
         """
         df_no_islands = df.copy() # to keep original df as it is
         col_with_islands = df.columns[df.isna().any()]
@@ -312,21 +330,24 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
                               constraints_with_wildcard:List[str] = [],
                               wildcard_string:str = '?'):
     """
-    Convert equality constraints from list to matrix form gor horizons to 
+    Convert equality constraints from list to matrix form for horizons to 
     be forecasted (Cy = d, where C and d are dataframes containing the 
-    linear constraints).
+    linear constraints). The input dataframe should not be in a standard wide 
+    format, but instead all columns should be stacked on one another. This is 
+    needed to control for dealing with the case of mixed frequency among 
+    observations. All island values in the dinput dataframe should be replaced
+    by nan prior to this step.
 
     Parameters
     ----------
     df0_stacked : pd.Series
-        Stacked version of df0 (input  dataframe with islands removed), useful 
-        for handling mixed frequency cases. 
+        Stacked version of df0 (input  dataframe with islands removed). 
     all_cells : pd.Series
-        Series containing index of all cells in the input dataframe.
+        Series containing cell names of all cells in the input dataframe.
     unknown_cells : pd.Series
-        Series containing index of cells whose values are to be forecasted.
+        Series containing cell names of cells whose values are to be forecasted.
     known_cells : pd.Series
-        Series containing index of cells whose values are known..
+        Series containing cell names of cells whose values are known..
     constraints_with_wildcard : str, optional
         String specifying equality constraints that have to hold. 
         The default is [].
@@ -337,9 +358,30 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
     Returns
     -------
     C: pd.DataFrame
-        Dataframe containing linear constraints in matrix form.
+        Dataframe containing matrix of the linear constraints on the left side of
+        equation Cy=d.
     d: pd.DataFrame
-        Dataframe containing linear constraints in matrix form. (TBC)
+        Dataframe containing matrix of the linear constraints on the right side of
+        equation Cy=d.
+
+    Examples
+    -------- 
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)  
+    >>> df0_stacked = df0.T.stack()
+    >>> constraints_with_wildcard = ['a?+b?']
+    >>> C,d = StringToMatrixConstraints(df0_stacked,
+    >>>                                 all_cells,
+    >>>                                 unknown_cells,
+    >>>                                 known_cells,
+    >>>                                 constraints_with_wildcard)  
     """
     def find_permissible_wildcard(constraints_with_wildcard):
         """Generate random letter to be used in constraints."""
@@ -371,22 +413,46 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
 
 
     def expand_wildcard(constraints_with_alphabet_wildcard,var_list,wildcard):
-        """Expand constraints with wildcard to all forecast horizons.
+        """
+        Expand constraints with wildcard to all possible time periods. This is
+        called within ``StringToMatrixConstraints``, and the wildcard character
+        has already been replaced by a random letter before this function is 
+        called.
 
         Parameters
         ----------
-        constraints_with_alphabet_wildcard : str
+        constraints_with_alphabet_wildcard : string
             Linear equality constraints with wildcard string replaced 
             with alphabets.
         var_list : list
             List of indices of all cells (known and unknown) in raw dataframe.
-        wildcard : str
+        wildcard : string
             Alphabet which has replaced wildcard string in the constraints.
 
         Return
         ------
         expanded_constraints : list
             Expanded list of constraints over all time periods.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> n = 30
+        >>> p = 2
+        >>> df = pd.DataFrame(np.random.sample([n,p]),
+        >>>                   columns=['a','b'],
+        >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+        >>> df0_stacked = df.T.stack()
+        >>> all_cells_index = df0_stacked.index
+        >>> var_list = pd.Series([f'{a}_{b}' for a, b in all_cells_index],
+        >>>                      index = all_cells_index)
+        >>> constraints_with_alphabet_wildcard = ['ax + bx']
+        >>> alphabet_wildcard = 'x'
+        >>> constraints = expand_wildcard(constraints_with_alphabet_wildcard,
+        >>>                               var_list = var_list,
+        >>>                               wildcard = alphabet_wildcard)
+                         
         """
         expanded_constraints = []
         for constraint in constraints_with_alphabet_wildcard:
@@ -451,6 +517,25 @@ def AddIslandsToConstraints(C:pd.DataFrame,
     d_aug : pd.DataFrame
         Dataframe containing the augmented d vector, with island values incorporated.
 
+    Examples
+    -------- 
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)  
+    >>> df0_stacked = df0.T.stack()
+    >>> constraints_with_wildcard = ['a?+b?']
+    >>> C,d = StringToMatrixConstraints(df0_stacked,
+    >>>                                 all_cells,
+    >>>                                 unknown_cells,
+    >>>                                 known_cells,
+    >>>                                 constraints_with_wildcard)  
+    >>> C,d = AddIslandsToConstraints(C,d,islands)
     """
     C_aug_index = islands.index.union(C.index, sort=False) # singleton constraints prioritize over islands
     C_aug = pd.DataFrame(np.zeros([len(C_aug_index),len(C.columns)]),
@@ -470,6 +555,7 @@ def AddIslandsToConstraints(C:pd.DataFrame,
 def FillAnEmptyCell(df,row,col,forecaster):
     """Generate a forecast for a given cell based on the latest known value 
     for the given column (variable) and using the predefined forecasting pipeline.
+    Called by ``FillAllEmptyCells``.
 
     Parameters
     ----------
@@ -495,7 +581,6 @@ def FillAnEmptyCell(df,row,col,forecaster):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.forecasting.compose import YfromX
-    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sklearn.linear_model import ElasticNetCV
     >>> n = 30
     >>> p = 2
@@ -506,8 +591,7 @@ def FillAnEmptyCell(df,row,col,forecaster):
     >>> row = df.index[-1]
     >>> col = df.columns[0]
     >>> forecaster = YfromX(ElasticNetCV())
-    >>> y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)
-    
+    >>> y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)   
     """
     warnings.filterwarnings('ignore', category=UserWarning)
 
@@ -530,12 +614,14 @@ def FillAnEmptyCell(df,row,col,forecaster):
 def FillAllEmptyCells(df,forecaster,parallelize = True):
     """
     Generate forecasts for all unknown cells in the supplied dataframe.
+    All forecasts are made independently from each other. (TBC)
 
     Parameters
     ----------
     df: pd.DataFrame
         Dataframe containing known values of all variables and nan for 
         unknown values.
+    
     forecaster : 
 
     parrallelize : boolean
@@ -547,15 +633,19 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     df1: pd.DataFrame
         Dataframe with all known cells, as well as unknown cells filled in by
         one-step forecasts.
-    df1_model: pd.Dataframe
+    df1_model: pd.DataFrame
         Dataframe with all known cells, with unknown cells containing details 
         of the forecaster used for generating forecast of that cell.
     
     Examples
     -------- 
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from sklearn.linear_model import ElasticNetCV
     >>> n = 30
     >>> p = 2
-    >>> df = pd.DataFrame(random.sample([n,p]),
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
     >>>                   columns=['a','b'],
     >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
     >>> df.iloc[-5:,:1] = np.nan
@@ -597,7 +687,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
 def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     """
     Generate in-sample forecasts from existing data by constructing 
-    pseudo-historical datasets.
+    pseudo-historical datasets. 
 
     Parameters
     ----------
@@ -622,7 +712,22 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     model : pd.DataFrame
         Dataframe with information on the models used for generating each
         forecast.
-
+    
+    Examples
+    -------- 
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:,:1] = np.nan
+    >>> def DefaultForecaster():
+    >>>     return YfromX(ElasticNetCV(max_iter=5000))
+    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)   
     """
   
     # last historical data and length of forecast horizon
@@ -664,7 +769,7 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     colname = df.isna()[df.isna()].T.stack().index
     idxname = pd.Index([df_list[n].index[np.argwhere(df_list[n].isna())[:,0].min()] 
                         for n in range(n_sample)],
-                       name = 'LastData')
+                        name = 'LastData')
     pred = pd.DataFrame([filled_list[n][df_list[n].isna()].T.stack().values 
                          for n in range(n_sample)],index=idxname,columns=colname)
     model = pd.DataFrame([model_list[n][df_list[n].isna()].T.stack().values 
@@ -675,7 +780,7 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     return pred,true,model
 
 def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
-    """ Transform relevant dataframes into lists for ensuing reconsiliation step.
+    """ Transform relevant dataframes into lists for ensuing reconciliation step.
 
     Parameters
     ----------
@@ -687,8 +792,9 @@ def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
     pred : pd.DataFrame
         Dataframe with in-sample predictions generated using pseudo-historical 
         datasets, output from ``GenPredTrueData``.
-    true : TYPE
-        DESCRIPTION.
+    true : pd.DataFrame
+       Dataframe with actual values of the variable corresponding to predicted
+        values contained in pred.
 
     Returns
     -------
@@ -698,10 +804,27 @@ def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
         List of dataframes, with each dataframe containing in-sample forecasts
         for one variable.
     true_list : list
-        List of dataframes, with each dataframe containing the actuall values
+        List of dataframes, with each dataframe containing the actual values
         for a variable corresponding to in-sample predictions stored in
         pred_list.
-
+    
+    Examples
+    -------- 
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:,:1] = np.nan
+    >>> def DefaultForecaster():
+    >>>     return YfromX(ElasticNetCV(max_iter=5000))
+    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
+    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
+    >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df,df1,pred,true)
     """
     ts_list = [df1[df0.isna()].loc[:,col:col].dropna().T.stack() for col in df0.columns[df0.isna().any()]]
     pred_list = [pred.loc[:,ts.index] for ts in ts_list]
@@ -711,17 +834,18 @@ def BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true):
 
 def HP_matrix(size):
     """
-    
+    Create the degenerate penta-diagonal matrix (the one used in HP Filter), 
+    with dimensions (size x size).
 
     Parameters
     ----------
-    size : TYPE
-        DESCRIPTION.
+    size : integer
+        Number of rows for the square matrix.
 
     Returns
     -------
-    F : TYPE
-        DESCRIPTION.
+    F : np.array
+        Array containing the F matrix.
 
     """
     if size >=2:
@@ -751,6 +875,24 @@ def GenVecForecastWithIslands(ts_list,islands):
     y1 : pd.Series
         List of forecasted values with island values incorporated.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
+    >>> def DefaultForecaster():
+    >>>     return YfromX(ElasticNetCV(max_iter=5000))
+    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster(),parallelize=False)
+    >>> ts_list = [df1[df0.isna()].loc[:,col:col].dropna().T.stack() for col in df0.columns[df.isna().any()]]
+    >>> y1 = GenVecForecastWithIslands(ts_list,islands)
     """
     try:
         y1 = pd.concat(ts_list,axis=0)
@@ -764,7 +906,9 @@ def GenVecForecastWithIslands(ts_list,islands):
 
 
 def GenWeightMatrix(pred_list,true_list,method='oas'):
-    """ Generate weighting matrix based on in-sample forecasts and actual values.    
+    """
+    Generate weighting matrix based on in-sample forecasts and actual values
+    for the corresponding periods.    
 
     Parameters
     ----------
@@ -776,7 +920,8 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
         for a variable corresponding to in-sample predictions stored in
         pred_list.
     method : str, optional
-        Type of *Fill in*, with options of identity, oas and oasd. The default is 'oas'.
+        Type of algorithm to use for shrinking the covariance matrix, with 
+        options of identity, oas and oasd. The default is 'oas'.
 
     Returns
     -------
@@ -785,6 +930,14 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
     shrinkage: float
         Shrinkage parameter associated with the weight. Nan in case identity
         is selected as method.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> pred_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
+    >>> true_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
+    >>> W,shrinkage = GenWeightMatrix(pred_list, true_list)
 
     """
     fe_list = [pred_list[i]-true_list[i] for i in range(len(pred_list))]
@@ -848,13 +1001,12 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
     Calculate the smoothness parameter (lambda) associated with each variable 
     being forecasted. 
     
-
     Parameters
     ----------
     pred_list : list
         List of dataframes, with each dataframe containing in-sample forecasts
-        for one variable..
-    true_list : Tlist
+        for one variable.
+    true_list : list
         List of dataframes, with each dataframe containing the actual values
         for a variable corresponding to in-sample predictions stored in
         pred_list.
@@ -868,7 +1020,14 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
     -------
     lamstar : Series
         Series containing smoothing parameters to be used for each variable.
-
+    
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> pred_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
+    >>> true_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
+    >>> W,shrinkage = GenWeightMatrix(pred_list, true_list)
     """
     # index of time series to deal with mixed-frequency
     tsidx_list = [df.columns for df in pred_list]
@@ -925,6 +1084,22 @@ def GenSmoothingMatrix(W,lamstar):
     Phi : pd.DataFrame
         Dataframe containing the smoothing matrix.
 
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> pred_list_1 = [pd.DataFrame(np.random.rand(5, 5), 
+    >>>                             columns=pd.MultiIndex.from_product([['A'], [f'Col{i+1}' for i in range(5)]])) if i == 0 else 
+    >>>                pd.DataFrame(np.random.rand(5, 5), 
+    >>>                             columns=pd.MultiIndex.from_product([['B'], [f'Col{i+1}' for i in range(5)]])) 
+    >>>                for i in range(2)]
+    >>> true_list_1 = [pd.DataFrame(np.random.rand(5, 5), 
+    >>>                             columns=pd.MultiIndex.from_product([['A'], [f'Col{i+1}' for i in range(5)]])) if i == 0 else 
+    >>>                pd.DataFrame(np.random.rand(5, 5), 
+    >>>                             columns=pd.MultiIndex.from_product([['B'], [f'Col{i+1}' for i in range(5)]])) 
+    >>>                for i in range(2)]
+    >>> smoothness = GenLamstar(pred_list_1,true_list_1)
+
     """
     lam = lamstar/[np.diag(W.loc[tsidx,tsidx]).min() 
                    for tsidx in lamstar.index]
@@ -936,8 +1111,8 @@ def GenSmoothingMatrix(W,lamstar):
 
 def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
     """
-    Reconcile first step forecasts to satisfy constraints, with smoothening
-    parameters implemented.
+    Reconcile first step forecasts to satisfy equality as well as inequality
+    constraints, subject to smoothening.
 
     Parameters
     ----------
@@ -964,6 +1139,33 @@ def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
     -------
     y2 : pd.DataFrame
         Dataframe containing the final reconciled forecasts for all variables.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:,:1] = np.nan
+    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
+    >>> def DefaultForecaster():
+    >>>     return YfromX(ElasticNetCV(max_iter=5000))
+    >>> df1,df1_models = FillAllEmptyCells(df0,DefaultForecaster(),parallelize=False)
+    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=False)
+    >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
+    >>> y1 = pd.concat(ts_list)
+    >>> C = pd.DataFrame(columns = y1.index).astype(float)
+    >>> d = pd.DataFrame().astype(float)
+    >>> W = pd.DataFrame(np.eye(5),index=y1.index,columns=y1.index)
+    >>> smoothness = GenLamstar(pred_list,true_list)
+    >>> Phi = GenSmoothingMatrix(W,smoothness)
+    >>> y2 = Reconciliation(y1,W,Phi,C,d)
+    >>> y2 = Reconciliation(m.y1,m.W,m.Phi,m.C,m.d)
 
     """
     assert((y1.index == W.index).all())
