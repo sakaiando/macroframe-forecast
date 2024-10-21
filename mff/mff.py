@@ -38,12 +38,14 @@ import warnings
 
 def DefaultForecaster()->BaseForecaster:
     """
-    
+    Set up forecasting pipeline, specifying the scaling (transforming) to be 
+    applied and forecasting model to be used. Default forecasting model used is 
+    Elastic Net, will soon be changed to incorporate Grid Search methodology.
 
-    Returns
-    -------
-    BaseForecaster
-        DESCRIPTION.
+    Return
+    ------
+    gscv : sktime BaseForecaster descendant (concrete forecaster)
+        sktime Grid Search forecaster to used.
 
     """
     
@@ -216,8 +218,11 @@ class MFF:
         return self.df2
 
 def OrganizeCells(df:pd.DataFrame):
-    """Organize raw input data frame into known and unknown values, and identify 
-    islands. Islands are values of known cells, preceded by unknown values.
+    """
+    Extract island values (if existing) from input dataframe, replacing them
+    with nan values. This is useful for generating first step forecasts, which
+    disregard known island values for the prediction. Also identifies separate
+    series of indices for known and unknown values in the input dataframe.
 
     Parameters
     ----------
@@ -240,6 +245,18 @@ def OrganizeCells(df:pd.DataFrame):
 
     islands : pd.Series
         Series containing island values.
+    
+    Examples
+    -------- 
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)  
     """    
     def CleanIslands(df):
         """
