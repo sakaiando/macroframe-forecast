@@ -21,13 +21,17 @@ To install the `mff` package, run the following from the repository root:
 
    python -m pip install .
 
-.. autofunction:: mff.mff.OrganizeCells
+Alternatively, use the following command to install from PyPI.
+
+.. code-block:: console
+   
+   python -m pip install macroframe-forecast
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   getting_started/index
-   api_reference/index
+   mff_documentation
 
 * :ref:`genindex`
