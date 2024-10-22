@@ -39,13 +39,13 @@ import warnings
 def DefaultForecaster()->BaseForecaster:
     """
     Set up forecasting pipeline, specifying the scaling (transforming) to be 
-    applied and forecasting model to be used. Default forecasting model used is 
-    Elastic Net, will soon be changed to incorporate Grid Search methodology.
+    applied and forecasting model to be used. 
 
-    Return
-    ------
-    gscv : sktime BaseForecaster descendant (concrete forecaster)
-        sktime Grid Search forecaster to used.
+    Returns
+    -------
+    gscv : BaseForecaster
+        Instance of sktime's Grid Search forecaster, derived from BaseForecaster, 
+        which is configured for hyperparameter tuning and model selection.
 
     """
     
@@ -106,8 +106,8 @@ class MFF:
        format, with each row containing data for one period, and each 
        column containing data for one variable.
     
-    forecaster : Forecaster pipeline
-        Forecasting pipeline to be used for predictions. (In development, to change)
+    forecaster : BaseForecaster
+        sktime BaseForecaster descendant
     
     constraints_with_wildcard : str, optional(default: None)
         Constraints that hold with equality. Constraints may include wildcard, 
@@ -120,9 +120,9 @@ class MFF:
         applied across all horizons, or may be defined for specified time 
         periods.
        
-    parrallelize : boolean
-        Indicate whether paralellization should be employed for generating 
-        first step forecasts  
+    parallelize : boolean
+        Indicate whether parallelization should be employed for generating the
+        first step forecasts. Default value is `True`. 
 
     Returns
     -------
@@ -395,7 +395,26 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
 
 
     def find_strings_to_replace_wildcard(constraint,var_list,wildcard):
-        """"""
+        """Identify list of strings to be substitute wildard character with.
+        
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> n = 30
+        >>> p = 2
+        >>> df = pd.DataFrame(np.random.sample([n,p]),
+        >>>                   columns=['a','b'],
+        >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+        >>> df0_stacked = df.T.stack()
+        >>> all_cells_index = df0_stacked.index
+        >>> var_list = pd.Series([f'{a}_{b}' for a, b in all_cells_index],
+        >>>                      index = all_cells_index)
+        >>> constraint= 'ax + bx'
+        >>> wildcard = 'x'
+        >>> missing_string_list = find_strings_to_replace_wildcard(constraint,var_list,wildcard)
+        """
+        
         varlist_regex = ['^' + str(v).replace(wildcard, '(.*)') + '$'
                          for v in sp.sympify(constraint).free_symbols]
         missing_string_set_list = []
@@ -566,15 +585,15 @@ def FillAnEmptyCell(df,row,col,forecaster):
         Row index of cell to be forecasted.
     col : str
         Column index of cell to be forecasted. 
-    forecaster : pipeline (?)
-        Forecasting pipeline to be used for generating forecast.
+    forecaster : BaseForecaster
+        
 
     Returns
     -------
     y_pred : double
         Forecasted value of the variable for the given horizon.
-    forecaster : 
-         
+    forecaster : BaseForecaster
+         sktime BaseForecaster descendant
 
     Examples
     --------
@@ -622,7 +641,8 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
         Dataframe containing known values of all variables and nan for 
         unknown values.
     
-    forecaster : 
+    forecaster : BaseForecaster
+        sktime BaseForecaster descendant
 
     parrallelize : boolean
         Indicate whether paralellization should be employed for generating 
@@ -873,7 +893,7 @@ def GenVecForecastWithIslands(ts_list,islands):
     Returns
     -------
     y1 : pd.Series
-        List of forecasted values with island values incorporated.
+        Series of forecasted values with island values incorporated.
 
     Examples
     --------
@@ -915,7 +935,7 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
     pred_list : list
         List of dataframes, with each dataframe containing in-sample forecasts
         for one variable..
-    true_list : Tlist
+    true_list : list
         List of dataframes, with each dataframe containing the actual values
         for a variable corresponding to in-sample predictions stored in
         pred_list.
@@ -1018,7 +1038,7 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
 
     Returns
     -------
-    lamstar : Series
+    lamstar : pd.Series
         Series containing smoothing parameters to be used for each variable.
     
     Examples
@@ -1116,7 +1136,7 @@ def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
 
     Parameters
     ----------
-    y1 : Series
+    y1 : pd.Series
         Series of all forecasted and island values.
     W : pd.DataFrame
         Dataframe containing the weighting matrix.

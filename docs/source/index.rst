@@ -21,7 +21,7 @@ To install the `mff` package, run the following from the repository root:
 
    python -m pip install .
 
-Alternatively, use the following command to install from pypi.
+Alternatively, use the following command to install from PyPI.
 
 .. code-block:: console
    
