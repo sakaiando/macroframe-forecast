@@ -644,9 +644,9 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     forecaster : BaseForecaster
         sktime BaseForecaster descendant
 
-    parrallelize : boolean
-        Indicate whether paralellization should be employed for generating 
-        first step forecasts 
+    parallelize : boolean
+        Indicate whether parallelization should be employed for generating the
+        first step forecasts. Default value is `True`. 
 
     Return
     ------
