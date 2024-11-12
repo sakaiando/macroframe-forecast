@@ -597,14 +597,16 @@ def FillAnEmptyCell(df,row,col,forecaster):
 
     Examples
     --------
+    >>> from string import ascii_lowercase
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from mff.mff import FillAnEmptyCell
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
+    >>>                   columns=list(ascii_lowercase[:p]),
     >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
     >>> df.iloc[-5:,:1] = np.nan
     >>> row = df.index[-1]
