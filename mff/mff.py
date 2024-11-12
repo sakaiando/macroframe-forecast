@@ -631,6 +631,10 @@ def FillAnEmptyCell(df,row,col,forecaster):
     return y_pred, forecaster
 
 
+@delayed
+def delayed_FillAnEmptyCell(df,row,col,forecaster):
+    return FillAnEmptyCell(df,row,col,forecaster):
+
 
 def FillAllEmptyCells(df,forecaster,parallelize = True):
     """
@@ -661,14 +665,16 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     
     Examples
     -------- 
+    >>> from string import ascii_lowercase
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sktime.forecasting.compose import YfromX
+    >>> from mff.mff import FillAllEmptyCells
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
+    >>>                   columns=list(ascii_lowercase[:p]),
     >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
     >>> df.iloc[-5:,:1] = np.nan
     >>> def DefaultForecaster():
@@ -684,7 +690,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     if parallelize:
 
         start = time()
-        results = dask.compute(*[delayed(FillAnEmptyCell)(df,row,col,copy.deepcopy(forecaster)) 
+        results = dask.compute(*[delayed_FillAnEmptyCell(df,row,col,copy.deepcopy(forecaster)) 
                                   for (row,col) in na_cells],
                                scheduler = 'processes')
         end = time()
