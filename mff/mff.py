@@ -679,7 +679,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     na_cells = [(df.index[rowi],df.columns[coli]) for rowi,coli in np.argwhere(df.isna())]
     
     # apply dask
-    if parallelize == True:
+    if parallelize:
 
         start = time()
         results = dask.compute(*[delayed(FillAnEmptyCell)(df,row,col,copy.deepcopy(forecaster)) 
@@ -763,7 +763,7 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
              for dfi,df in enumerate(df_list) \
              for (rowi,coli) in np.argwhere(df.isna())]
     
-    if parallelize == True:
+    if parallelize:
         start = time()
         results = dask.compute(*[delayed(FillAnEmptyCell)(df_list[dfi],row,col,copy.deepcopy(forecaster)) \
                                       for (dfi,row,col) in tasks],
@@ -917,7 +917,7 @@ def GenVecForecastWithIslands(ts_list,islands):
     try:
         y1 = pd.concat(ts_list,axis=0)
     
-    except: # only used in mixed-freq, pd.concat cann't process 4 mix-freq series
+    except Exception: # only used in mixed-freq, pd.concat cann't process 4 mix-freq series
         y1 = ConcatMixFreqMultiIndexSeries(ts_list,axis=0)
         
     y1.update(islands)
@@ -965,7 +965,7 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
     try: # fe: sample size x vairables
         fe = pd.concat(fe_list,axis=1)
         
-    except: # only used in mixed-freq, pd.concat cann't process 4 mix-freq series
+    except Exception: # only used in mixed-freq, pd.concat cann't process 4 mix-freq series
         
         fe = ConcatMixFreqMultiIndexSeries(fe_list,axis=1)
 
@@ -1066,12 +1066,12 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
                     'S':ly*((365*24*60*60)**2)}
         lamstar = pd.Series( [lambda_dict[item].astype(float) for item in freq_list],
                             index = tsidx_list)
-    except:
+    except Exception:
         lamstar = pd.Series( np.ones(len(tsidx_list)) * default_lam, 
                             index = tsidx_list)
     
     # optimal lambda
-    if empirically == True:
+    if empirically:
         loss_fn = lambda x,T,yt,yp: \
             (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ \
             (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp)
@@ -1543,7 +1543,7 @@ def ConcatMixFreqMultiIndexSeries(df_list,axis):
     
     try:
         return pd.concat(df_list,axis=axis)
-    except:
+    except Exception:
         
         if axis == 0:
             
