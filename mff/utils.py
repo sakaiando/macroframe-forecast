@@ -537,7 +537,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     >>> import pandas as pd
     >>> from sklearn.linear_model import ElasticNetCV
     >>> from sktime.forecasting.compose import YfromX
-    >>> from mff.mff import FillAllEmptyCells
+    >>> from mff.utils import FillAllEmptyCells
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
