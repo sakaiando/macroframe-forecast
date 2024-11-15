@@ -1,7 +1,7 @@
 __pycache__
 .git_local_repo_credentials
 # setuptools files
-macro-framework.egg-info/*
+macroframe_forecast.egg-info/*
 # temporary csv files
 tests/*.csv
 # Sphinx documentation

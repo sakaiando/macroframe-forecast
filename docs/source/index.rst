@@ -27,7 +27,6 @@ Alternatively, use the following command to install from PyPI.
    
    python -m pip install macroframe-forecast
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
