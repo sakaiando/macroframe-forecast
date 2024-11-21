@@ -1,10 +1,12 @@
 __pycache__
 .git_local_repo_credentials
 # setuptools files
-macroframe_forecast.egg-info/*
+*.egg-info
 # temporary csv files
 tests/*.csv
 # Sphinx documentation
 docs/build/
 # MacOS
 .DS_Store
+# pixi environments
+.pixi
