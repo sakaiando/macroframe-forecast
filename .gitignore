@@ -10,3 +10,7 @@ docs/build/
 .DS_Store
 # pixi environments
 .pixi
+
+# pixi environments
+.pixi
+*.egg-info

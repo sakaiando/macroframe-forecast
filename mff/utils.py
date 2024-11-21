@@ -212,7 +212,7 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
                               all_cells:pd.Series,
                               unknown_cells:pd.Series,
                               known_cells:pd.Series,
-                              constraints_with_wildcard:List[str] = [],
+                              constraints_with_wildcard:list[str] = [],
                               wildcard_string:str = '?'):
     """
     Convert equality constraints from list to matrix form for horizons to 
