@@ -6,7 +6,9 @@
 from scipy.linalg import block_diag
 from dask import delayed
 from numpy.linalg import inv
-from sklearn.linear_model import ElasticNetCV
+from sklearn.decomposition import PCA
+from sklearn.linear_model import ElasticNetCV, LinearRegression
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import StandardScaler
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import ( 
@@ -14,14 +16,15 @@ from sktime.forecasting.compose import (
     ForecastingPipeline,
     MultiplexForecaster,
     TransformedTargetForecaster
-)
+    )
+from sktime.forecasting.dynamic_factor import DynamicFactor
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingGreedySplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.feature_selection import FeatureSelection
 from string import ascii_uppercase, ascii_lowercase
 from time import time
-from typing import List
 
 import copy
 import dask
@@ -49,27 +52,38 @@ def DefaultForecaster()->BaseForecaster:
 
     """
     
-    pipe_y_elasticnet = TransformedTargetForecaster(
-        steps=[
-            ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('forecaster',DirectReductionForecaster(ElasticNetCV(max_iter=5000))),
-        ]
-    )
-    pipe_yX_elasticnet = ForecastingPipeline(
-        steps=[
-            ('scaler', TabularToSeriesAdaptor(StandardScaler())),
-            ('pipe_y', pipe_y_elasticnet),
-        ]
-    )
+    pipe_y_elasticnet = TransformedTargetForecaster(steps=[
+        ('scaler', TabularToSeriesAdaptor(StandardScaler())),
+        ('forecaster',DirectReductionForecaster(
+            ElasticNetCV(max_iter=5000,
+                         cv = TimeSeriesSplit(n_splits=5)))),
+        ])
     
+    pipe_yX_elasticnet = ForecastingPipeline(steps=[
+        ('scaler', TabularToSeriesAdaptor(StandardScaler())),
+        ('pipe_y', pipe_y_elasticnet),
+        ])
+
+    ols_1feature = ForecastingPipeline(steps=[
+        ('feature_selection',FeatureSelection(n_columns=1)),
+        ('ols',DirectReductionForecaster(LinearRegression()))
+        ])
+    
+    ols_pca = ForecastingPipeline(steps=[
+        ('pca',TabularToSeriesAdaptor(PCA(n_components=.9))),
+        ('ols',DirectReductionForecaster(LinearRegression()))
+        ])
+        
     # forecaster representation for selection among the listed models
     forecaster = MultiplexForecaster(
         forecasters=[
-            ('naive_drift', NaiveForecaster(strategy='drift',window_length=5)),
-            ('naive_last', NaiveForecaster(strategy='last')),
-            ('naive_mean', NaiveForecaster(strategy='mean',window_length=5)),
-            ('elasticnetcv', pipe_yX_elasticnet)
-        ],
+            ('naive_drift', NaiveForecaster(strategy='drift',window_length=2)),
+            ('naive_last',  NaiveForecaster(strategy='last')),
+            ('naive_mean',  NaiveForecaster(strategy='mean',window_length=5)),
+            ('elasticnetcv', pipe_yX_elasticnet),
+            ('ols_1feature', ols_1feature),
+            ('ols_pca',      ols_pca)
+        ]
     )
     
     cv = ExpandingGreedySplitter(test_size=1, folds=5)
@@ -81,8 +95,10 @@ def DefaultForecaster()->BaseForecaster:
                 'naive_drift',
                 'naive_last',
                 'naive_mean',
-                'elasticnetcv'
-                ],},
+                'elasticnetcv',
+                'ols_1feature',
+                'ols_pca',
+                ]},
         backend='dask'
     )
 
