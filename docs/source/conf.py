@@ -8,8 +8,8 @@
 
 project = "mff"
 copyright = "2024, IMF"
-author = "Ando Sakai, Doga Bilgin and Sultan Orazbayev"
-release = "0.1"
+author = "Ando Sakai, Shuvam Das, Doga Bilgin and Sultan Orazbayev"
+release = "0.1.2"
 
 
 # -- General configuration ---------------------------------------------------

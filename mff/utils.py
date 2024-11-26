@@ -37,7 +37,7 @@ import pandas as pd
 import sympy as sp
 import warnings
 
-#%% MFF
+#%%
 
 def DefaultForecaster()->BaseForecaster:
     """
@@ -103,137 +103,6 @@ def DefaultForecaster()->BaseForecaster:
     )
 
     return gscv
-
-
-class MFF:
-    
-    """A class for Macro-Framework Forecasting (MFF). 
-    
-    This class facilitates forecasting of single frequency time series data 
-    using a two-step process. First step of the forecasting procedure generates
-    unconstrained forecasts using the forecaster specified. In the next step, 
-    these forecasts are then reconclied so that they satisfy the supplied 
-    constrants, and smoothness of the forecasts is maintained.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-       Input dataframe containing time series data. Data should be in wide
-       format, with each row containing data for one period, and each 
-       column containing data for one variable.
-    
-    forecaster : BaseForecaster
-        sktime BaseForecaster descendant
-    
-    constraints_with_wildcard : str, optional(default: None)
-        Constraints that hold with equality. Constraints may include wildcard, 
-        in which case constraints will be applied across all horizons, or
-        may be defined for specified time periods.
-     
-    ineq_constraints_with_wildcard : str, optional(default: None)
-        Inequality constraints, comparable to ``constraints_with_wildcard``.
-        Constraints may include wildcard, in which case constraints will be
-        applied across all horizons, or may be defined for specified time 
-        periods.
-       
-    parallelize : boolean
-        Indicate whether parallelization should be employed for generating the
-        first step forecasts. Default value is `True`. 
-
-    Returns
-    -------
-    df2 : pd.Dataframe
-        Output dataframe with all reconciled forecasts filled into the original
-        input. 
-
-
-    """
-    def __init__(self,
-                 df: pd.DataFrame,
-                 forecaster = DefaultForecaster(),
-                 constraints_with_wildcard:List[str] = [],
-                 ineq_constraints_with_wildcard:List[str] = [],
-                 parallelize:bool = True):
-        
-        self.df = df
-        self.forecaster = forecaster
-        self.constraints_with_wildcard = constraints_with_wildcard
-        self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
-        self.parallelize = parallelize
-        
-    def fit(self):
-        """
-        Fits the model and generates reconciled forecasts for the input 
-        dataframe subject to defined constraints.
-        """
-
-        df = self.df
-        forecaster = self.forecaster
-        constraints_with_wildcard = self.constraints_with_wildcard
-        ineq_constraints_with_wildcard = self.ineq_constraints_with_wildcard
-        parallelize = self.parallelize
-        
-        # modify inputs into machine-friendly shape
-        df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
-        C,d = StringToMatrixConstraints(df0.T.stack(),
-                                        all_cells,
-                                        unknown_cells,
-                                        known_cells,
-                                        constraints_with_wildcard)
-        C,d = AddIslandsToConstraints(C,d,islands)
-        C_ineq,d_ineq = StringToMatrixConstraints(df0.T.stack(),
-                                                  all_cells,
-                                                  unknown_cells,
-                                                  known_cells,
-                                                  ineq_constraints_with_wildcard)
-        # 1st stage forecast and its model
-        df1,df1_model = FillAllEmptyCells(df0,forecaster,parallelize=parallelize)
-
-        # get pseudo out-of-sample prediction, true values, and prediction models
-        pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
-        
-        # break dataframe into list of time series
-        ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
-        
-        # get parts for reconciliation
-        y1 = GenVecForecastWithIslands(ts_list,islands)
-        W,shrinkage = GenWeightMatrix(pred_list, true_list)
-        smoothness = GenLamstar(pred_list,true_list)
-        Phi = GenSmoothingMatrix(W,smoothness)
-
-        # 2nd stage forecast
-        y2 = Reconciliation(y1,W,Phi,C,d,C_ineq,d_ineq)
-        
-        # reshape vector y2 into df2
-        y2 = y2.T.stack(future_stack=True)
-        y2.index = y2.index.droplevel(level=0)
-        df2 = df0.copy()
-        df2.update(y2,overwrite=False) # fill only nan cells of df0
-        
-        self.df0 = df0
-        self.C = C
-        self.d = d
-        self.islands=islands
-        
-        self.df1 = df1
-        self.df1_model = df1_model
-        
-        self.pred = pred
-        self.true = true
-        self.model = model
-        self.ts_list = ts_list
-        self.pred_list = pred_list
-        self.true_list = true_list
-        self.y1 = y1
-        self.W = W
-        self.Phi = Phi
-        self.shrinkage = shrinkage
-        self.smoothness = smoothness
-        
-        self.y2 = y2
-        self.df2 = df2
-        
-        return self.df2
 
 def OrganizeCells(df:pd.DataFrame):
     """
@@ -343,7 +212,7 @@ def StringToMatrixConstraints(df0_stacked:pd.DataFrame, # stack df0 to accomodat
                               all_cells:pd.Series,
                               unknown_cells:pd.Series,
                               known_cells:pd.Series,
-                              constraints_with_wildcard:List[str] = [],
+                              constraints_with_wildcard:list[str] = [],
                               wildcard_string:str = '?'):
     """
     Convert equality constraints from list to matrix form for horizons to 
@@ -617,8 +486,6 @@ def FillAnEmptyCell(df,row,col,forecaster):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sklearn.linear_model import ElasticNetCV
-    >>> from sktime.forecasting.compose import YfromX
-    >>> from mff.mff import FillAnEmptyCell
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
@@ -646,10 +513,10 @@ def FillAnEmptyCell(df,row,col,forecaster):
     
     return y_pred, forecaster
 
-
 @delayed
 def delayed_FillAnEmptyCell(df,row,col,forecaster):
-    return FillAnEmptyCell(df,row,col,forecaster):
+    return FillAnEmptyCell(df,row,col,forecaster)
+
 
 
 def FillAllEmptyCells(df,forecaster,parallelize = True):
@@ -686,7 +553,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     >>> import pandas as pd
     >>> from sklearn.linear_model import ElasticNetCV
     >>> from sktime.forecasting.compose import YfromX
-    >>> from mff.mff import FillAllEmptyCells
+    >>> from mff.utils import FillAllEmptyCells
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
@@ -1291,276 +1158,25 @@ def Reconciliation(y1,W,Phi,C,d,C_ineq=None,d_ineq=None):
 
     return y2
 
-
-def example1(): # no constraints
-
-    # load data
-    from sktime.datasets import load_macroeconomic
-    df_true = load_macroeconomic().iloc[:,:5]
     
-    # input dataframe
-    df = df_true.copy()
-    fh = 5
-    df.iloc[-fh:,0] = np.nan
-    
-    # apply MFF
-    m = MFF(df,constraints_with_wildcard=[])
-    df2 = m.fit()
-    df0 = m.df0
-    df1 = m.df1
-    df1_model = m.df1_model
-    smoothness = m.smoothness
-    shrinkage = m.shrinkage
-    
-    # plot results
-    t0 = -30
-    ax = df0.iloc[t0:,0].plot(label='df0')
-    df1.iloc[t0:,0].plot(ax=ax,label='df1')
-    df2.iloc[t0:,0].plot(ax=ax,label='df2')
-    df_true.iloc[t0:,0].plot(ax=ax,label='df_true')
-    ax.axvline(x = df0.index[-fh])
-    ax.legend()
-    
-    print('smoothness',smoothness.values)
-    print('shrinkage',np.round(shrinkage,3))
-    for ri,ci in np.argwhere(df.isna()):
-        print(df1_model.index[ri],
-              df1_model.columns[ci],
-              df1_model.iloc[ri,ci].best_params_)
+def get_freq_of_freq(periodindex,freqstr):
+    if freqstr == 'Y':
+        return periodindex.year
+    if freqstr == 'Q':
+        return periodindex.quarter
+    if freqstr == 'M':
+        return periodindex.month
+    if freqstr == 'W':
+        return periodindex.week
+    if freqstr == 'D':
+        return periodindex.day
+    if freqstr == 'H':
+        return periodindex.hour
+    if freqstr == 'T':
+        return periodindex.min
+    if freqstr == 'S':
+        return periodindex.second
 
-        
-# example 2: with constraints
-def example2():
-    
-    # create data
-    n = 30
-    p = 3
-    fh = 5
-    df_true = pd.DataFrame(np.random.rand(n,p),
-                      columns=[f'{L}{i}' for i in range(int(np.ceil(p/26))) for L in ascii_uppercase][:p],
-                      index=pd.date_range(start='2000',periods=n,freq='YE').year
-                      )
-    df_true.iloc[:,-1] = df_true.iloc[:,:-1].sum(axis=1)
-    df = df_true.copy()
-    df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
-    df.iloc[-1,0] = df_true.iloc[-1,0] # island
-    #df.iloc[-fh,-1] = df.iloc[:,-1].mean()
-    # df.iloc[-3,1] = df_true.iloc[-3,1] # island
-    constraints_with_wildcard = ['A0?+B0?-C0?']
-    #ineq_constraints_with_wildcard = ['A0?-0.5'] # A0 <=0.5 for all years
-    
-    # fit data
-    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard)
-    df2 = m.fit()
-    df0 = m.df0
-    df1 = m.df1
-    df1_model = m.df1_model
-    shrinkage = m.shrinkage
-    smoothness = m.smoothness
-    W = m.W
-    for ri,ci in np.argwhere(df.isna()):
-        print(df1_model.index[ri],
-              df1_model.columns[ci],
-              df1_model.iloc[ri,ci].best_params_)
-    
-    
-    import matplotlib.pyplot as plt
-    plt.figure()
-    t0 = -20
-    plt.subplot(2,1,1)
-    ax = df0.iloc[t0:,0].plot(label='df0')
-    df1.iloc[t0:,0].plot(ax=ax,label='df1')
-    df2.iloc[t0:,0].plot(ax=ax,label='df2')
-    df_true.iloc[t0:,0].plot(ax=ax,label='df_true')
-    ax.axvline(x = df0.index[-fh])
-    
-    plt.subplot(2,1,2)
-    ax = df0.iloc[t0:,1].plot(label='df0')
-    df1.iloc[t0:,1].plot(ax=ax,label='df1')
-    df2.iloc[t0:,1].plot(ax=ax,label='df2')
-    df_true.iloc[t0:,1].plot(ax=ax,label='df_true')
-    ax.axvline(x = df0.index[-fh],label='fh=1')
-    ax.legend(loc='lower left')
-    
-    print('smoothness',smoothness.values)
-    print('shrinkage',np.round(shrinkage,3))
-    
-    # confirm constraints
-    assert(np.isclose(df2['A0']+df2['B0']-df2['C0'],0).all())
-
-    
-
-    
-#%% MFF mixed freq
-class MFF_mixed_freqency:
-    
-    def __init__(self,
-                 df_dict,
-                 forecaster = DefaultForecaster(),
-                 constraints_with_wildcard=[],
-                 ineq_constraints_with_wildcard=[]):
-        
-        self.df_dict = df_dict
-        self.forecaster=forecaster
-        self.constraints_with_wildcard=constraints_with_wildcard
-        self.ineq_constraints_with_wildcard=ineq_constraints_with_wildcard
-        
-    def fit(self):
-        df_dict = self.df_dict
-        forecaster=self.forecaster
-        constraints_with_wildcard=self.constraints_with_wildcard
-        ineq_constraints_with_wildcard=self.ineq_constraints_with_wildcard
-        
-        # create constraints
-        freq_order = ['Y', 'Q', 'M', 'W', 'D', 'H', 'T', 'S']    
-        lowest_freq = freq_order[min([freq_order.index(k) for k in df_dict.keys()])]
-
-        df0_list = []
-        all_cells_list = []
-        unknown_cells_list = []
-        known_cells_list = []
-        islands_list = []
-        for k in df_dict.keys():
-            df0_k, all_cells_k, unknown_cells_k, known_cells_k, islands_k = \
-                OrganizeCells(df_dict[k])
-            df0_list.append(df0_k)
-            all_cells_list.append(all_cells_k)
-            unknown_cells_list.append(unknown_cells_k)
-            known_cells_list.append(known_cells_k)
-            islands_list.append(islands_k)
-
-        df0_stacked = ConcatMixFreqMultiIndexSeries([df0.T.stack() for df0 in df0_list], axis=0)
-        all_cells = pd.concat(all_cells_list,axis=0)
-        unknown_cells = pd.concat(unknown_cells_list,axis=0)
-        known_cells = pd.concat(known_cells_list,axis=0)
-        islands = pd.concat(islands_list,axis=0)
-
-        C,d = StringToMatrixConstraints(df0_stacked,
-                                        all_cells,
-                                        unknown_cells,
-                                        known_cells,
-                                        constraints_with_wildcard)
-
-        # combine all frequncies into the lowest frequency dataframe
-        df0wide_list = []
-        df0wide_colflat_list = []
-        for df in df0_list:
-            
-            df0 = df.copy() # don't want to change df0_list
-            df0_freq = df0.index.freqstr[0] 
-            
-            if df0_freq == lowest_freq:
-                df0wide_freq = df0.copy()
-                df0wide_colfat_freq = pd.Series(df0wide_freq.columns,
-                                              index = df0wide_freq.columns)
-                
-            else:
-                index_freq = df0.index.asfreq(lowest_freq)
-                col_freq = df0_freq + get_freq_of_freq(df0.index,df0_freq).astype(str)
-                df0.index = pd.MultiIndex.from_arrays([index_freq,col_freq])
-                df0wide_freq = df0.unstack()
-                df0wide_colfat_freq = pd.Series(df0wide_freq.columns.map('_'.join), 
-                                                   index = df0wide_freq.columns)
-                
-            df0wide_list.append(df0wide_freq)
-            df0wide_colflat_list.append(df0wide_colfat_freq)
-
-        df0wide = pd.concat(df0wide_list,axis=1)
-        df0wide_col = df0wide.columns
-        df0wide_colflat = pd.concat(df0wide_colflat_list)
-
-        # 1st step forecast
-        df0wide.columns = df0wide_colflat.values.tolist() # colname has to be single index
-        df1wide,df1wide_model = FillAllEmptyCells(df0wide,forecaster)
-        predwide,truewide,modelwide = GenPredTrueData(df0wide,forecaster)
-
-        # get df1_list by breaking wide dataframe into different frequencies
-        df1_list = []
-        for df0i,df0 in enumerate(df0_list):
-            if df0.index.freqstr[0] == lowest_freq:
-                df1_freq = df0.copy()
-                df1_freq.update(df1wide.loc[:,df0wide_colflat_list[df0i].values])    
-            else:
-                df1wide_freq = df1wide.loc[:,df0wide_colflat_list[df0i].values]
-                df1wide_freq.columns = pd.MultiIndex.from_tuples(df0wide_colflat_list[df0i].index)
-                df1_freq = df0wide_list[df0i].copy().stack(future_stack=True) # storage
-                df1_freq.update(df1wide_freq.stack(future_stack=True))
-                df1_freq.index = df0_list[df0i].index
-            
-            df1_list.append(df1_freq)
-
-        # get pred_list, true_list by breaking dataframes into different frequencies
-        pred_allfreq = []
-        true_allfreq = []
-        for df0i,df0 in enumerate(df0_list):
-            
-            # get nan cells
-            df0wide_freq = df0wide_list[df0i].copy()
-            df0wide_freq.columns = df0wide_colflat_list[df0i].values
-            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().index
-            
-            # slice predwide
-            pred_freq = predwide.loc[:,na_cells]
-            true_freq = truewide.loc[:,na_cells]
-            
-            if df0.index.freqstr[0] != lowest_freq:
-                    
-                # reshape colname multiindex of (var_freq,lowestfreq) to var_lowestfreqfreq
-                colflat = pred_freq.columns
-                var_list = [v[:v.rfind('_')] for v in colflat.get_level_values(0)]
-                freq_list = [v[v.rfind('_')+1:] for v in colflat.get_level_values(0)]
-                lowest_freq_list = colflat.get_level_values(-1).astype(str)
-                original_time = pd.PeriodIndex([lowest_freq_list[i]+freq_list[i] for i in range(len(colflat))],
-                                               freq=df0.index.freq)
-                pred_freq_colname = pd.MultiIndex.from_arrays([var_list,original_time])
-                pred_freq.columns = pred_freq_colname
-                true_freq.columns = pred_freq_colname
-            
-            # change col order
-            pred_freq = pred_freq.loc[:,df0.isna()[df0.isna()].T.stack().index]
-            true_freq = true_freq.loc[:,pred_freq.columns]
-            
-            # append pred, true for each frequency
-            pred_allfreq.append(pred_freq)
-            true_allfreq.append(true_freq)
-
-        # break dataframes in to lists
-        ts_list = []
-        pred_list = []
-        true_list = []
-        for df0i,df0 in enumerate(df0_list):
-            ts_list_freq,pred_list_freq,true_list_freq = BreakDataFrameIntoTimeSeriesList(
-                df0,df1_list[df0i],pred_allfreq[df0i],true_allfreq[df0i])
-                
-            ts_list += ts_list_freq
-            pred_list += pred_list_freq
-            true_list += true_list_freq
-              
-        # get parts for reconciliation
-        #islands_list_all_freq = pd.concat(islands_list)
-
-        y1 = GenVecForecastWithIslands(ts_list,islands)
-        W,shrinkage = GenWeightMatrix(pred_list, true_list)
-        smoothness = GenLamstar(pred_list,true_list)
-        Phi = GenSmoothingMatrix(W,smoothness)
-        
-        y2 = Reconciliation(y1,W,Phi,C,d)
-
-        # reshape vector y2 into df2
-        y2 = y2.T.stack(future_stack=True)
-        y2.index = y2.index.droplevel(level=0)
-        df2_list=[]
-        for df0 in df0_list:
-            df2_freq = df0.copy()
-            df2_freq.update(y2,overwrite=False) # fill only nan cells of df0
-            df2_list.append(df2_freq)
-
-
-        self.df0_list = df0_list
-        self.df1_list = df1_list
-        self.df2_list = df2_list
-        return self.df2_list
-    
 # used only in mixed freq case, pd.concat doesn't work for more than 4 mix-freq series
 # doesn't work when there are more than 3 freq!
 def ConcatMixFreqMultiIndexSeries(df_list,axis):
@@ -1599,80 +1215,3 @@ def ConcatMixFreqMultiIndexSeries(df_list,axis):
             
             dfwide = pd.concat(dfwide_list,axis=1)
             return dfwide
-
-def get_freq_of_freq(periodindex,freqstr):
-    if freqstr == 'Y':
-        return periodindex.year
-    if freqstr == 'Q':
-        return periodindex.quarter
-    if freqstr == 'M':
-        return periodindex.month
-    if freqstr == 'W':
-        return periodindex.week
-    if freqstr == 'D':
-        return periodindex.day
-    if freqstr == 'H':
-        return periodindex.hour
-    if freqstr == 'T':
-        return periodindex.min
-    if freqstr == 'S':
-        return periodindex.second
-
-
-# example, mixed-frequency intra-inter-temporal constraints
-def example3():
-    
-    import warnings
-    warnings.filterwarnings("ignore", category=UserWarning)
-    
-    n = 120
-    p = 3
-    fhA = 5
-    fhQ = 7
-    dfQ_true = pd.DataFrame(np.random.rand(n,p),
-                      columns=[f'{L}{i}' for i in range(int(np.ceil(p/26))) for L in ascii_uppercase][:p],
-                      index=pd.period_range(start='2000-1-1',periods=n,freq='Q'))
-    dfQ_true.iloc[:,-1] = dfQ_true.iloc[:,:-1].sum(axis=1)
-    dfA_true = dfQ_true.groupby(dfQ_true.index.year).sum()
-    dfA_true.index = pd.PeriodIndex(dfA_true.index,freq='Y')
-    
-    dfA = dfA_true.copy()
-    dfA.iloc[-fhA:,:np.ceil(p/2).astype(int)] = np.nan
-    
-    dfQ = dfQ_true.iloc[:-12,:].copy()
-    dfQ.iloc[-fhQ:,:np.ceil(p/2).astype(int)] = np.nan
-    
-    # inputs
-    df_dict = {'Y':dfA,'Q':dfQ}
-    constraints_with_wildcard = ['A0?+B0?-C0?','?Q1+?Q2+?Q3+?Q4-?']
-    
-    mff = MFF_mixed_freqency(df_dict,
-                             constraints_with_wildcard=constraints_with_wildcard)
-    df2_list = mff.fit()
-    df1_list = mff.df1_list
-    df0_list = mff.df0_list
-    
-    # plot results
-    import matplotlib.pyplot as plt
-    t0 = -30
-    plt.subplot(2,1,1)
-    ax = df0_list[1].iloc[t0:,0].plot(label='df0')
-    df1_list[1].iloc[t0:,0].plot(ax=ax,label='df1')
-    df2_list[1].iloc[t0:,0].plot(ax=ax,label='df2')
-    dfQ_true.iloc[t0:,0].plot(ax=ax,label='df_true')
-    ax.axvline(x = df0_list[1].index[-fhQ],label='fh=1')
-    ax.legend(loc='lower left')
-    
-    plt.subplot(2,1,2)
-    ax = df0_list[0].iloc[t0:,0].plot(label='df0')
-    df1_list[0].iloc[t0:,0].plot(ax=ax,label='df1')
-    df2_list[0].iloc[t0:,0].plot(ax=ax,label='df2')
-    dfA_true.iloc[t0:,0].plot(ax=ax,label='df_true')
-    ax.axvline(x = df0_list[0].index[-fhQ],label='fh=1')
-    ax.legend(loc='lower left')
-    
-    # check constraints
-    df2A = df2_list[0]
-    df2Q = df2_list[1]
-    df2A.eval('A0+B0-C0')
-    (df2Q.resample('Y').sum()-df2A).dropna()

@@ -39,6 +39,8 @@ dependencies = [
     "sktime >= 0.27.0",
     "sympy >= 1.12",
     "cvxpy >= 1.5.3",
+    "matplotlib",
+    "statsmodels",
 ]
 
 [build-system]
@@ -96,3 +98,19 @@ line-length = 100
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+macroframe-forecast = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+pip = "*"
+ipykernel = "*"
+cvxpy = "*"
+
+
+[tool.pixi.tasks]
+test = "pytest ."
