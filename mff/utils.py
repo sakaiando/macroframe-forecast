@@ -907,7 +907,12 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
         return W,np.nan
 
 
-def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
+def GenLamstar(pred_list: list,
+               true_list: list,
+               empirically: bool = True,
+               default_lam: float =6.25,
+               max_lam: float =129600):
+
     """
     Calculate the smoothness parameter (lambda) associated with each variable 
     being forecasted. 
@@ -926,7 +931,10 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
         commonly used values from the literature. The default is True.
     default_lam : float, optional
         The value of lambda to use if none is provided. The default is 6.25.
-
+    max_lam : float, optional
+        The upperbound of HP filter penality term (lambda) searched by scipy 
+        minimizer. The default is 129600.
+        
     Returns
     -------
     lamstar : pd.Series
@@ -973,8 +981,12 @@ def GenLamstar(pred_list,true_list,empirically=True,default_lam=6.25):
             obj = lambda x: np.mean([loss_fn(x,T,y_true.iloc[i:i+1,:].T.values,
                                              y_pred.iloc[i:i+1,:].T.values) \
                                  for i in range(y_pred.shape[0])])
-            constraint = {'type': 'ineq', 'fun': lambda lam: lam}
-            result = scipy.optimize.minimize(obj,0,constraints=[constraint])
+            constraint_lb = {'type': 'ineq', 'fun': lambda lam: lam} # lambda >=0
+            
+            # lambda <= max_lam, without this, I+xF may be too close to F to invert
+            constraint_ub = {'type': 'ineq', 'fun': lambda lam: -lam + max_lam} 
+            result = scipy.optimize.minimize(obj,0,constraints=[constraint_lb,
+                                                                constraint_ub])
             lamstar.iloc[tsidxi] = result.x[0]
     return lamstar
 
