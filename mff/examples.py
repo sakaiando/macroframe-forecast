@@ -27,7 +27,7 @@ def example1(): # no constraints
     df.iloc[-fh:,0] = np.nan
     
     # apply MFF
-    m = MFF(df,constraints_with_wildcard=[])
+    m = MFF(df,equality_constraints=[])
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1
@@ -69,11 +69,11 @@ def example2():
     df.iloc[-1,0] = df_true.iloc[-1,0] # island
     #df.iloc[-fh,-1] = df.iloc[:,-1].mean()
     # df.iloc[-3,1] = df_true.iloc[-3,1] # island
-    constraints_with_wildcard = ['A0?+B0?-C0?']
+    equality_constraints = ['A0?+B0?-C0?']
     #ineq_constraints_with_wildcard = ['A0?-0.5'] # A0 <=0.5 for all years
     
     # fit data
-    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard)
+    m = MFF(df,equality_constraints = equality_constraints)
     df2 = m.fit()
     df0 = m.df0
     df1 = m.df1

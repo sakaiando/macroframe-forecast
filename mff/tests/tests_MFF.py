@@ -26,9 +26,9 @@ def test_MFF_non_parallel():
     df = df_true.copy()
     df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
     df.iloc[-1,0] = df_true.iloc[-1,0] # island
-    constraints_with_wildcard = ['A0?+B0?-C0?']
+    equality_constraints = ['A0?+B0?-C0?']
     
-    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard,
+    m = MFF(df,equality_constraints = equality_constraints,
             parallelize=False)
     df2 = m.fit()
 
@@ -47,9 +47,9 @@ def test_MFF_parallel():
     df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
     df.iloc[-1,0] = df_true.iloc[-1,0] # island
 
-    constraints_with_wildcard = ['A0?+B0?-C0?']
+    equality_constraints = ['A0?+B0?-C0?']
 
-    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard,
+    m = MFF(df,equality_constraints = equality_constraints,
             parallelize=True)
     df2 = m.fit()
 
