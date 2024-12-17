@@ -39,10 +39,16 @@ import warnings
 
 #%%
 
-def DefaultForecaster()->BaseForecaster:
+def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
     """
     Set up forecasting pipeline, specifying the scaling (transforming) to be 
     applied and forecasting model to be used. 
+
+    Parameters
+    ----------
+    small_sample : boolean
+        Indicator for whether the sample of observations available for training 
+        is small. By default this is turned to False.
 
     Returns
     -------
@@ -85,22 +91,47 @@ def DefaultForecaster()->BaseForecaster:
             ('ols_pca',      ols_pca)
         ]
     )
-    
+
     cv = ExpandingGreedySplitter(test_size=1, folds=5)
+
+    # If the number of observations is small, Elastic Net is dropped from the 
+    # models in the grid search algorithm.
     
-    gscv = ForecastingGridSearchCV(
-        forecaster=forecaster,
-        cv=cv,
-        param_grid={'selected_forecaster':[
-                'naive_drift',
-                'naive_last',
-                'naive_mean',
-                'elasticnetcv',
-                'ols_1feature',
-                'ols_pca',
-                ]},
-        backend='dask'
-    )
+    if not small_sample:
+
+        gscv = ForecastingGridSearchCV(
+            forecaster=forecaster,
+            cv=cv,
+            param_grid={'selected_forecaster':[
+                    'naive_drift',
+                    'naive_last',
+                    'naive_mean',
+                    'elasticnetcv',
+                    'ols_1feature',
+                    'ols_pca',
+                    ]},
+            backend='dask'
+        )
+            # Add a custom attribute to identify the forecaster
+        gscv.is_default_forecaster = True
+
+    else:
+
+        gscv = ForecastingGridSearchCV(
+            forecaster=forecaster,
+            cv=cv,
+            param_grid={'selected_forecaster':[
+                    'naive_drift',
+                    'naive_last',
+                    'naive_mean',
+                    'ols_1feature',
+                    'ols_pca',
+                    ]},
+            backend='dask'
+            
+        )
+
+
 
     return gscv
 
@@ -932,7 +963,7 @@ def GenLamstar(pred_list: list,
     default_lam : float, optional
         The value of lambda to use if none is provided. The default is 6.25.
     max_lam : float, optional
-        The upperbound of HP filter penality term (lambda) searched by scipy 
+        The upperbound of HP filter penalty term (lambda) searched by scipy 
         minimizer. The default is 129600.
         
     Returns

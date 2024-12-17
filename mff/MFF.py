@@ -7,6 +7,8 @@ from typing import List
 
 import pandas as pd
 
+import numpy as np
+
 from mff.utils import (
     DefaultForecaster,
     OrganizeCells,
@@ -131,6 +133,28 @@ class MFF:
         
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
+
+        # DefaultForecaster() has Elastic Net CV as one of the models.
+        # Elastic net needs more than 15 observations to work. If the minimum
+        # number of available observations for any variable is less than 16 in 
+        # synthetic training sets, Elastic Net is dropped from the set of models
+        # in the DefaultForecaster.
+
+        if hasattr(forecaster, 'is_default_forecaster'):
+
+            forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - min(np.argwhere(df0.isna())[:,0]) + 1
+
+            minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
+                                    - n_sample_split
+            
+            if minimum_training_obs <= 15:
+                if minimum_training_obs > 10:
+                    forecaster = DefaultForecaster(small_sample = True)
+                    print('Dropping Elastic Net from the list of models')
+                else:
+                    print('Too few observations for all models, ending fit')
+                    return None
+        
         C,d = StringToMatrixConstraints(df0.T.stack(),
                                         all_cells,
                                         unknown_cells,
