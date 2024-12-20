@@ -15,7 +15,8 @@ from sktime.forecasting.compose import (
     DirectReductionForecaster,
     ForecastingPipeline,
     MultiplexForecaster,
-    TransformedTargetForecaster
+    TransformedTargetForecaster,
+    YfromX
     )
 from sktime.forecasting.dynamic_factor import DynamicFactor
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -94,8 +95,8 @@ def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
 
     cv = ExpandingGreedySplitter(test_size=1, folds=5)
 
-    # If the number of observations is small, Elastic Net is dropped from the 
-    # models in the grid search algorithm.
+    # If the number of observations is small, Grid Search is no longer used for
+    # model selection. Instead, simple Linear Regression (OLS) is used.
     
     if not small_sample:
 
@@ -112,28 +113,68 @@ def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
                     ]},
             backend='dask'
         )
-            # Add a custom attribute to identify the forecaster
-        gscv.is_default_forecaster = True
 
     else:
 
-        gscv = ForecastingGridSearchCV(
-            forecaster=forecaster,
-            cv=cv,
-            param_grid={'selected_forecaster':[
-                    'naive_drift',
-                    'naive_last',
-                    'naive_mean',
-                    'ols_1feature',
-                    'ols_pca',
-                    ]},
-            backend='dask'
-            
-        )
-
-
+        gscv = YfromX(LinearRegression(fit_intercept = False))
 
     return gscv
+
+def ForecasterSetup(forecaster:BaseForecaster, df0:pd.DataFrame, 
+                    n_forecast_error:int = 5):
+    """
+    Check whether a forecaster has been defined or not, and initiate the default
+    forecasting pipeline if none has been defined. If the observed data is too 
+    small, then OLS model is used, otherwise a Grid Search algorithm is used to
+    select the best model for each forecast generated.
+
+    Parameters
+    ----------
+    forecaster : BaseForecaster(default: None)
+        sktime BaseForecaster descendant.
+    
+    df0 : pd.DataFrame
+        Input dataframe with island values replaced by nan.
+    
+    n_forecast_error : int
+        Number of training and testing sets to split data into for generating 
+        matrix of forecast errors.
+
+    Returns
+    -------
+    
+    forecaster : BaseForecaster
+        sktime BaseForecaster descendant; unmodified input if a forecaster was
+        provided. 
+
+    """
+    if forecaster is None:
+    
+        forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - \
+                            min(np.argwhere(df0.isna())[:,0]) + 1
+
+        minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
+                                - n_forecast_error
+        
+        if  minimum_training_obs <=0:
+
+            print('Number of observations too low for given forecast horizon \
+                   and n_sample_splits; consider reducing forecast horizon and\or \
+                   n_sample_splits')
+            
+            forecaster.no_estimation = True
+
+        elif minimum_training_obs <= 15:           
+            forecaster = DefaultForecaster(small_sample = True)
+            print('Number of observations too low; using OLS model')
+        
+        else:
+            
+            forecaster = DefaultForecaster(small_sample = False)
+            print('Using Grid Search algorithm for selecting best model')
+    
+    return(forecaster)
+
 
 def OrganizeCells(df:pd.DataFrame):
     """
@@ -488,7 +529,8 @@ def AddIslandsToConstraints(C:pd.DataFrame,
 
 
 def FillAnEmptyCell(df,row,col,forecaster):
-    """Generate a forecast for a given cell based on the latest known value 
+    """
+    Generate a forecast for a given cell based on the latest known value 
     for the given column (variable) and using the predefined forecasting pipeline.
     Called by ``FillAllEmptyCells``.
 
@@ -517,6 +559,7 @@ def FillAnEmptyCell(df,row,col,forecaster):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sktime.forecasting.compose import YfromX
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
@@ -626,7 +669,7 @@ def FillAllEmptyCells(df,forecaster,parallelize = True):
     return df1, df1_models
 
 
-def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
+def GenPredTrueData(df,forecaster,n_forecast_error=5,parallelize=True):
     """
     Generate in-sample forecasts from existing data by constructing 
     pseudo-historical datasets. 
@@ -635,9 +678,9 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     ----------
     df : pd.DataFrame
         Dataframe with all known as well as unknown values.
-    forecaster : pipeline (?)
-        Forecasting pipeline to be used
-    n_sample : int, optional
+    forecaster : BaseForecaster
+        sktime BaseForecaster descendant.
+    n_forecast_error : int, optional
         Number of horizons for which in-sample forecasts are generated.
         The default is 5.
     parallelize : boolean, optional
@@ -647,7 +690,7 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     -------
     pred : pd.DataFrame
         Dataframe with in-sample predictions generated using pseudo-historical 
-        datasets. Dimensions are n_sample x n_sample.
+        datasets. 
     true : pd.DataFrame
         Dataframe with actual values of the variable corresponding to predicted
         values contained in pred.
@@ -678,7 +721,7 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
         
     # create pseudo historical dataframes and their na cells
     df_list = [df.shift(-h-n).mask(df.shift(-h-n).notna(),df).iloc[:-h-n,:] \
-              for n in range(n_sample)]
+              for n in range(n_forecast_error)]
     
     # unpack all the na cells for pseudo historical dataframes to use dask
     tasks = [(dfi,df.index[rowi],df.columns[coli]) \
@@ -710,14 +753,14 @@ def GenPredTrueData(df,forecaster,n_sample=5,parallelize=True):
     # reduce n samples into a dataframe
     colname = df.isna()[df.isna()].T.stack().index
     idxname = pd.Index([df_list[n].index[np.argwhere(df_list[n].isna())[:,0].min()] 
-                        for n in range(n_sample)],
+                        for n in range(n_forecast_error)],
                         name = 'LastData')
     pred = pd.DataFrame([filled_list[n][df_list[n].isna()].T.stack().values 
-                         for n in range(n_sample)],index=idxname,columns=colname)
+                         for n in range(n_forecast_error)],index=idxname,columns=colname)
     model = pd.DataFrame([model_list[n][df_list[n].isna()].T.stack().values 
-                         for n in range(n_sample)],index=idxname,columns=colname)    
+                         for n in range(n_forecast_error)],index=idxname,columns=colname)    
     true = pd.DataFrame([df[df_list[n].isna()].T.stack().values 
-                         for n in range(n_sample)],index=idxname,columns=colname)
+                         for n in range(n_forecast_error)],index=idxname,columns=colname)
     
     return pred,true,model
 
@@ -847,7 +890,7 @@ def GenVecForecastWithIslands(ts_list,islands):
     return y1
 
 
-def GenWeightMatrix(pred_list,true_list,method='oas'):
+def GenWeightMatrix(pred_list,true_list,shrinkage_method='oas'):
     """
     Generate weighting matrix based on in-sample forecasts and actual values
     for the corresponding periods.    
@@ -861,7 +904,7 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
         List of dataframes, with each dataframe containing the actual values
         for a variable corresponding to in-sample predictions stored in
         pred_list.
-    method : str, optional
+    shrinkage_method : str, optional
         Type of algorithm to use for shrinking the covariance matrix, with 
         options of identity, oas and oasd. The default is 'oas'.
 
@@ -896,18 +939,18 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
     n_vars = fe.shape[1]
     sample_cov = fe.cov()
     
-    if method == 'identity':
+    if shrinkage_method == 'identity':
         W = pd.DataFrame(np.eye(sample_cov.shape[0]),index=sample_cov.index,columns=sample_cov.columns)
         return W, np.nan
     
-    if method == 'oas':    
+    if shrinkage_method == 'oas':    
         from sklearn.covariance import OAS
         oas = OAS().fit(fe.values)
         W = pd.DataFrame(oas.covariance_,index=sample_cov.index,columns=sample_cov.columns)
         rho = oas.shrinkage_
         return W, rho
     
-    if method == 'oasd':
+    if shrinkage_method == 'oasd':
         if n_vars>=2:
             # shrinkage target
             diag = np.diag(np.diag(sample_cov))
@@ -925,7 +968,7 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
             rho = np.nan
         return W, rho
     
-    if method == 'monotone diagonal':
+    if shrinkage_method == 'monotone diagonal':
         if n_vars>=2:
             diag = pd.Series(np.diag(sample_cov),
                              index=sample_cov.index)
@@ -940,7 +983,7 @@ def GenWeightMatrix(pred_list,true_list,method='oas'):
 
 def GenLamstar(pred_list: list,
                true_list: list,
-               empirically: bool = True,
+               lamstar_empirically: bool = True,
                default_lam: float =6.25,
                max_lam: float =129600):
 
@@ -957,7 +1000,7 @@ def GenLamstar(pred_list: list,
         List of dataframes, with each dataframe containing the actual values
         for a variable corresponding to in-sample predictions stored in
         pred_list.
-    empirically : boolean, optional
+    lamstar_empirically : boolean, optional
         Indicate whether lambda should be calculated emperically, or use
         commonly used values from the literature. The default is True.
     default_lam : float, optional
@@ -994,14 +1037,14 @@ def GenLamstar(pred_list: list,
                     'H':ly*((365*24)**2),
                     'T':ly*((365*24*60)**2),
                     'S':ly*((365*24*60*60)**2)}
-        lamstar = pd.Series( [lambda_dict[item].astype(float) for item in freq_list],
+        lamstar = pd.Series( [float(lambda_dict[item]) for item in freq_list],
                             index = tsidx_list)
     except Exception:
         lamstar = pd.Series( np.ones(len(tsidx_list)) * default_lam, 
                             index = tsidx_list)
     
     # optimal lambda
-    if empirically:
+    if lamstar_empirically:
         loss_fn = lambda x,T,yt,yp: \
             (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ \
             (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp)

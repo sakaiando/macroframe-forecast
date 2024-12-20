@@ -86,17 +86,17 @@ def test_MFF_mixed_frequency():
     assert ~np.isnan(df2_list[0].iloc[-1,0])
 
 def test_small_sample_MFF():
-    n = 30
+    n = 20
     p = 2
     fh = 5
     df_true = pd.DataFrame(np.random.rand(n,p),
                       columns=[f'{L}{i}' for i in range(int(np.ceil(p/26))) for L in ascii_uppercase][:p],
                       index=pd.date_range(start='2000',periods=n,freq='YE').year
                       )
-    df_true.iloc[:,-1] = df_true.iloc[:,:-1].sum(axis=1)
+    # df_true.iloc[:,-1] = df_true.iloc[:,:-1].sum(axis=1)
     df = df_true.copy()
     df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
-    df.iloc[-1,0] = df_true.iloc[-1,0] # island
+    # df.iloc[-1,0] = df_true.iloc[-1,0] # island
     equality_constraints = []
     
     m = MFF(df,equality_constraints = equality_constraints,

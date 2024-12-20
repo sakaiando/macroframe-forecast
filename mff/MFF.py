@@ -3,14 +3,12 @@
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
-from typing import List
-
 import pandas as pd
-
 import numpy as np
+from sktime.forecasting.base import BaseForecaster
 
 from mff.utils import (
-    DefaultForecaster,
+    ForecasterSetup,
     OrganizeCells,
     StringToMatrixConstraints,
     AddIslandsToConstraints,
@@ -25,6 +23,7 @@ from mff.utils import (
     )
 
 #%% MFF
+
 
 class MFF:
     
@@ -43,8 +42,9 @@ class MFF:
        format, with each row containing data for one period, and each 
        column containing data for one variable.
     
-    forecaster : BaseForecaster
-        sktime BaseForecaster descendant
+    forecaster : BaseForecaster, optional(default: None)
+        sktime BaseForecaster descendant. If not defined, then DefaultForecaster
+        is used.
     
     constraints_with_wildcard : str, optional(default: None)
         Constraints that hold with equality. Constraints may include wildcard, 
@@ -61,7 +61,7 @@ class MFF:
         Indicate whether parallelization should be employed for generating the
         first step forecasts. Default value is `True`. 
 
-    n_sample_split : int
+    n_forecast_error : int
         Number of windows to split data into training and testing sets for 
         generating matrix of forecast errors. Default is 5.
 
@@ -71,7 +71,7 @@ class MFF:
         oas, identity and monotone_diagonal.
     
     lamstar_empirically : boolean, optional(default: True)
-        Indicate whether the smoothness paramatere lambda is to be calculated
+        Indicate whether the smoothness paramater lambda is to be calculated
         empirically 
 
     default_lam : float, optional(default: 6.25)
@@ -92,11 +92,11 @@ class MFF:
     """
     def __init__(self,
                  df: pd.DataFrame,
-                 forecaster = DefaultForecaster(),
+                 forecaster: BaseForecaster  = None,
                  equality_constraints :list[str] = [],
                  inequality_constraints :list[str] = [],
                  parallelize:bool = True,
-                 n_sample_split:int = 5,
+                 n_forecast_error:int = 5,
                  shrinkage_method:str = 'oas',
                  lamstar_empirically:bool = True,
                  default_lam:float = 6.25,
@@ -107,7 +107,7 @@ class MFF:
         self.equality_constraints = equality_constraints
         self.inequality_constraints = inequality_constraints
         self.parallelize = parallelize
-        self.n_sample_split = n_sample_split
+        self.n_forecast_error = n_forecast_error
         self.shrinkage_method = shrinkage_method
         self.lamstar_empirically = lamstar_empirically
         self.default_lam = default_lam
@@ -125,7 +125,7 @@ class MFF:
         equality_constraints = self.equality_constraints
         inequality_constraints = self.inequality_constraints
         parallelize = self.parallelize
-        n_sample_split = self.n_sample_split 
+        n_forecast_error = self.n_forecast_error 
         shrinkage_method = self.shrinkage_method
         lamstar_empirically = self.lamstar_empirically
         default_lam = self.default_lam
@@ -134,27 +134,15 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        # DefaultForecaster() has Elastic Net CV as one of the models.
-        # Elastic net needs more than 15 observations to work. If the minimum
-        # number of available observations for any variable is less than 16 in 
-        # synthetic training sets, Elastic Net is dropped from the set of models
-        # in the DefaultForecaster.
-
-        if hasattr(forecaster, 'is_default_forecaster'):
-
-            forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - min(np.argwhere(df0.isna())[:,0]) + 1
-
-            minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
-                                    - n_sample_split
-            
-            if minimum_training_obs <= 15:
-                if minimum_training_obs > 10:
-                    forecaster = DefaultForecaster(small_sample = True)
-                    print('Dropping Elastic Net from the list of models')
-                else:
-                    print('Too few observations for all models, ending fit')
-                    return None
+        forecaster = ForecasterSetup(forecaster = forecaster,
+                                     df0 = df0,
+                                     n_forecast_error = n_forecast_error)
         
+        # In case there are too few observations, interrupt the estimation.
+        if hasattr(forecaster, 'no_estimation'):
+
+            return(None)
+
         C,d = StringToMatrixConstraints(df0.T.stack(),
                                         all_cells,
                                         unknown_cells,
@@ -170,7 +158,7 @@ class MFF:
         df1,df1_model = FillAllEmptyCells(df0,forecaster,parallelize=parallelize)
 
         # get pseudo out-of-sample prediction, true values, and prediction models
-        pred,true,model = GenPredTrueData(df0,forecaster,n_sample=n_sample_split, 
+        pred,true,model = GenPredTrueData(df0,forecaster,n_forecast_error=n_forecast_error, 
                                           parallelize=parallelize)
         
         # break dataframe into list of time series
@@ -179,9 +167,9 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list,islands)
         W,shrinkage = GenWeightMatrix(pred_list, true_list,
-                                      method = shrinkage_method)
+                                      shrinkage_method = shrinkage_method)
         smoothness = GenLamstar(pred_list,true_list,
-                                empirically = lamstar_empirically,
+                                lamstar_empirically = lamstar_empirically,
                                 default_lam = default_lam,
                                 max_lam = max_lam)
         Phi = GenSmoothingMatrix(W,smoothness)
