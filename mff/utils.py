@@ -158,9 +158,9 @@ def ForecasterSetup(forecaster:BaseForecaster, df0:pd.DataFrame,
         
         if  minimum_training_obs <=0:
 
-            print('Number of observations too low for given forecast horizon \
-                   and n_sample_splits; consider reducing forecast horizon and\or \
-                   n_sample_splits')
+            print('Number of observations too low for given forecast horizon' 
+                   'and n_sample_splits; consider reducing forecast horizon and/or' 
+                   'n_sample_splits')
             
             forecaster.no_estimation = True
 
