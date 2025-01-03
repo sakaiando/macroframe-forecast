@@ -70,13 +70,10 @@ class MFF:
         Oracle Shrinking Approximating Estimator ('oas'). Other options are
         oas, identity and monotone_diagonal.
     
-    lamstar_empirically : boolean, optional(default: True)
-        Indicate whether the smoothness paramater lambda is to be calculated
-        empirically 
-
-    default_lam : float, optional(default: 6.25)
-        Default value of lambda to be used; used when lamstar is not being estimated
-        empirically.
+    default_lam : float, optional(default: -1)
+        The value of lambda to be used for calculating smoothing parameter if 
+        frequency of observations cannot be determined from index names. If this 
+        is set to -1, lambda is calculated empirically. Default is -1.
 
     max_lam : float, optional(default: 129600)
         Maximum value of lamstar to be used for smoothing forecasts when being
@@ -127,7 +124,6 @@ class MFF:
         parallelize = self.parallelize
         n_forecast_error = self.n_forecast_error 
         shrinkage_method = self.shrinkage_method
-        lamstar_empirically = self.lamstar_empirically
         default_lam = self.default_lam
         max_lam = self.max_lam
         
@@ -169,7 +165,6 @@ class MFF:
         W,shrinkage = GenWeightMatrix(pred_list, true_list,
                                       shrinkage_method = shrinkage_method)
         smoothness = GenLamstar(pred_list,true_list,
-                                lamstar_empirically = lamstar_empirically,
                                 default_lam = default_lam,
                                 max_lam = max_lam)
         Phi = GenSmoothingMatrix(W,smoothness)

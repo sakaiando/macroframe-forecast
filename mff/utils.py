@@ -983,8 +983,7 @@ def GenWeightMatrix(pred_list,true_list,shrinkage_method='oas'):
 
 def GenLamstar(pred_list: list,
                true_list: list,
-               lamstar_empirically: bool = True,
-               default_lam: float =6.25,
+               default_lam: float = -1,
                max_lam: float =129600):
 
     """
@@ -1000,11 +999,10 @@ def GenLamstar(pred_list: list,
         List of dataframes, with each dataframe containing the actual values
         for a variable corresponding to in-sample predictions stored in
         pred_list.
-    lamstar_empirically : boolean, optional
-        Indicate whether lambda should be calculated emperically, or use
-        commonly used values from the literature. The default is True.
-    default_lam : float, optional
-        The value of lambda to use if none is provided. The default is 6.25.
+    default_lam : float, optional(default: -1)
+        The value of lambda to be used for calculating smoothing parameter if 
+        frequency of observations cannot be determined from index names. If this 
+        is set to -1, lambda is calculated empirically. The default value is -1.
     max_lam : float, optional
         The upperbound of HP filter penalty term (lambda) searched by scipy 
         minimizer. The default is 129600.
@@ -1044,7 +1042,7 @@ def GenLamstar(pred_list: list,
                             index = tsidx_list)
     
     # optimal lambda
-    if lamstar_empirically:
+    if default_lam == -1:
         loss_fn = lambda x,T,yt,yp: \
             (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ \
             (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp)
