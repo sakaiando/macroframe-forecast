@@ -95,8 +95,7 @@ class MFF:
                  parallelize:bool = True,
                  n_forecast_error:int = 5,
                  shrinkage_method:str = 'oas',
-                 lamstar_empirically:bool = True,
-                 default_lam:float = 6.25,
+                 default_lam:float = -1,
                  max_lam:float = 129600):
         
         self.df = df
@@ -106,7 +105,6 @@ class MFF:
         self.parallelize = parallelize
         self.n_forecast_error = n_forecast_error
         self.shrinkage_method = shrinkage_method
-        self.lamstar_empirically = lamstar_empirically
         self.default_lam = default_lam
         self.max_lam = max_lam
 
