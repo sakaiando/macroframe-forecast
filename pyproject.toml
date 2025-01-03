@@ -67,8 +67,8 @@ line_length = 100
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-testpaths = "tests"
-pythonpath = ["."]
+testpaths = "mff/tests"
+pythonpath = ["mff"]
 addopts = [
     "--strict-config",  # Force error if config is mispelled
     "--strict-markers", # Force error if marker is mispelled (must be defined in config)
