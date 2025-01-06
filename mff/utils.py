@@ -26,6 +26,7 @@ from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.feature_selection import FeatureSelection
 from string import ascii_uppercase, ascii_lowercase
 from time import time
+from dataclasses import dataclass
 
 import copy
 import dask
@@ -96,7 +97,7 @@ def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
     cv = ExpandingGreedySplitter(test_size=1, folds=5)
 
     # If the number of observations is small, Grid Search is no longer used for
-    # model selection. Instead, simple Linear Regression (OLS) is used.
+    # model selection. Instead, OLS with PCA is used is used.
     
     if not small_sample:
 
@@ -116,22 +117,30 @@ def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
 
     else:
 
-        gscv = YfromX(LinearRegression(fit_intercept = False))
+        gscv = ols_pca
 
     return gscv
 
-def ForecasterSetup(forecaster:BaseForecaster, df0:pd.DataFrame, 
-                    n_forecast_error:int = 5):
-    """
-    Check whether a forecaster has been defined or not, and initiate the default
-    forecasting pipeline if none has been defined. If the observed data is too 
-    small, then OLS model is used, otherwise a Grid Search algorithm is used to
-    select the best model for each forecast generated.
 
+@dataclass
+class TooFewObservations(Exception):
+    message: str = (
+                    f'Error: Number of observations too low for given forecast horizon '
+                    f'and n_sample_splits; consider reducing forecast horizon and/or '
+                    f'n_sample_splits'
+                )
+
+    def __str__(self):
+        return self.message
+
+
+def check_training_sample_size(df0:pd.DataFrame,n_forecast_error:int = 5):
+    """ 
+    Check sample size available for training window. Raise an exception if the 
+    number of observations available is too low. 
+    
     Parameters
     ----------
-    forecaster : BaseForecaster(default: None)
-        sktime BaseForecaster descendant.
     
     df0 : pd.DataFrame
         Input dataframe with island values replaced by nan.
@@ -143,37 +152,32 @@ def ForecasterSetup(forecaster:BaseForecaster, df0:pd.DataFrame,
     Returns
     -------
     
-    forecaster : BaseForecaster
-        sktime BaseForecaster descendant; unmodified input if a forecaster was
-        provided. 
-
-    """
-    if forecaster is None:
+    small_sample : boolean
+        Indicator for whether the sample of observations available for training 
+        is small. 
     
-        forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - \
+    """
+
+    forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - \
                             min(np.argwhere(df0.isna())[:,0]) + 1
 
-        minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
-                                - n_forecast_error
-        
-        if  minimum_training_obs <=0:
-
-            print('Number of observations too low for given forecast horizon' 
-                   'and n_sample_splits; consider reducing forecast horizon and/or' 
-                   'n_sample_splits')
-            
-            forecaster.no_estimation = True
-
-        elif minimum_training_obs <= 15:           
-            forecaster = DefaultForecaster(small_sample = True)
-            print('Number of observations too low; using OLS model')
-        
-        else:
-            
-            forecaster = DefaultForecaster(small_sample = False)
-            print('Using Grid Search algorithm for selecting best model')
+    minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
+                            - n_forecast_error
     
-    return(forecaster)
+    
+    if  minimum_training_obs <=0:
+
+        raise TooFewObservations
+
+    elif minimum_training_obs <= 15:           
+        
+        small_sample = True
+    
+    else:
+        
+        small_sample = False
+
+    return(small_sample)
 
 
 def OrganizeCells(df:pd.DataFrame):

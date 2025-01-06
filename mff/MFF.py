@@ -8,7 +8,7 @@ import numpy as np
 from sktime.forecasting.base import BaseForecaster
 
 from mff.utils import (
-    ForecasterSetup,
+    DefaultForecaster,
     OrganizeCells,
     StringToMatrixConstraints,
     AddIslandsToConstraints,
@@ -19,7 +19,8 @@ from mff.utils import (
     GenWeightMatrix,
     GenLamstar,
     GenSmoothingMatrix,
-    Reconciliation
+    Reconciliation,
+    check_training_sample_size,
     )
 
 #%% MFF
@@ -128,14 +129,14 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        forecaster = ForecasterSetup(forecaster = forecaster,
-                                     df0 = df0,
-                                     n_forecast_error = n_forecast_error)
-        
-        # In case there are too few observations, interrupt the estimation.
-        if hasattr(forecaster, 'no_estimation'):
+        small_sample: bool = check_training_sample_size(df0,n_forecast_error)
 
-            return(None)
+        # Initiate DefaultForecaster only if a forecaster has not already been 
+        # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
+        # if false.
+        if forecaster is None:
+
+             forecaster = DefaultForecaster(small_sample)
 
         C,d = StringToMatrixConstraints(df0.T.stack(),
                                         all_cells,
