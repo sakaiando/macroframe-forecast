@@ -26,7 +26,6 @@ from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.feature_selection import FeatureSelection
 from string import ascii_uppercase, ascii_lowercase
 from time import time
-from dataclasses import dataclass
 
 import copy
 import dask
@@ -40,6 +39,54 @@ import sympy as sp
 import warnings
 
 #%%
+
+def CheckTrainingSampleSize(df0:pd.DataFrame,n_forecast_error:int = 5):
+    """ 
+    Check sample size available for training window. Raise an exception if the 
+    number of observations available is too low. 
+    
+    Parameters
+    ----------
+    
+    df0 : pd.DataFrame
+        Input dataframe with island values replaced by nan.
+    
+    n_forecast_error : int
+        Number of training and testing sets to split data into for generating 
+        matrix of forecast errors.
+
+    Returns
+    -------
+    
+    small_sample : boolean
+        Indicator for whether the sample of observations available for training 
+        is small. 
+    
+    """
+
+    forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - \
+                            min(np.argwhere(df0.isna())[:,0]) + 1
+
+    minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
+                            - n_forecast_error
+    
+    
+    if  minimum_training_obs <=0:
+
+        raise ValueError(f'Number of observations too low for given forecast horizon '
+                         f'and n_sample_splits; consider reducing forecast horizon and/or '
+                         f'n_sample_splits')
+
+    elif minimum_training_obs <= 15:           
+        
+        small_sample = True
+    
+    else:
+        
+        small_sample = False
+
+    return(small_sample)
+
 
 def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
     """
@@ -120,64 +167,6 @@ def DefaultForecaster(small_sample:bool = False)->BaseForecaster:
         gscv = ols_pca
 
     return gscv
-
-
-@dataclass
-class TooFewObservations(Exception):
-    message: str = (
-                    f'Error: Number of observations too low for given forecast horizon '
-                    f'and n_sample_splits; consider reducing forecast horizon and/or '
-                    f'n_sample_splits'
-                )
-
-    def __str__(self):
-        return self.message
-
-
-def check_training_sample_size(df0:pd.DataFrame,n_forecast_error:int = 5):
-    """ 
-    Check sample size available for training window. Raise an exception if the 
-    number of observations available is too low. 
-    
-    Parameters
-    ----------
-    
-    df0 : pd.DataFrame
-        Input dataframe with island values replaced by nan.
-    
-    n_forecast_error : int
-        Number of training and testing sets to split data into for generating 
-        matrix of forecast errors.
-
-    Returns
-    -------
-    
-    small_sample : boolean
-        Indicator for whether the sample of observations available for training 
-        is small. 
-    
-    """
-
-    forecast_horizon = max(np.argwhere(df0.isna())[:,0]) - \
-                            min(np.argwhere(df0.isna())[:,0]) + 1
-
-    minimum_training_obs = min(np.argwhere(df0.isna())[:,0]) - forecast_horizon \
-                            - n_forecast_error
-    
-    
-    if  minimum_training_obs <=0:
-
-        raise TooFewObservations
-
-    elif minimum_training_obs <= 15:           
-        
-        small_sample = True
-    
-    else:
-        
-        small_sample = False
-
-    return(small_sample)
 
 
 def OrganizeCells(df:pd.DataFrame):

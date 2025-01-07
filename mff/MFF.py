@@ -8,6 +8,7 @@ import numpy as np
 from sktime.forecasting.base import BaseForecaster
 
 from mff.utils import (
+    CheckTrainingSampleSize,
     DefaultForecaster,
     OrganizeCells,
     StringToMatrixConstraints,
@@ -20,7 +21,6 @@ from mff.utils import (
     GenLamstar,
     GenSmoothingMatrix,
     Reconciliation,
-    check_training_sample_size,
     )
 
 #%% MFF
@@ -129,7 +129,7 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        small_sample: bool = check_training_sample_size(df0,n_forecast_error)
+        small_sample: bool = CheckTrainingSampleSize(df0,n_forecast_error)
 
         # Initiate DefaultForecaster only if a forecaster has not already been 
         # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
