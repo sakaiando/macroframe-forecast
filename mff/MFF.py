@@ -3,11 +3,12 @@
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
-from typing import List
-
 import pandas as pd
+import numpy as np
+from sktime.forecasting.base import BaseForecaster
 
 from mff.utils import (
+    CheckTrainingSampleSize,
     DefaultForecaster,
     OrganizeCells,
     StringToMatrixConstraints,
@@ -19,10 +20,11 @@ from mff.utils import (
     GenWeightMatrix,
     GenLamstar,
     GenSmoothingMatrix,
-    Reconciliation
+    Reconciliation,
     )
 
 #%% MFF
+
 
 class MFF:
     
@@ -41,8 +43,9 @@ class MFF:
        format, with each row containing data for one period, and each 
        column containing data for one variable.
     
-    forecaster : BaseForecaster
-        sktime BaseForecaster descendant
+    forecaster : BaseForecaster, optional(default: None)
+        sktime BaseForecaster descendant. If not defined, then DefaultForecaster
+        is used.
     
     constraints_with_wildcard : str, optional(default: None)
         Constraints that hold with equality. Constraints may include wildcard, 
@@ -59,6 +62,24 @@ class MFF:
         Indicate whether parallelization should be employed for generating the
         first step forecasts. Default value is `True`. 
 
+    n_forecast_error : int
+        Number of windows to split data into training and testing sets for 
+        generating matrix of forecast errors. Default is 5.
+
+    shrinkage_method : str, optional(default: 'oas')
+        Method to be used for shrinking sample covariance matrix. Default is 
+        Oracle Shrinking Approximating Estimator ('oas'). Other options are
+        oas, identity and monotone_diagonal.
+    
+    default_lam : float, optional(default: -1)
+        The value of lambda to be used for calculating smoothing parameter if 
+        frequency of observations cannot be determined from index names. If this 
+        is set to -1, lambda is calculated empirically. Default is -1.
+
+    max_lam : float, optional(default: 129600)
+        Maximum value of lamstar to be used for smoothing forecasts when being
+        estimated empirically.
+
     Returns
     -------
     df2 : pd.Dataframe
@@ -69,16 +90,25 @@ class MFF:
     """
     def __init__(self,
                  df: pd.DataFrame,
-                 forecaster = DefaultForecaster(),
-                 constraints_with_wildcard:List[str] = [],
-                 ineq_constraints_with_wildcard:List[str] = [],
-                 parallelize:bool = True):
+                 forecaster: BaseForecaster  = None,
+                 equality_constraints :list[str] = [],
+                 inequality_constraints :list[str] = [],
+                 parallelize:bool = True,
+                 n_forecast_error:int = 5,
+                 shrinkage_method:str = 'oas',
+                 default_lam:float = -1,
+                 max_lam:float = 129600):
         
         self.df = df
         self.forecaster = forecaster
-        self.constraints_with_wildcard = constraints_with_wildcard
-        self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
+        self.equality_constraints = equality_constraints
+        self.inequality_constraints = inequality_constraints
         self.parallelize = parallelize
+        self.n_forecast_error = n_forecast_error
+        self.shrinkage_method = shrinkage_method
+        self.default_lam = default_lam
+        self.max_lam = max_lam
+
         
     def fit(self):
         """
@@ -88,36 +118,54 @@ class MFF:
 
         df = self.df
         forecaster = self.forecaster
-        constraints_with_wildcard = self.constraints_with_wildcard
-        ineq_constraints_with_wildcard = self.ineq_constraints_with_wildcard
+        equality_constraints = self.equality_constraints
+        inequality_constraints = self.inequality_constraints
         parallelize = self.parallelize
+        n_forecast_error = self.n_forecast_error 
+        shrinkage_method = self.shrinkage_method
+        default_lam = self.default_lam
+        max_lam = self.max_lam
         
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
+
+        small_sample: bool = CheckTrainingSampleSize(df0,n_forecast_error)
+
+        # Initiate DefaultForecaster only if a forecaster has not already been 
+        # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
+        # if false.
+        if forecaster is None:
+
+             forecaster = DefaultForecaster(small_sample)
+
         C,d = StringToMatrixConstraints(df0.T.stack(),
                                         all_cells,
                                         unknown_cells,
                                         known_cells,
-                                        constraints_with_wildcard)
+                                        equality_constraints)
         C,d = AddIslandsToConstraints(C,d,islands)
         C_ineq,d_ineq = StringToMatrixConstraints(df0.T.stack(),
                                                   all_cells,
                                                   unknown_cells,
                                                   known_cells,
-                                                  ineq_constraints_with_wildcard)
+                                                  inequality_constraints)
         # 1st stage forecast and its model
         df1,df1_model = FillAllEmptyCells(df0,forecaster,parallelize=parallelize)
 
         # get pseudo out-of-sample prediction, true values, and prediction models
-        pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
+        pred,true,model = GenPredTrueData(df0,forecaster,n_forecast_error=n_forecast_error, 
+                                          parallelize=parallelize)
         
         # break dataframe into list of time series
         ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
         
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list,islands)
-        W,shrinkage = GenWeightMatrix(pred_list, true_list)
-        smoothness = GenLamstar(pred_list,true_list)
+        W,shrinkage = GenWeightMatrix(pred_list, true_list,
+                                      shrinkage_method = shrinkage_method)
+        smoothness = GenLamstar(pred_list,true_list,
+                                default_lam = default_lam,
+                                max_lam = max_lam)
         Phi = GenSmoothingMatrix(W,smoothness)
 
         # 2nd stage forecast

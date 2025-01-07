@@ -26,9 +26,9 @@ def test_MFF_non_parallel():
     df = df_true.copy()
     df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
     df.iloc[-1,0] = df_true.iloc[-1,0] # island
-    constraints_with_wildcard = ['A0?+B0?-C0?']
+    equality_constraints = ['A0?+B0?-C0?']
     
-    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard,
+    m = MFF(df,equality_constraints = equality_constraints,
             parallelize=False)
     df2 = m.fit()
 
@@ -47,9 +47,9 @@ def test_MFF_parallel():
     df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
     df.iloc[-1,0] = df_true.iloc[-1,0] # island
 
-    constraints_with_wildcard = ['A0?+B0?-C0?']
+    equality_constraints = ['A0?+B0?-C0?']
 
-    m = MFF(df,constraints_with_wildcard = constraints_with_wildcard,
+    m = MFF(df,equality_constraints = equality_constraints,
             parallelize=True)
     df2 = m.fit()
 
@@ -84,3 +84,23 @@ def test_MFF_mixed_frequency():
                              constraints_with_wildcard=constraints_with_wildcard)
     df2_list = mff.fit()
     assert ~np.isnan(df2_list[0].iloc[-1,0])
+
+def test_small_sample_MFF():
+    n = 20
+    p = 2
+    fh = 5
+    df_true = pd.DataFrame(np.random.rand(n,p),
+                      columns=[f'{L}{i}' for i in range(int(np.ceil(p/26))) for L in ascii_uppercase][:p],
+                      index=pd.date_range(start='2000',periods=n,freq='YE').year
+                      )
+    # df_true.iloc[:,-1] = df_true.iloc[:,:-1].sum(axis=1)
+    df = df_true.copy()
+    df.iloc[-fh:,:np.ceil(p/2).astype(int)] = np.nan
+    # df.iloc[-1,0] = df_true.iloc[-1,0] # island
+    equality_constraints = []
+    
+    m = MFF(df,equality_constraints = equality_constraints,
+            parallelize=False)
+    df2 = m.fit()
+
+    assert ~np.isnan(df2.iloc[-1,0]) 
