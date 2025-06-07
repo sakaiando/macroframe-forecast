@@ -1,15 +1,18 @@
 __pycache__
+dist/
 .git_local_repo_credentials
+
 # setuptools files
 *.egg-info
+
 # temporary csv files
 tests/*.csv
+
 # Sphinx documentation
 docs/build/
+
 # MacOS
 .DS_Store
-# pixi environments
-.pixi
 
 # pixi environments
 .pixi
