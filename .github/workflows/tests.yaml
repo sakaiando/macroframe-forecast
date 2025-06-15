@@ -17,4 +17,4 @@ jobs:
         run: pip install .
       - name: Run tests
         run: |
-          pytest mff/tests/tests_MFF.py
+          pytest
