@@ -65,7 +65,7 @@ addopts = [
     "-ra",              # Print summary of all fails/errors
     "-m not slow",      # Skip slow tests
 ]
-markers = ["slow: Skipped unless --runslow passed"]
+markers = ["slow: Skipped unless '-m slow' passed"]
 
 [tool.ruff]
 line-length = 120
