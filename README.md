@@ -14,13 +14,14 @@ python -m pip install .
 
 # Development
 
-For development of the code, use the environment in file `environment-dev.yml`.
-It's recommended to install the editable version of the package, so the edits
-are immediately reflected for testing:
+For development of the code, it's recommended to install the editable version of the package,
+so the edits are immediately reflected for testing:
 
 ```shell
 python -m pip install -e .
 ```
+
+Make sure to install the dependencies in the `dev` dependency group of `pyproject.toml`.
 
 ## Building documentation
 
