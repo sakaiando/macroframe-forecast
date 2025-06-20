@@ -1,4 +1,6 @@
-__version__ = "0.1"
+from importlib.metadata import version
 
-from .MFF import MFF
-from .MFF_mixed_frequency import MFF_mixed_freqency
+__version__ = version("macroframe_forecast")
+
+from .MFF import MFF  # noqa: F401
+from .MFF_mixed_frequency import MFF_mixed_freqency  # noqa: F401
