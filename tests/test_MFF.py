@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from pytest import mark
 
-from mff import MFF, MFF_mixed_freqency
+from macroframe_forecast import MFF, MFF_mixed_freqency
 
 # %%
 

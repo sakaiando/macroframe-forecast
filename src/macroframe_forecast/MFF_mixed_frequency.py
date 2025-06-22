@@ -37,7 +37,8 @@ class MFF_mixed_freqency:
         df_dict = self.df_dict
         forecaster = self.forecaster
         constraints_with_wildcard = self.constraints_with_wildcard
-        ineq_constraints_with_wildcard = self.ineq_constraints_with_wildcard
+        # TODO: delete, the assignment below, if not needed
+        ineq_constraints_with_wildcard = self.ineq_constraints_with_wildcard  # noqa: F841
 
         # create constraints
         freq_order = ["Y", "Q", "M", "W", "D", "H", "T", "S"]
@@ -86,7 +87,8 @@ class MFF_mixed_freqency:
             df0wide_colflat_list.append(df0wide_colfat_freq)
 
         df0wide = pd.concat(df0wide_list, axis=1)
-        df0wide_col = df0wide.columns
+        # TODO: delete, the assignment below, if not needed
+        df0wide_col = df0wide.columns  # noqa: F841
         df0wide_colflat = pd.concat(df0wide_colflat_list)
 
         # 1st step forecast

@@ -1033,19 +1033,24 @@ def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_la
 
     # optimal lambda
     if default_lam == -1:
-        loss_fn = lambda x, T, yt, yp: (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ (
-            yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp
-        )
+
+        def loss_fn(x, T, yt, yp):
+            return (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp)
+
         for tsidxi, tsidx in enumerate(tsidx_list):
             y_pred = pred_list[tsidxi]
             y_true = true_list[tsidxi]
             T = len(tsidx)
-            obj = lambda x: np.mean(
-                [
-                    loss_fn(x, T, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
-                    for i in range(y_pred.shape[0])
-                ]
-            )
+
+            # TODO: pick a better name for the function
+            def obj(x):
+                return np.mean(
+                    [
+                        loss_fn(x, T, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
+                        for i in range(y_pred.shape[0])
+                    ]
+                )
+
             constraint_lb = {"type": "ineq", "fun": lambda lam: lam}  # lambda >=0
 
             # lambda <= max_lam, without this, I+xF may be too close to F to invert
