@@ -94,6 +94,7 @@ def test_MFF_mixed_frequency():
     assert ~np.isnan(df2_list[0].iloc[-1, 0])
 
 
+@mark.slow
 def test_small_sample_MFF():
     n = 20
     p = 2

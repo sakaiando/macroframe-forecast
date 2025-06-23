@@ -4,20 +4,22 @@
 # its Executive Board, member governments.
 
 import copy
-import random
 import re
 import warnings
+from random import sample, seed
 from string import ascii_lowercase
 from time import time
+from typing import Literal
 
 import cvxpy as cp
-import dask
 import numpy as np
 import pandas as pd
 import scipy
 import sympy as sp
-from dask import delayed
+from dask import compute, delayed
+from numpy import ndarray
 from numpy.linalg import inv
+from pandas import DataFrame, Index, PeriodIndex, Series
 from scipy.linalg import block_diag
 from sklearn.decomposition import PCA
 from sklearn.linear_model import ElasticNetCV, LinearRegression
@@ -39,7 +41,7 @@ from sktime.transformations.series.feature_selection import FeatureSelection
 # %%
 
 
-def CheckTrainingSampleSize(df0: pd.DataFrame, n_forecast_error: int = 5):
+def CheckTrainingSampleSize(df0: DataFrame, n_forecast_error: int = 5) -> bool:
     """
     Check sample size available for training window. Raise an exception if the
     number of observations available is too low.
@@ -57,7 +59,7 @@ def CheckTrainingSampleSize(df0: pd.DataFrame, n_forecast_error: int = 5):
     Returns
     -------
 
-    small_sample : boolean
+    small_sample : bool
         Indicator for whether the sample of observations available for training
         is small.
 
@@ -75,12 +77,10 @@ def CheckTrainingSampleSize(df0: pd.DataFrame, n_forecast_error: int = 5):
         )
 
     elif minimum_training_obs <= 15:
-        small_sample = True
+        return True
 
     else:
-        small_sample = False
-
-    return small_sample
+        return False
 
 
 def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
@@ -170,7 +170,49 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     return gscv
 
 
-def OrganizeCells(df: pd.DataFrame):
+def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
+    """
+    Separate island values from input dataframe, replacing them with nan.
+    Called by ``OrganizeCells``.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe with raw data.
+
+    Returns
+    -------
+    df_no_islands : pd.DataFrame
+        Dataframe with island values replaced by nan.
+
+    islands : pd.Series
+        Series containing island values.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> n = 30
+        >>> p = 2
+        >>> df = pd.DataFrame(np.random.sample([n,p]),
+        >>>                   columns=['a','b'],
+        >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+        >>> df.iloc[-5:-1,:1] = np.nan
+        >>> df0, islands = CleanIslands(df)
+
+    """
+    df_no_islands = df.copy()  # to keep original df as it is
+    col_with_islands = df.columns[df.isna().any()]
+    coli_list = [df_no_islands.columns.get_loc(col) for col in col_with_islands]
+    for coli in coli_list:  # for col with na
+        first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
+        df_no_islands.iloc[first_na_index:, coli] = np.nan
+
+    islands: Series = df[df_no_islands.isna()].T.stack()
+    return df_no_islands, islands
+
+
+def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     """
     Extract island values (if existing) from input dataframe, replacing them
     with nan values. This is useful for generating first step forecasts, which
@@ -213,47 +255,6 @@ def OrganizeCells(df: pd.DataFrame):
     >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
     """
 
-    def CleanIslands(df):
-        """
-        Separate island values from input dataframe, replacing them with nan.
-        Called by ``OrganizeCells``.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Input dataframe with raw data.
-
-        Returns
-        -------
-        df_no_islands : pd.DataFrame
-            Dataframe with island values replaced by nan.
-
-        islands : pd.Series
-            Series containing island values.
-
-            Examples
-            --------
-            >>> import numpy as np
-            >>> import pandas as pd
-            >>> n = 30
-            >>> p = 2
-            >>> df = pd.DataFrame(np.random.sample([n,p]),
-            >>>                   columns=['a','b'],
-            >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-            >>> df.iloc[-5:-1,:1] = np.nan
-            >>> df0, islands = CleanIslands(df)
-
-        """
-        df_no_islands = df.copy()  # to keep original df as it is
-        col_with_islands = df.columns[df.isna().any()]
-        coli_list = [df_no_islands.columns.get_loc(col) for col in col_with_islands]
-        for coli in coli_list:  # for col with na
-            first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
-            df_no_islands.iloc[first_na_index:, coli] = np.nan
-
-        islands = df[df_no_islands.isna()].T.stack()
-        return df_no_islands, islands
-
     # clean islands
     df0, islands = CleanIslands(df)
 
@@ -272,14 +273,96 @@ def OrganizeCells(df: pd.DataFrame):
     return df0, all_cells, unknown_cells, known_cells, islands
 
 
+def find_permissible_wildcard(constraints_with_wildcard: list[str], _seed: int = 0) -> str:
+    """Generate random letter to be used in constraints."""
+    wild_card_length = 1
+    seed(_seed)
+    candidate = "".join(sample(ascii_lowercase, wild_card_length))
+    while candidate in "".join(constraints_with_wildcard):
+        wild_card_length = wild_card_length + 1
+        candidate = "".join(sample(ascii_lowercase, wild_card_length))
+    alphabet_wildcard = candidate
+    return alphabet_wildcard
+
+
+def find_strings_to_replace_wildcard(constraint: str, var_list: Series, wildcard: str) -> list[str]:
+    """Identify list of strings to be substituted with the wildcard character."""
+
+    varlist_regex = ["^" + str(v).replace(wildcard, "(.*)") + "$" for v in sp.sympify(constraint).free_symbols]
+    missing_string_set_list = []
+    for w in varlist_regex:
+        missing_string = []
+        for v in var_list:
+            match = re.compile(w).search(v)
+            if match:
+                missing_string.append(match.group(1))
+        missing_string_set_list.append(set(missing_string))
+    missing_string_list = list(set.intersection(*missing_string_set_list))
+    missing_string_list.sort()
+
+    return missing_string_list
+
+
+def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Series, wildcard: str):
+    """
+    Expand constraints with wildcard to all possible time periods. This is
+    called within ``StringToMatrixConstraints``, and the wildcard character
+    has already been replaced by a random letter before this function is
+    called.
+
+    Parameters
+    ----------
+    constraints_with_alphabet_wildcard : string
+        Linear equality constraints with wildcard string replaced
+        with alphabets.
+    var_list : list
+        List of indices of all cells (known and unknown) in raw dataframe.
+    wildcard : string
+        Alphabet which has replaced wildcard string in the constraints.
+
+    Return
+    ------
+    expanded_constraints : list
+        Expanded list of constraints over all time periods.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> n = 30
+    >>> p = 2
+    >>> df = pd.DataFrame(np.random.sample([n,p]),
+    >>>                   columns=['a','b'],
+    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df0_stacked = df.T.stack()
+    >>> all_cells_index = df0_stacked.index
+    >>> var_list = pd.Series([f'{a}_{b}' for a, b in all_cells_index],
+    >>>                      index = all_cells_index)
+    >>> constraints_with_alphabet_wildcard = ['ax + bx']
+    >>> alphabet_wildcard = 'x'
+    >>> constraints = expand_wildcard(constraints_with_alphabet_wildcard,
+    >>>                               var_list = var_list,
+    >>>                               wildcard = alphabet_wildcard)
+
+    """
+    expanded_constraints = []
+    for constraint in constraints_with_alphabet_wildcard:
+        if wildcard not in constraint:
+            expanded_constraints.append(constraint)
+        else:
+            missing_string_list = find_strings_to_replace_wildcard(constraint, var_list, wildcard)
+            expanded_constraints += [constraint.replace(f"{wildcard}", m) for m in missing_string_list]
+    return expanded_constraints
+
+
 def StringToMatrixConstraints(
-    df0_stacked: pd.DataFrame,  # stack df0 to accomodate mixed frequency
-    all_cells: pd.Series,
-    unknown_cells: pd.Series,
-    known_cells: pd.Series,
-    constraints_with_wildcard: list[str] = [],
+    df0_stacked: DataFrame,  # stack df0 to accomodate mixed frequency
+    all_cells: Series,
+    unknown_cells: Series,
+    known_cells: Series,
+    constraints_with_wildcard: list[str] | None = None,
     wildcard_string: str = "?",
-):
+) -> tuple[DataFrame, DataFrame]:
     """
     Convert equality constraints from list to matrix form for horizons to
     be forecasted (Cy = d, where C and d are dataframes containing the
@@ -335,101 +418,8 @@ def StringToMatrixConstraints(
     >>>                                 constraints_with_wildcard)
     """
 
-    def find_permissible_wildcard(constraints_with_wildcard):
-        """Generate random letter to be used in constraints."""
-        wild_card_length = 1
-        candidate = "".join(random.sample(ascii_lowercase, wild_card_length))
-        while candidate in "".join(constraints_with_wildcard):
-            wild_card_length = wild_card_length + 1
-            candidate = "".join(random.sample(ascii_lowercase, wild_card_length))
-        alphabet_wildcard = candidate
-        return alphabet_wildcard
-
-    def find_strings_to_replace_wildcard(constraint, var_list, wildcard):
-        """Identify list of strings to be substitute wildard character with.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pandas as pd
-        >>> n = 30
-        >>> p = 2
-        >>> df = pd.DataFrame(np.random.sample([n,p]),
-        >>>                   columns=['a','b'],
-        >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-        >>> df0_stacked = df.T.stack()
-        >>> all_cells_index = df0_stacked.index
-        >>> var_list = pd.Series([f'{a}_{b}' for a, b in all_cells_index],
-        >>>                      index = all_cells_index)
-        >>> constraint= 'ax + bx'
-        >>> wildcard = 'x'
-        >>> missing_string_list = find_strings_to_replace_wildcard(constraint,var_list,wildcard)
-        """
-
-        varlist_regex = ["^" + str(v).replace(wildcard, "(.*)") + "$" for v in sp.sympify(constraint).free_symbols]
-        missing_string_set_list = []
-        for w in varlist_regex:
-            missing_string = []
-            for v in var_list:
-                match = re.compile(w).search(v)
-                if match:
-                    missing_string.append(match.group(1))
-            missing_string_set_list.append(set(missing_string))
-        missing_string_list = list(set.intersection(*missing_string_set_list))
-        missing_string_list.sort()
-
-        return missing_string_list
-
-    def expand_wildcard(constraints_with_alphabet_wildcard, var_list, wildcard):
-        """
-        Expand constraints with wildcard to all possible time periods. This is
-        called within ``StringToMatrixConstraints``, and the wildcard character
-        has already been replaced by a random letter before this function is
-        called.
-
-        Parameters
-        ----------
-        constraints_with_alphabet_wildcard : string
-            Linear equality constraints with wildcard string replaced
-            with alphabets.
-        var_list : list
-            List of indices of all cells (known and unknown) in raw dataframe.
-        wildcard : string
-            Alphabet which has replaced wildcard string in the constraints.
-
-        Return
-        ------
-        expanded_constraints : list
-            Expanded list of constraints over all time periods.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pandas as pd
-        >>> n = 30
-        >>> p = 2
-        >>> df = pd.DataFrame(np.random.sample([n,p]),
-        >>>                   columns=['a','b'],
-        >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-        >>> df0_stacked = df.T.stack()
-        >>> all_cells_index = df0_stacked.index
-        >>> var_list = pd.Series([f'{a}_{b}' for a, b in all_cells_index],
-        >>>                      index = all_cells_index)
-        >>> constraints_with_alphabet_wildcard = ['ax + bx']
-        >>> alphabet_wildcard = 'x'
-        >>> constraints = expand_wildcard(constraints_with_alphabet_wildcard,
-        >>>                               var_list = var_list,
-        >>>                               wildcard = alphabet_wildcard)
-
-        """
-        expanded_constraints = []
-        for constraint in constraints_with_alphabet_wildcard:
-            if wildcard not in constraint:
-                expanded_constraints.append(constraint)
-            else:
-                missing_string_list = find_strings_to_replace_wildcard(constraint, var_list, wildcard)
-                expanded_constraints += [constraint.replace(f"{wildcard}", m) for m in missing_string_list]
-        return expanded_constraints
+    if constraints_with_wildcard is None:
+        constraints_with_wildcard = list()
 
     # replace wildcard with alphabet to utilize sympy
     alphabet_wildcard = find_permissible_wildcard(constraints_with_wildcard)
@@ -458,7 +448,7 @@ def StringToMatrixConstraints(
     return C, d
 
 
-def AddIslandsToConstraints(C: pd.DataFrame, d: pd.DataFrame, islands):
+def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tuple[DataFrame, DataFrame]:
     """
     Add island values into the matrix form equality constraints which have been
     constructed by ``StringToMatrixConstraints``.
@@ -513,7 +503,9 @@ def AddIslandsToConstraints(C: pd.DataFrame, d: pd.DataFrame, islands):
     return C_aug, d_aug
 
 
-def FillAnEmptyCell(df, row, col, forecaster):
+def FillAnEmptyCell(
+    df: DataFrame, row: int | str, col: int | str, forecaster: BaseForecaster
+) -> tuple[float, BaseForecaster]:
     """
     Generate a forecast for a given cell based on the latest known value
     for the given column (variable) and using the predefined forecasting pipeline.
@@ -578,7 +570,9 @@ def delayed_FillAnEmptyCell(df, row, col, forecaster):
     return FillAnEmptyCell(df, row, col, forecaster)
 
 
-def FillAllEmptyCells(df, forecaster, parallelize=True):
+def FillAllEmptyCells(
+    df: DataFrame, forecaster: BaseForecaster, parallelize: bool = True
+) -> tuple[DataFrame, DataFrame]:
     """
     Generate forecasts for all unknown cells in the supplied dataframe.
     All forecasts are made independently from each other. (TBC)
@@ -631,7 +625,7 @@ def FillAllEmptyCells(df, forecaster, parallelize=True):
     # apply dask
     if parallelize:
         start = time()
-        results = dask.compute(
+        results = compute(
             *[delayed_FillAnEmptyCell(df, row, col, copy.deepcopy(forecaster)) for (row, col) in na_cells],
             scheduler="processes",
         )
@@ -654,7 +648,9 @@ def FillAllEmptyCells(df, forecaster, parallelize=True):
     return df1, df1_models
 
 
-def GenPredTrueData(df, forecaster, n_forecast_error=5, parallelize=True):
+def GenPredTrueData(
+    df: DataFrame, forecaster: BaseForecaster, n_forecast_error: int = 5, parallelize: bool = True
+) -> tuple[DataFrame, DataFrame, DataFrame]:
     """
     Generate in-sample forecasts from existing data by constructing
     pseudo-historical datasets.
@@ -716,7 +712,7 @@ def GenPredTrueData(df, forecaster, n_forecast_error=5, parallelize=True):
 
     if parallelize:
         start = time()
-        results = dask.compute(
+        results = compute(
             *[delayed(FillAnEmptyCell)(df_list[dfi], row, col, copy.deepcopy(forecaster)) for (dfi, row, col) in tasks],
             scheduler="processes",
         )  # processes, multiprocesses, threads won't work
@@ -758,7 +754,9 @@ def GenPredTrueData(df, forecaster, n_forecast_error=5, parallelize=True):
     return pred, true, model
 
 
-def BreakDataFrameIntoTimeSeriesList(df0, df1, pred, true):
+def BreakDataFrameIntoTimeSeriesList(
+    df0: DataFrame, df1: DataFrame, pred: DataFrame, true: DataFrame
+) -> tuple[list[DataFrame], list[DataFrame], list[DataFrame]]:
     """Transform relevant dataframes into lists for ensuing reconciliation step.
 
     Parameters
@@ -812,7 +810,7 @@ def BreakDataFrameIntoTimeSeriesList(df0, df1, pred, true):
     return ts_list, pred_list, true_list
 
 
-def HP_matrix(size):
+def HP_matrix(size: int) -> ndarray:
     """
     Create the degenerate penta-diagonal matrix (the one used in HP Filter),
     with dimensions (size x size).
@@ -840,7 +838,7 @@ def HP_matrix(size):
     return F
 
 
-def GenVecForecastWithIslands(ts_list, islands):
+def GenVecForecastWithIslands(ts_list: list[DataFrame], islands: list[Series]) -> Series:
     """Overwrite forecasted values for islands with known island value.
 
     Parameters
@@ -885,7 +883,9 @@ def GenVecForecastWithIslands(ts_list, islands):
     return y1
 
 
-def GenWeightMatrix(pred_list, true_list, shrinkage_method="oas"):
+def GenWeightMatrix(
+    pred_list: list[DataFrame], true_list: list[DataFrame], shrinkage_method: Literal["oas", "oasd"] = "oas"
+) -> tuple[DataFrame, float]:
     """
     Generate weighting matrix based on in-sample forecasts and actual values
     for the corresponding periods.
@@ -975,7 +975,7 @@ def GenWeightMatrix(pred_list, true_list, shrinkage_method="oas"):
         return W, np.nan
 
 
-def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_lam: float = 129600):
+def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_lam: float = 129600) -> Series:
     """
     Calculate the smoothness parameter (lambda) associated with each variable
     being forecasted.
@@ -1060,7 +1060,7 @@ def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_la
     return lamstar
 
 
-def GenSmoothingMatrix(W, lamstar):
+def GenSmoothingMatrix(W: DataFrame, lamstar: Series) -> DataFrame:
     """
     Generate symmetric smoothing matrix using optimal lambda and weighting matrix.
 
@@ -1099,7 +1099,15 @@ def GenSmoothingMatrix(W, lamstar):
     return Phi
 
 
-def Reconciliation(y1, W, Phi, C, d, C_ineq=None, d_ineq=None):
+def Reconciliation(
+    y1: Series,
+    W: DataFrame,
+    Phi: DataFrame,
+    C: DataFrame,
+    d: DataFrame,
+    C_ineq: DataFrame | None = None,
+    d_ineq: DataFrame | None = None,
+) -> DataFrame:
     """
     Reconcile first step forecasts to satisfy equality as well as inequality
     constraints, subject to smoothening.
@@ -1235,7 +1243,7 @@ def Reconciliation(y1, W, Phi, C, d, C_ineq=None, d_ineq=None):
     return y2
 
 
-def get_freq_of_freq(periodindex, freqstr):
+def get_freq_of_freq(periodindex: PeriodIndex, freqstr: Literal["Y", "Q", "M", "W", "D", "H", "T", "S"]) -> Index:
     if freqstr == "Y":
         return periodindex.year
     if freqstr == "Q":
@@ -1249,14 +1257,14 @@ def get_freq_of_freq(periodindex, freqstr):
     if freqstr == "H":
         return periodindex.hour
     if freqstr == "T":
-        return periodindex.min
+        return periodindex.minute
     if freqstr == "S":
         return periodindex.second
 
 
-# used only in mixed freq case, pd.concat doesn't work for more than 4 mix-freq series
-# doesn't work when there are more than 3 freq!
-def ConcatMixFreqMultiIndexSeries(df_list, axis):
+def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: int) -> DataFrame:
+    # used only in mixed freq case, pd.concat doesn't work for more than 4 mix-freq series
+    # doesn't work when there are more than 3 freq!
     try:
         return pd.concat(df_list, axis=axis)
     except Exception:
