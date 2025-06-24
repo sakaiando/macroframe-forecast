@@ -1,6 +1,6 @@
 [project]
 name = "macroframe-forecast"
-version = "0.1.3"
+version = "0.1.4"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -47,18 +47,13 @@ homepage = "https://github.com/sakaiando/macroframe-forecast"
 repository = "https://github.com/sakaiando/macroframe-forecast"
 
 [build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools >=64"]
-
-[tool.setuptools]
-packages = ["mff"]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = ["pre-commit>=4.2.0", "pytest>=8.4.0", "ruff>=0.11.13", "sphinx>=8.2.3"]
 
 [tool.pytest.ini_options]
-testpaths = "mff/tests"
-pythonpath = ["mff"]
 addopts = [
     "--strict-config",  # Force error if config is mispelled
     "--strict-markers", # Force error if marker is mispelled (must be defined in config)
@@ -69,4 +64,6 @@ markers = ["slow: Skipped unless '-m slow' passed"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
 pydocstyle = { convention = "numpy" }

@@ -7,7 +7,7 @@
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 
-from mff.utils import (
+from macroframe_forecast.utils import (
     AddIslandsToConstraints,
     BreakDataFrameIntoTimeSeriesList,
     CheckTrainingSampleSize,

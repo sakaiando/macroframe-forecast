@@ -4,13 +4,13 @@
 # its Executive Board, member governments.
 
 
-from string import ascii_lowercase, ascii_uppercase
+from string import ascii_uppercase
 
 import numpy as np
 import pandas as pd
 from sktime.datasets import load_macroeconomic
 
-from mff import MFF, MFF_mixed_freqency
+from macroframe_forecast import MFF, MFF_mixed_freqency
 
 # %%
 
@@ -77,7 +77,8 @@ def example2():
     df1_model = m.df1_model
     shrinkage = m.shrinkage
     smoothness = m.smoothness
-    W = m.W
+    # TODO: delete, the assignment below, if not needed
+    W = m.W  # noqa: F841
     for ri, ci in np.argwhere(df.isna()):
         print(df1_model.index[ri], df1_model.columns[ci], df1_model.iloc[ri, ci].best_params_)
 
