@@ -14,6 +14,10 @@ To install the `macroframe-forecast` package, run the following from the reposit
 python -m pip install .
 ```
 
+# Documentation
+
+Please refer to [this link](https://sakaiando.github.io/macroframe-forecast/) for documentation.
+
 # Development
 
 For development of the code, it's recommended to install the editable version of the package, so the edits are immediately reflected for testing:
