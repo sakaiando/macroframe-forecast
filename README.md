@@ -8,7 +8,7 @@ This repository contains the Python code for the forecasting method described in
 
 # Installation
 
-To install the `mff` package, run the following from the repository root:
+To install the `macroframe-forecast` package, run the following from the repository root:
 
 ```shell
 python -m pip install .
