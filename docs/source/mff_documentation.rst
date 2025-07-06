@@ -1,4 +1,4 @@
-Macroframework Forecasting Package
+Macroframework Forecasting Package API
 ----------------------------------
 
 .. automodule:: macroframe_forecast.MFF
