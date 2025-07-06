@@ -15,7 +15,7 @@ This repository contains the Python code for the forecasting method described in
 Installation
 ~~~~~~~~~~~~
 
-To install the `mff` package, run the following from the repository root:
+To install the `macroframe-foreacst` package, run the following from the repository root:
 
 .. code-block:: console
 
@@ -24,7 +24,7 @@ To install the `mff` package, run the following from the repository root:
 Alternatively, use the following command to install from PyPI.
 
 .. code-block:: console
-   
+
    python -m pip install macroframe-forecast
 
 .. toctree::
