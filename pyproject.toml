@@ -1,6 +1,6 @@
 [project]
 name = "macroframe-forecast"
-version = "0.1.4"
+version = "0.1.5"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -51,7 +51,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["pre-commit>=4.2.0", "pytest>=8.4.0", "ruff>=0.11.13", "sphinx>=8.2.3"]
+dev = [
+    "furo>=2024.8.6",
+    "numpydoc>=1.9.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.0",
+    "ruff>=0.11.13",
+    "sphinx>=8.2.3",
+]
 
 [tool.pytest.ini_options]
 addopts = [

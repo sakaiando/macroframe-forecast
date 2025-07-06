@@ -6,10 +6,10 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "mff"
-copyright = "2024, IMF"
-author = "Ando Sakai, Shuvam Das, Doga Bilgin and Sultan Orazbayev"
-release = "0.1.2"
+project = "macroframe-forecast"
+copyright = "2024-2025, IMF"
+author = "Ando Sakai, Shuvam Das, Sultan Orazbayev"
+release = "0.1.5"
 
 
 # -- General configuration ---------------------------------------------------
@@ -44,5 +44,5 @@ autodoc_default_options = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "pydata_sphinx_theme"
+html_theme = "furo"
 html_static_path = []
