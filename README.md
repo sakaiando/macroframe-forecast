@@ -6,6 +6,10 @@ This repository contains the Python code for the forecasting method described in
 
 [Smooth Forecast Reconciliation](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654).
 
+# Documentation
+
+Please refer to [this link](https://sakaiando.github.io/macroframe-forecast/) for documentation.
+
 # Installation
 
 To install the `macroframe-forecast` package, run the following from the repository root:
@@ -13,10 +17,6 @@ To install the `macroframe-forecast` package, run the following from the reposit
 ```shell
 python -m pip install .
 ```
-
-# Documentation
-
-Please refer to [this link](https://sakaiando.github.io/macroframe-forecast/) for documentation.
 
 # Development
 
