@@ -91,7 +91,7 @@ class MFF:
     def __init__(
         self,
         df: pd.DataFrame,
-        forecaster: BaseForecaster = None,
+        forecaster: BaseForecaster | None = None,
         equality_constraints: list[str] = [],
         inequality_constraints: list[str] = [],
         parallelize: bool = True,
@@ -110,10 +110,20 @@ class MFF:
         self.default_lam = default_lam
         self.max_lam = max_lam
 
-    def fit(self):
+    def fit(
+        self,
+        smoothness: pd.Series | None = None,
+    ) -> pd.DataFrame:
         """
         Fits the model and generates reconciled forecasts for the input
         dataframe subject to defined constraints.
+
+        smoothness : Series[float] | None, optional(default: None)
+            Use can specify the smoothness parameter (lambda) associated with each variable
+            being forecasted. If not specified, the smoothness is calculated based on
+            default_lam and max_lam using GenLamStar function.
+
+
         """
 
         df = self.df
@@ -154,7 +164,8 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-        smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
+        if smoothness is None:
+            smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
         Phi = GenSmoothingMatrix(W, smoothness)
 
         # 2nd stage forecast
