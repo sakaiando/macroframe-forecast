@@ -165,7 +165,7 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
         )
 
     else:
-        gscv = ols_pca
+        gscv = NaiveForecaster(strategy = "last")
 
     return gscv
 
