@@ -6,6 +6,7 @@ Single-variable example
 
 
 .. code-block:: python
+
   import pandas as pd
   import numpy as np
   from macroframe_forecast import MFF
@@ -213,6 +214,7 @@ Multi-variable example
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
+
   import pandas as pd
   import numpy as np
   from macroframe_forecast import MFF
