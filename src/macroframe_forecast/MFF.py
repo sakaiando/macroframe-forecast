@@ -79,6 +79,11 @@ class MFF:
         Maximum value of lamstar to be used for smoothing forecasts when being
         estimated empirically.
 
+    smoothness : Series[float] | None, optional(default: None)
+        Use can specify the smoothness parameter (lambda) associated with each variable
+        being forecasted. If not specified, the smoothness is calculated based on
+        default_lam and max_lam using GenLamStar function.
+
     Returns
     -------
     df2 : pd.Dataframe
@@ -99,6 +104,7 @@ class MFF:
         shrinkage_method: str = "oas",
         default_lam: float = -1,
         max_lam: float = 129600,
+        smoothness: pd.Series | None = None,
     ):
         self.df = df
         self.forecaster = forecaster
@@ -109,21 +115,14 @@ class MFF:
         self.shrinkage_method = shrinkage_method
         self.default_lam = default_lam
         self.max_lam = max_lam
+        self.smoothness = smoothness
 
     def fit(
         self,
-        smoothness: pd.Series | None = None,
     ) -> pd.DataFrame:
         """
         Fits the model and generates reconciled forecasts for the input
         dataframe subject to defined constraints.
-
-        smoothness : Series[float] | None, optional(default: None)
-            Use can specify the smoothness parameter (lambda) associated with each variable
-            being forecasted. If not specified, the smoothness is calculated based on
-            default_lam and max_lam using GenLamStar function.
-
-
         """
 
         df = self.df
@@ -164,8 +163,10 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-        if smoothness is None:
+        if self.smoothness is None:
             smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
+        else:
+            smoothness = self.smoothness
         Phi = GenSmoothingMatrix(W, smoothness)
 
         # 2nd stage forecast
