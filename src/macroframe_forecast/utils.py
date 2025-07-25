@@ -165,7 +165,7 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
         )
 
     else:
-        gscv = ols_pca
+        gscv = NaiveForecaster(strategy = "last")
 
     return gscv
 
@@ -975,7 +975,7 @@ def GenWeightMatrix(
         return W, np.nan
 
 
-def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_lam: float = 129600) -> Series:
+def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_lam: float = 129600) -> pd.Series:
     """
     Calculate the smoothness parameter (lambda) associated with each variable
     being forecasted.
