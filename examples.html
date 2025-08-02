@@ -1,0 +1,699 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Macroframework Forecasting Package API" href="mff_documentation.html" /><link rel="prev" title="Documentation for the Macroframework Forecasting package." href="index.html" />
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.07.19 -->
+        <title>Examples - macroframe-forecast 0.1.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">macroframe-forecast 0.1.5 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">macroframe-forecast 0.1.5 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mff_documentation.html">Macroframework Forecasting Package API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#building-documentation">Building documentation</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/examples.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
+<section id="single-variable-example">
+<h2>Single-variable example<a class="headerlink" href="#single-variable-example" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">macroframe_forecast</span><span class="w"> </span><span class="kn">import</span> <span class="n">MFF</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">macroframe_forecast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">string</span><span class="w"> </span><span class="kn">import</span> <span class="n">ascii_uppercase</span><span class="p">,</span> <span class="n">ascii_lowercase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sktime.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_macroeconomic</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1">#%% Reading the data and generating forecasts.</span>
+
+<span class="c1"># Reading GDP data as a pandas dataframe.</span>
+<span class="c1"># This dataframe has two columns: year and GDP. Data from 2024-2029 are WEO forecasts.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+
+<span class="n">GDP_data_true</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;year&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mi">1950</span><span class="p">,</span> <span class="mi">1951</span><span class="p">,</span> <span class="mi">1952</span><span class="p">,</span> <span class="mi">1953</span><span class="p">,</span> <span class="mi">1954</span><span class="p">,</span> <span class="mi">1955</span><span class="p">,</span> <span class="mi">1956</span><span class="p">,</span> <span class="mi">1957</span><span class="p">,</span> <span class="mi">1958</span><span class="p">,</span> <span class="mi">1959</span><span class="p">,</span>
+        <span class="mi">1960</span><span class="p">,</span> <span class="mi">1961</span><span class="p">,</span> <span class="mi">1962</span><span class="p">,</span> <span class="mi">1963</span><span class="p">,</span> <span class="mi">1964</span><span class="p">,</span> <span class="mi">1965</span><span class="p">,</span> <span class="mi">1966</span><span class="p">,</span> <span class="mi">1967</span><span class="p">,</span> <span class="mi">1968</span><span class="p">,</span> <span class="mi">1969</span><span class="p">,</span>
+        <span class="mi">1970</span><span class="p">,</span> <span class="mi">1971</span><span class="p">,</span> <span class="mi">1972</span><span class="p">,</span> <span class="mi">1973</span><span class="p">,</span> <span class="mi">1974</span><span class="p">,</span> <span class="mi">1975</span><span class="p">,</span> <span class="mi">1976</span><span class="p">,</span> <span class="mi">1977</span><span class="p">,</span> <span class="mi">1978</span><span class="p">,</span> <span class="mi">1979</span><span class="p">,</span>
+        <span class="mi">1980</span><span class="p">,</span> <span class="mi">1981</span><span class="p">,</span> <span class="mi">1982</span><span class="p">,</span> <span class="mi">1983</span><span class="p">,</span> <span class="mi">1984</span><span class="p">,</span> <span class="mi">1985</span><span class="p">,</span> <span class="mi">1986</span><span class="p">,</span> <span class="mi">1987</span><span class="p">,</span> <span class="mi">1988</span><span class="p">,</span> <span class="mi">1989</span><span class="p">,</span>
+        <span class="mi">1990</span><span class="p">,</span> <span class="mi">1991</span><span class="p">,</span> <span class="mi">1992</span><span class="p">,</span> <span class="mi">1993</span><span class="p">,</span> <span class="mi">1994</span><span class="p">,</span> <span class="mi">1995</span><span class="p">,</span> <span class="mi">1996</span><span class="p">,</span> <span class="mi">1997</span><span class="p">,</span> <span class="mi">1998</span><span class="p">,</span> <span class="mi">1999</span><span class="p">,</span>
+        <span class="mi">2000</span><span class="p">,</span> <span class="mi">2001</span><span class="p">,</span> <span class="mi">2002</span><span class="p">,</span> <span class="mi">2003</span><span class="p">,</span> <span class="mi">2004</span><span class="p">,</span> <span class="mi">2005</span><span class="p">,</span> <span class="mi">2006</span><span class="p">,</span> <span class="mi">2007</span><span class="p">,</span> <span class="mi">2008</span><span class="p">,</span> <span class="mi">2009</span><span class="p">,</span>
+        <span class="mi">2010</span><span class="p">,</span> <span class="mi">2011</span><span class="p">,</span> <span class="mi">2012</span><span class="p">,</span> <span class="mi">2013</span><span class="p">,</span> <span class="mi">2014</span><span class="p">,</span> <span class="mi">2015</span><span class="p">,</span> <span class="mi">2016</span><span class="p">,</span> <span class="mi">2017</span><span class="p">,</span> <span class="mi">2018</span><span class="p">,</span> <span class="mi">2019</span><span class="p">,</span>
+        <span class="mi">2020</span><span class="p">,</span> <span class="mi">2021</span><span class="p">,</span> <span class="mi">2022</span><span class="p">,</span> <span class="mi">2023</span><span class="p">,</span> <span class="mi">2024</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="mi">2026</span><span class="p">,</span> <span class="mi">2027</span><span class="p">,</span> <span class="mi">2028</span><span class="p">,</span> <span class="mi">2029</span><span class="p">,</span>
+        <span class="mi">2030</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;GDP&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mf">301782704906.154</span><span class="p">,</span> <span class="mf">348993057004.926</span><span class="p">,</span> <span class="mf">368027835977.609</span><span class="p">,</span> <span class="mf">389147698401.843</span><span class="p">,</span>
+        <span class="mf">390276672099.46</span><span class="p">,</span> <span class="mf">424868331217.657</span><span class="p">,</span> <span class="mf">448388356231.708</span><span class="p">,</span> <span class="mf">471707274214.225</span><span class="p">,</span>
+        <span class="mf">478166880805.205</span><span class="p">,</span> <span class="mf">519476064642.104</span><span class="p">,</span> <span class="mf">539899866168.654</span><span class="p">,</span> <span class="mf">558583293630.287</span><span class="p">,</span>
+        <span class="mf">600454646133.34</span><span class="p">,</span> <span class="mf">633368190949.311</span><span class="p">,</span> <span class="mf">680153540812.135</span><span class="p">,</span> <span class="mf">737201978910.734</span><span class="p">,</span>
+        <span class="mf">808045440847.441</span><span class="p">,</span> <span class="mf">853883822469.0601</span><span class="p">,</span> <span class="mf">933096436159.1281</span><span class="p">,</span> <span class="mf">1008751520510.61</span><span class="p">,</span>
+        <span class="mf">1064366709379.28</span><span class="p">,</span> <span class="mf">1155403629216.3</span><span class="p">,</span> <span class="mf">1269884411457.22</span><span class="p">,</span> <span class="mf">1418456050381.57</span><span class="p">,</span>
+        <span class="mf">1536647924378.57</span><span class="p">,</span> <span class="mf">1674009506825.93</span><span class="p">,</span> <span class="mf">1867242215504.46</span><span class="p">,</span> <span class="mf">2079644632633.34</span><span class="p">,</span>
+        <span class="mf">2350400768409.49</span><span class="p">,</span> <span class="mf">2627325000000.0</span><span class="p">,</span> <span class="mf">2857325000000.0</span><span class="p">,</span> <span class="mf">3207025000000.0</span><span class="p">,</span>
+        <span class="mf">3343800000000.0</span><span class="p">,</span> <span class="mf">3634025000000.0</span><span class="p">,</span> <span class="mf">4037650000000.0</span><span class="p">,</span> <span class="mf">4339000000000.0</span><span class="p">,</span>
+        <span class="mf">4579625000000.0</span><span class="p">,</span> <span class="mf">4855250000000.0</span><span class="p">,</span> <span class="mf">5236425000000.0</span><span class="p">,</span> <span class="mf">5641600000000.0</span><span class="p">,</span>
+        <span class="mf">5963125000000.0</span><span class="p">,</span> <span class="mf">6158125000000.0</span><span class="p">,</span> <span class="mf">6520325000000.0</span><span class="p">,</span> <span class="mf">6858550000000.0</span><span class="p">,</span>
+        <span class="mf">7287250000000.0</span><span class="p">,</span> <span class="mf">7639750000000.0</span><span class="p">,</span> <span class="mf">8073125000000.0</span><span class="p">,</span> <span class="mf">8577550000000.0</span><span class="p">,</span>
+        <span class="mf">9062825000000.0</span><span class="p">,</span> <span class="mf">9631175000000.0</span><span class="p">,</span> <span class="mf">10250950000000.0</span><span class="p">,</span> <span class="mf">10581925000000.0</span><span class="p">,</span>
+        <span class="mf">10929100000000.0</span><span class="p">,</span> <span class="mf">11456450000000.0</span><span class="p">,</span> <span class="mf">12217175000000.0</span><span class="p">,</span> <span class="mf">13039200000000.0</span><span class="p">,</span>
+        <span class="mf">13815600000000.0</span><span class="p">,</span> <span class="mf">14474250000000.0</span><span class="p">,</span> <span class="mf">14769850000000.0</span><span class="p">,</span> <span class="mf">14478050000000.0</span><span class="p">,</span>
+        <span class="mf">15048975000000.0</span><span class="p">,</span> <span class="mf">15599725000000.0</span><span class="p">,</span> <span class="mf">16253950000000.0</span><span class="p">,</span> <span class="mf">16880675000000.0</span><span class="p">,</span>
+        <span class="mf">17608125000000.0</span><span class="p">,</span> <span class="mf">18295000000000.0</span><span class="p">,</span> <span class="mf">18804900000000.0</span><span class="p">,</span> <span class="mf">19612100000000.0</span><span class="p">,</span>
+        <span class="mf">20656525000000.0</span><span class="p">,</span> <span class="mf">21539975000000.0</span><span class="p">,</span> <span class="mf">21354125000000.0</span><span class="p">,</span> <span class="mf">23681175000000.0</span><span class="p">,</span>
+        <span class="mf">26006900000000.0</span><span class="p">,</span> <span class="mf">27720725000000.0</span><span class="p">,</span> <span class="mf">29184900000000.0</span><span class="p">,</span> <span class="mf">30507217002511.25</span><span class="p">,</span>
+        <span class="mf">31717641479090.75</span><span class="p">,</span> <span class="mf">32941710359665.25</span><span class="p">,</span> <span class="mf">34342131994149.0</span><span class="p">,</span> <span class="mf">35712823521822.0</span><span class="p">,</span>
+        <span class="mf">37153089058192.75</span>
+    <span class="p">]</span>
+<span class="p">})</span>
+
+
+<span class="c1"># Forecasted GDP growth in 2029 (last year) is as given below</span>
+<span class="n">final_year_growth</span> <span class="o">=</span>  <span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">GDP_data_true</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="n">GDP_data_true</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># The original GDP data is in dollar numbers, but changing this to billions</span>
+<span class="c1"># going forward in order to deal with problem of matrix invertibility.</span>
+<span class="n">GDP_data_true</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">GDP_data_true</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">/</span><span class="mf">1e12</span>
+
+<span class="c1"># Time period hs to be set as the index. Here year is the time identifier,</span>
+<span class="c1"># therefore setting this as the index.</span>
+<span class="n">GDP_data_true</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">GDP_data_true</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">],</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">GDP_data_true</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Creating a copy which is used for geenrating the forecasts. Removing the last</span>
+<span class="c1"># six years of data for ease of forecasts</span>
+<span class="n">GDP_data</span> <span class="o">=</span> <span class="n">GDP_data_true</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="c1"># Removing the last six years of data so that they are forecasted by the</span>
+<span class="c1"># function.</span>
+<span class="n">GDP_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">6</span><span class="p">:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+<span class="c1"># Now we assume that US GDP grows by 4% from 2028 to 2029, which is given by the</span>
+<span class="c1"># WEO forecast. This therefore works as a constraint for the forecasts.</span>
+<span class="c1"># The dataframe has GDP in levels terms, therefore the constraint has to be</span>
+<span class="c1"># specified in levels terms as well. The constraints can be rewritten in the following</span>
+<span class="c1"># steps.</span>
+<span class="c1"># GDP_2029/GDP_2028 - 1 = 0.04</span>
+<span class="c1"># GDP_2029 = 1.04*GDP_2028</span>
+<span class="c1"># GDP_2029 - 1.04*GDP_2028 = 0</span>
+
+<span class="c1"># Constraints are to be provided in the form of a list, even when there is only</span>
+<span class="c1"># constraint.</span>
+<span class="n">GDP_constraint</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;GDP_2030 - 1.04*GDP_2029&#39;</span><span class="p">]</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">MFF</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">GDP_data</span><span class="p">,</span>
+        <span class="n">equality_constraints</span> <span class="o">=</span> <span class="n">GDP_constraint</span><span class="p">,</span>
+        <span class="n">parallelize</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Using the fit method generates first as well as second step forecasts.</span>
+<span class="n">m</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="c1"># First step forecasts are stored as df1 in the fitted object.</span>
+<span class="n">firststep_GDP</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">df1</span>
+
+<span class="c1"># The forecasted data is filled into the df2 dataframe in the fitted object.</span>
+<span class="n">reconciled_GDP</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">df2</span>
+
+<span class="c1"># Models are stored in a dataframe in the fitted object.</span>
+
+<span class="n">models_used</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">df1_model</span>
+<span class="n">models_used</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+<span class="c1">#%% Plotting first and second step forecasts</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+
+<span class="n">firststep_GDP</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;First step forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">reconciled_GDP</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Final forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+<span class="n">GDP_data</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Known values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;US Nominal GDP (in US$ trn)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;US GDP in levels&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="c1"># max_xlastvalue = reconciled_GDP.index.max()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">15</span><span class="p">,</span> <span class="mi">40</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">2031</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># %%</span>
+
+<span class="n">firststep_GDP</span><span class="p">[</span><span class="s1">&#39;GDP_growth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">firststep_GDP</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">firststep_GDP</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span>
+<span class="n">reconciled_GDP</span><span class="p">[</span><span class="s1">&#39;GDP_growth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">reconciled_GDP</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">reconciled_GDP</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span>
+<span class="n">GDP_data</span><span class="p">[</span><span class="s1">&#39;GDP_growth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">GDP_data</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">GDP_data</span><span class="p">[</span><span class="s1">&#39;GDP&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+
+<span class="n">firststep_GDP</span><span class="p">[</span><span class="s1">&#39;GDP_growth&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;First-step forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">reconciled_GDP</span><span class="p">[</span><span class="s1">&#39;GDP_growth&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Second-step forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+<span class="n">GDP_data</span><span class="p">[</span><span class="s1">&#39;GDP_growth&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Known values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Nominal GDP growth (annual, %)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;US GDP growth rates&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add triangle marker at (2029, 4)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">2030</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;_nolegend_&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add text annotation</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;2030 growth constraint&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mi">2030</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">2030</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">),</span>
+            <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+
+<span class="c1"># max_xlastvalue = reconciled_GDP.index.max()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">2031</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">2031</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># %% Looking at externally generated first-stage</span>
+
+<span class="n">GDP_forecasts_external</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;GDP&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">29.0</span><span class="p">,</span> <span class="mf">31.5</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mf">34.1</span><span class="p">,</span><span class="mf">36.8</span><span class="p">,</span> <span class="mi">39</span><span class="p">]},</span>
+                            <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">2026</span><span class="p">,</span> <span class="mi">2027</span><span class="p">,</span> <span class="mi">2028</span><span class="p">,</span> <span class="mi">2029</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+
+<span class="c1"># Build MultiIndex using column name</span>
+<span class="n">multi_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">GDP_forecasts_external</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">GDP_forecasts_external</span><span class="o">.</span><span class="n">index</span><span class="p">],</span>
+                                         <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">])</span>
+
+<span class="c1"># Correct: flatten the 2D array to 1D</span>
+<span class="n">GDP_multiindex_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">GDP_forecasts_external</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">multi_index</span><span class="p">)</span>
+
+
+
+<span class="n">W_alt</span> <span class="o">=</span>  <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">multi_index</span><span class="p">)),</span> <span class="n">index</span><span class="o">=</span><span class="n">multi_index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">multi_index</span><span class="p">)</span>  <span class="c1"># Create identity matrix with shape (n x n)</span>
+
+<span class="n">smoothness_alt</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">multi_index</span><span class="p">])</span>
+
+<span class="n">Phi_alt</span> <span class="o">=</span> <span class="n">macroframe_forecast</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">GenSmoothingMatrix</span><span class="p">(</span><span class="n">W_alt</span><span class="p">,</span> <span class="n">smoothness_alt</span><span class="p">)</span>
+
+
+<span class="n">final_forecasts</span> <span class="o">=</span> <span class="n">macroframe_forecast</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">Reconciliation</span><span class="p">(</span><span class="n">y1</span> <span class="o">=</span> <span class="n">GDP_multiindex_series</span><span class="p">,</span>
+                                                           <span class="n">W</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="n">Phi</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">Phi</span><span class="p">,</span>
+                                                           <span class="n">C</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">d</span><span class="p">,</span>
+                                                           <span class="n">C_ineq</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">C_ineq</span><span class="p">,</span>
+                                                           <span class="n">d_ineq</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">d_ineq</span><span class="p">)</span>
+<span class="c1"># %%</span>
+
+<span class="c1"># Convert MultiIndex Series to regular Series with year index</span>
+
+<span class="n">gdp_to_forecast_series</span> <span class="o">=</span> <span class="n">GDP_data</span>
+
+<span class="n">gdp_series</span> <span class="o">=</span> <span class="n">GDP_multiindex_series</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="s1">&#39;GDP&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">second_stage_series</span> <span class="o">=</span> <span class="n">final_forecasts</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="s1">&#39;GDP&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Now plot it</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+<span class="n">gdp_series</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Externally generated first-step forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">second_stage_series</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Second-step forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+
+
+
+<span class="c1"># Add labels and formatting</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;US Nominal GDP (in US$ trn)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;US GDP in levels&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">15</span><span class="p">,</span> <span class="mi">40</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-variable-example">
+<h2>Multi-variable example<a class="headerlink" href="#multi-variable-example" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">macroframe_forecast</span><span class="w"> </span><span class="kn">import</span> <span class="n">MFF</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">DirectReductionForecaster</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForecastingPipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;year&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mi">2001</span><span class="p">,</span> <span class="mi">2002</span><span class="p">,</span> <span class="mi">2003</span><span class="p">,</span> <span class="mi">2004</span><span class="p">,</span> <span class="mi">2005</span><span class="p">,</span> <span class="mi">2006</span><span class="p">,</span> <span class="mi">2007</span><span class="p">,</span> <span class="mi">2008</span><span class="p">,</span> <span class="mi">2009</span><span class="p">,</span> <span class="mi">2010</span><span class="p">,</span>
+        <span class="mi">2011</span><span class="p">,</span> <span class="mi">2012</span><span class="p">,</span> <span class="mi">2013</span><span class="p">,</span> <span class="mi">2014</span><span class="p">,</span> <span class="mi">2015</span><span class="p">,</span> <span class="mi">2016</span><span class="p">,</span> <span class="mi">2017</span><span class="p">,</span> <span class="mi">2018</span><span class="p">,</span> <span class="mi">2019</span><span class="p">,</span> <span class="mi">2020</span><span class="p">,</span>
+        <span class="mi">2021</span><span class="p">,</span> <span class="mi">2022</span><span class="p">,</span> <span class="mi">2023</span><span class="p">,</span> <span class="mi">2024</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="mi">2026</span><span class="p">,</span> <span class="mi">2027</span><span class="p">,</span> <span class="mi">2028</span><span class="p">,</span> <span class="mi">2029</span><span class="p">,</span> <span class="mi">2030</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;exp&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mf">32.801</span><span class="p">,</span> <span class="mf">33.698</span><span class="p">,</span> <span class="mf">34.037</span><span class="p">,</span> <span class="mf">33.719</span><span class="p">,</span> <span class="mf">33.928</span><span class="p">,</span> <span class="mf">33.692</span><span class="p">,</span> <span class="mf">34.562</span><span class="p">,</span> <span class="mf">37.144</span><span class="p">,</span> <span class="mf">41.399</span><span class="p">,</span> <span class="mf">39.763</span><span class="p">,</span>
+        <span class="mf">38.796</span><span class="p">,</span> <span class="mf">37.223</span><span class="p">,</span> <span class="mf">35.782</span><span class="p">,</span> <span class="mf">35.324</span><span class="p">,</span> <span class="mf">35.031</span><span class="p">,</span> <span class="mf">35.333</span><span class="p">,</span> <span class="mf">35.194</span><span class="p">,</span> <span class="mf">35.349</span><span class="p">,</span> <span class="mf">35.819</span><span class="p">,</span> <span class="mf">44.779</span><span class="p">,</span>
+        <span class="mf">43.218</span><span class="p">,</span> <span class="mf">36.829</span><span class="p">,</span> <span class="mf">37.113</span><span class="p">,</span> <span class="mf">37.593</span><span class="p">,</span> <span class="mf">37.848</span><span class="p">,</span> <span class="mf">38.004</span><span class="p">,</span> <span class="mf">38.107</span><span class="p">,</span> <span class="mf">38.024</span><span class="p">,</span> <span class="mf">37.711</span><span class="p">,</span> <span class="mf">37.862</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;rev&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mf">32.257</span><span class="p">,</span> <span class="mf">29.877</span><span class="p">,</span> <span class="mf">29.266</span><span class="p">,</span> <span class="mf">29.476</span><span class="p">,</span> <span class="mf">30.853</span><span class="p">,</span> <span class="mf">31.656</span><span class="p">,</span> <span class="mf">31.649</span><span class="p">,</span> <span class="mf">30.532</span><span class="p">,</span> <span class="mf">28.222</span><span class="p">,</span> <span class="mf">28.770</span><span class="p">,</span>
+        <span class="mf">29.080</span><span class="p">,</span> <span class="mf">29.109</span><span class="p">,</span> <span class="mf">31.222</span><span class="p">,</span> <span class="mf">31.298</span><span class="p">,</span> <span class="mf">31.501</span><span class="p">,</span> <span class="mf">30.977</span><span class="p">,</span> <span class="mf">30.400</span><span class="p">,</span> <span class="mf">30.014</span><span class="p">,</span> <span class="mf">30.014</span><span class="p">,</span> <span class="mf">30.631</span><span class="p">,</span>
+        <span class="mf">31.827</span><span class="p">,</span> <span class="mf">33.130</span><span class="p">,</span> <span class="mf">29.949</span><span class="p">,</span> <span class="mf">30.331</span><span class="p">,</span> <span class="mf">31.389</span><span class="p">,</span> <span class="mf">32.514</span><span class="p">,</span> <span class="mf">32.754</span><span class="p">,</span> <span class="mf">32.409</span><span class="p">,</span> <span class="mf">32.222</span><span class="p">,</span> <span class="mf">32.248</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;int_payments&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mf">3.255</span><span class="p">,</span> <span class="mf">2.892</span><span class="p">,</span> <span class="mf">2.658</span><span class="p">,</span> <span class="mf">2.563</span><span class="p">,</span> <span class="mf">2.704</span><span class="p">,</span> <span class="mf">2.775</span><span class="p">,</span> <span class="mf">2.933</span><span class="p">,</span> <span class="mf">2.776</span><span class="p">,</span> <span class="mf">2.574</span><span class="p">,</span> <span class="mf">2.678</span><span class="p">,</span>
+        <span class="mf">2.880</span><span class="p">,</span> <span class="mf">2.726</span><span class="p">,</span> <span class="mf">2.485</span><span class="p">,</span> <span class="mf">2.474</span><span class="p">,</span> <span class="mf">2.341</span><span class="p">,</span> <span class="mf">2.490</span><span class="p">,</span> <span class="mf">2.522</span><span class="p">,</span> <span class="mf">2.769</span><span class="p">,</span> <span class="mf">2.817</span><span class="p">,</span> <span class="mf">2.537</span><span class="p">,</span>
+        <span class="mf">2.669</span><span class="p">,</span> <span class="mf">3.137</span><span class="p">,</span> <span class="mf">3.600</span><span class="p">,</span> <span class="mf">4.195</span><span class="p">,</span> <span class="mf">4.301</span><span class="p">,</span> <span class="mf">4.427</span><span class="p">,</span> <span class="mf">4.451</span><span class="p">,</span> <span class="mf">4.370</span><span class="p">,</span> <span class="mf">4.353</span><span class="p">,</span> <span class="mf">4.290</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;pb&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="mf">2.711</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.929</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.113</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.681</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.371</span><span class="p">,</span> <span class="mf">0.739</span><span class="p">,</span> <span class="mf">0.020</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.836</span><span class="p">,</span> <span class="o">-</span><span class="mf">10.603</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.315</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">6.836</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.387</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.076</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.552</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.189</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.867</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.272</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.566</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.988</span><span class="p">,</span> <span class="o">-</span><span class="mf">11.610</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">8.721</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.561</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.564</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.067</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.158</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.063</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.902</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.246</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.136</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.324</span>
+    <span class="p">]</span>
+<span class="p">})</span>
+
+
+<span class="c1"># Data upto 2024 is known for all variables. 2024 onwards data are all WEO forecasts.</span>
+<span class="c1"># Let us assume that the path for Primary Balance/GDP is known to the forecaster,</span>
+<span class="c1"># which is given by the WEO forecasts, while the other three variables are to be</span>
+<span class="c1"># forecasted. These unknown values are therefore replaced by NaNs.</span>
+
+<span class="n">fiscal_data</span> <span class="o">=</span> <span class="n">fiscal_data_true</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">fiscal_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">6</span><span class="p">:,:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+<span class="c1"># fiscal_data.iloc[-1,0] = fiscal_data_true.iloc[-1,0].copy()</span>
+
+<span class="c1"># The basic acccounting identiy can be writted as:</span>
+<span class="c1"># Primary Balance/GDP = Revenue /GDP - Expenditure/GDP + Interest Payments/GDP</span>
+<span class="c1"># We know that this identity has to bind throughout the forecasting horizon, and</span>
+<span class="c1"># therefore we can specify this using the wildcard feature.</span>
+
+<span class="n">fiscal_constraint</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pb? - rev? + exp? - int_payments?&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;exp_2030 - 37&#39;</span><span class="p">]</span>
+
+<span class="c1"># Defining the OLS forecasting pipeline for the example</span>
+
+<span class="n">ols</span> <span class="o">=</span> <span class="n">ForecastingPipeline</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;ols&#39;</span><span class="p">,</span><span class="n">DirectReductionForecaster</span><span class="p">(</span><span class="n">LinearRegression</span><span class="p">()))</span>
+    <span class="p">])</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">MFF</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">fiscal_data</span><span class="p">,</span>
+        <span class="n">equality_constraints</span> <span class="o">=</span> <span class="n">fiscal_constraint</span><span class="p">,</span>
+        <span class="n">forecaster</span> <span class="o">=</span> <span class="n">ols</span><span class="p">,</span>
+        <span class="n">parallelize</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+<span class="n">m</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="n">first_step_forecasts</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">df1</span>
+<span class="n">second_step_forecasts</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">df2</span>
+
+<span class="c1"># final_forecasts =</span>
+<span class="c1"># %% Expenditure forecasts</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+
+<span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;exp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;First-step forecasts&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;exp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Second-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+<span class="n">fiscal_data</span><span class="p">[</span><span class="s1">&#39;exp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;WEO values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;US Government Expenditure to GDP ratio (%)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Government Expenditure&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">2030</span><span class="p">,</span> <span class="mf">36.65</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;_nolegend_&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add text annotation</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;2030 expenditure constraint value&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mi">2030</span><span class="p">,</span> <span class="n">fiscal_data_true</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">2027</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span>
+            <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+
+<span class="c1"># max_xlastvalue = reconciled_GDP.index.max()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2031</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># %% Revenue forecasts</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+
+<span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;rev&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;First-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;rev&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Second-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+<span class="n">fiscal_data</span><span class="p">[</span><span class="s1">&#39;rev&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;WEO values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;US Government Revenue to GDP ratio (%)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Government Revenue&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="c1"># max_xlastvalue = reconciled_GDP.index.max()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2031</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># %% Interest Payment forecasts</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+
+<span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;int_payments&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;First-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;int_payments&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Second-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+<span class="n">fiscal_data</span><span class="p">[</span><span class="s1">&#39;int_payments&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;WEO values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;US Government Interest Payments to GDP ratio (%)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Interest Payments&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="c1"># max_xlastvalue = reconciled_GDP.index.max()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2031</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+
+<span class="c1"># %% First step primary balance vs. the constraints</span>
+
+<span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;pb_calculated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;rev&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;exp&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;int_payments&#39;</span><span class="p">]</span>
+<span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;pb_calculated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;rev&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;exp&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;int_payments&#39;</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.8</span><span class="p">))</span>
+
+<span class="n">first_step_forecasts</span><span class="p">[</span><span class="s1">&#39;pb_calculated&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;First-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">second_step_forecasts</span><span class="p">[</span><span class="s1">&#39;pb_calculated&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Second-step forecast&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span>
+
+<span class="c1"># fiscal_data[fiscal_data][&#39;pb&#39;].plot(ax=ax, label=&#39;WEO values&#39;, linestyle = &#39;-.&#39;)</span>
+<span class="n">fiscal_data</span><span class="p">[</span><span class="n">fiscal_data</span><span class="o">.</span><span class="n">index</span><span class="o">&lt;</span><span class="mi">2024</span><span class="p">][</span><span class="s1">&#39;pb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;WEO values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">fiscal_data</span><span class="p">[</span><span class="n">fiscal_data</span><span class="o">.</span><span class="n">index</span><span class="o">&gt;=</span><span class="mi">2024</span><span class="p">][</span><span class="s1">&#39;pb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Constraint values&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;None&#39;</span><span class="p">)</span>
+
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Primary Balance to GDP ratio (%)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Primary Balance&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="c1"># max_xlastvalue = reconciled_GDP.index.max()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2030</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2031</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># %%</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="mff_documentation.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Macroframework Forecasting Package API</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024-2025, IMF
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Examples</a><ul>
+<li><a class="reference internal" href="#single-variable-example">Single-variable example</a></li>
+<li><a class="reference internal" href="#multi-variable-example">Multi-variable example</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=59fadc99"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
