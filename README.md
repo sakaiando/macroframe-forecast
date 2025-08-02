@@ -3,7 +3,7 @@
 
 [![!pypi](https://img.shields.io/pypi/v/macroframe-forecast?color=green)](https://pypi.org/project/macroframe-forecast/) [![Downloads](https://static.pepy.tech/personalized-badge/macroframe-forecast?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/macroframe-forecast)
 
-This repository contains the Python code for the forecasting method described in [Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities](https://link.springer.com/article/10.1057/s41308-023-00225-8) and [Smooth Forecast Reconciliation](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654).
+This repository contains the Python code to assist macroframework forecasting. The methodologies are described in [Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities](https://link.springer.com/article/10.1057/s41308-023-00225-8) and [Smooth Forecast Reconciliation](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654).
 
 # Documentation
 
