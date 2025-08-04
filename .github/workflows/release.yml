@@ -1,3 +1,6 @@
+name: release
+on: [release]
+
 jobs:
   release-build:
     runs-on: ubuntu-latest
