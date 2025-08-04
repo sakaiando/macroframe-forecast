@@ -17,3 +17,6 @@ docs/build/
 # pixi environments
 .pixi
 *.egg-info
+
+# build files
+build/

@@ -55,7 +55,8 @@ class MFF:
         Inequality constraints, comparable to ``constraints_with_wildcard``.
         Constraints may include wildcard, in which case constraints will be
         applied across all horizons, or may be defined for specified time
-        periods.
+        periods. Constraints should be written in the form of 'C_ineq-d_ineq', where 
+        C_ineq*y- d_ineq ≤ 0. 
 
     parallelize : boolean
         Indicate whether parallelization should be employed for generating the
@@ -79,11 +80,6 @@ class MFF:
         Maximum value of lamstar to be used for smoothing forecasts when being
         estimated empirically.
 
-    smoothness : Series[float] | None, optional(default: None)
-        Use can specify the smoothness parameter (lambda) associated with each variable
-        being forecasted. If not specified, the smoothness is calculated based on
-        default_lam and max_lam using GenLamStar function.
-
     Returns
     -------
     df2 : pd.Dataframe
@@ -103,8 +99,7 @@ class MFF:
         n_forecast_error: int = 5,
         shrinkage_method: str = "oas",
         default_lam: float = -1,
-        max_lam: float = 129600,
-        smoothness: pd.Series | None = None,
+        max_lam: float = 129600
     ):
         self.df = df
         self.forecaster = forecaster
@@ -115,7 +110,6 @@ class MFF:
         self.shrinkage_method = shrinkage_method
         self.default_lam = default_lam
         self.max_lam = max_lam
-        self.smoothness = smoothness
 
     def fit(
         self,
@@ -163,10 +157,9 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-        if self.smoothness is None:
-            smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
-        else:
-            smoothness = self.smoothness
+
+        smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
+        
         Phi = GenSmoothingMatrix(W, smoothness)
 
         # 2nd stage forecast
