@@ -1128,10 +1128,10 @@ def Reconciliation(
         the equality constraint Cy=d.
     C_ineq : pd.DataFrame, optional
         Dataframe containing matrix of the linear constraints on the left side of
-        the equality constraint Cy <= d. The default is None.
-    d_ineq : TYPE, optional
-        Dataframe containing matrix of the linear constraints on the left side of
-        the equality constraint Cy <= d. The default is None.
+        the equality constraint C_ineq · y - d_ineq ≤ 0. The default is None.
+    d_ineq : pd.DataFrame, optional
+        Dataframe containing matrix of the linear constraints on the right side of 
+        the inequality constraint C_ineq · y - d_ineq ≤ 0.  The default is None.
 
     Returns
     -------
@@ -1154,7 +1154,7 @@ def Reconciliation(
     >>> def DefaultForecaster():
     >>>     return YfromX(ElasticNetCV(max_iter=5000))
     >>> df1,df1_models = FillAllEmptyCells(df0,DefaultForecaster(),parallelize=False)
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=False)
+    >>> pred,true,model = GenPredTrueData(df0,DefaultForecaster(),parallelize=False)
     >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
     >>> y1 = pd.concat(ts_list)
     >>> C = pd.DataFrame(columns = y1.index).astype(float)
