@@ -1128,7 +1128,7 @@ def Reconciliation(
         the equality constraint Cy=d.
     C_ineq : pd.DataFrame, optional
         Dataframe containing matrix of the linear constraints on the left side of
-        the equality constraint C_ineq · y - d_ineq ≤ 0. The default is None.
+        the inequality constraint C_ineq · y - d_ineq ≤ 0. The default is None.
     d_ineq : pd.DataFrame, optional
         Dataframe containing matrix of the linear constraints on the right side of 
         the inequality constraint C_ineq · y - d_ineq ≤ 0.  The default is None.

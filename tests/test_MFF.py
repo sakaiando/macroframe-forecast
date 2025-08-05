@@ -114,3 +114,36 @@ def test_small_sample_MFF():
     df2 = m.fit()
 
     assert ~np.isnan(df2.iloc[-1, 0])
+
+
+@mark.slow
+def test_equality_inequality_constraints():
+
+    n = 20
+    p = 2
+    fh = 5
+    df_true = pd.DataFrame(
+        np.random.rand(n, p),
+        columns=[f"{L}{i}" for i in range(int(np.ceil(p / 26))) for L in ascii_uppercase][:p],
+        index=pd.date_range(start="2000", periods=n, freq="YE").year,
+    )
+    # df_true.iloc[:,-1] = df_true.iloc[:,:-1].sum(axis=1)
+    df = df_true.copy()
+    df.iloc[-fh:, : np.ceil(p / 2).astype(int)] = np.nan
+    # df.iloc[-1,0] = df_true.iloc[-1,0] # island
+
+
+    equality_constraints = [df.columns[0] + '_' + str(df_true.index[-fh])]
+
+
+    inequality_constraints = [ df.columns[0] + '_' + str(df_true.index[-1]) + ' + 1']
+    # inequality_constraints = [constraint_description]
+
+    m = MFF(df, equality_constraints=equality_constraints, 
+            inequality_constraints = inequality_constraints, 
+            parallelize=False)
+    df2 = m.fit()
+    df2.iloc[-1, 0]
+    assert round(df2.iloc[-fh, 0]) == 0
+    assert df2.iloc[-1, 0] <= -1
+

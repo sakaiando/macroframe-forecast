@@ -55,8 +55,7 @@ class MFF:
         Inequality constraints, comparable to ``constraints_with_wildcard``.
         Constraints may include wildcard, in which case constraints will be
         applied across all horizons, or may be defined for specified time
-        periods. Constraints should be written in the form of 'C_ineq-d_ineq', where 
-        C_ineq*y- d_ineq ≤ 0. 
+        periods. Constraints should be written in the form of 'C_ineq*y - d_ineq ≤ 0 '. 
 
     parallelize : boolean
         Indicate whether parallelization should be employed for generating the
