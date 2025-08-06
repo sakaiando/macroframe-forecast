@@ -1227,7 +1227,12 @@ def Reconciliation(
         q = -2 * W_inv @ y1n
         x = cp.Variable([len(y1), 1])
         objective = cp.Minimize(cp.quad_form(x, P, assume_PSD=True) + q.T @ x)
-        constraints = [Cn @ x == dn, Cn_ineq @ x <= dn_ineq]
+        
+        # If equality constraints do not exist, dropping C matrix from solver
+        if C.shape[0] >0:
+            constraints = [Cn @ x == dn, Cn_ineq @ x <= dn_ineq]
+        else:
+            constraints = [Cn_ineq @ x <= dn_ineq]
         prob = cp.Problem(objective, constraints)
         prob.solve()
         y2n = x.value
