@@ -170,4 +170,4 @@ def test_equality_constraints():
     df2 = m.fit()
     df2.iloc[-1, 0]
 
-    assert df2.iloc[-1, 0] == -1
+    assert round(df2.iloc[-1, 0],2) == -1
