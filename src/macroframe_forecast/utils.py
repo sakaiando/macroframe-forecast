@@ -165,7 +165,7 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
         )
 
     else:
-        gscv = ols_pca
+        gscv = NaiveForecaster(strategy = "last")
 
     return gscv
 
@@ -975,7 +975,7 @@ def GenWeightMatrix(
         return W, np.nan
 
 
-def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_lam: float = 129600) -> Series:
+def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_lam: float = 129600) -> pd.Series:
     """
     Calculate the smoothness parameter (lambda) associated with each variable
     being forecasted.
@@ -1128,10 +1128,10 @@ def Reconciliation(
         the equality constraint Cy=d.
     C_ineq : pd.DataFrame, optional
         Dataframe containing matrix of the linear constraints on the left side of
-        the equality constraint Cy <= d. The default is None.
-    d_ineq : TYPE, optional
-        Dataframe containing matrix of the linear constraints on the left side of
-        the equality constraint Cy <= d. The default is None.
+        the inequality constraint C_ineq · y - d_ineq ≤ 0. The default is None.
+    d_ineq : pd.DataFrame, optional
+        Dataframe containing matrix of the linear constraints on the right side of 
+        the inequality constraint C_ineq · y - d_ineq ≤ 0.  The default is None.
 
     Returns
     -------
@@ -1154,7 +1154,7 @@ def Reconciliation(
     >>> def DefaultForecaster():
     >>>     return YfromX(ElasticNetCV(max_iter=5000))
     >>> df1,df1_models = FillAllEmptyCells(df0,DefaultForecaster(),parallelize=False)
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=False)
+    >>> pred,true,model = GenPredTrueData(df0,DefaultForecaster(),parallelize=False)
     >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
     >>> y1 = pd.concat(ts_list)
     >>> C = pd.DataFrame(columns = y1.index).astype(float)
@@ -1227,7 +1227,12 @@ def Reconciliation(
         q = -2 * W_inv @ y1n
         x = cp.Variable([len(y1), 1])
         objective = cp.Minimize(cp.quad_form(x, P, assume_PSD=True) + q.T @ x)
-        constraints = [Cn @ x == dn, Cn_ineq @ x <= dn_ineq]
+        
+        # If equality constraints do not exist, dropping C matrix from solver
+        if C.shape[0] >0:
+            constraints = [Cn @ x == dn, Cn_ineq @ x <= dn_ineq]
+        else:
+            constraints = [Cn_ineq @ x <= dn_ineq]
         prob = cp.Problem(objective, constraints)
         prob.solve()
         y2n = x.value

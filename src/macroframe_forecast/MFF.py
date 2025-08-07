@@ -55,7 +55,7 @@ class MFF:
         Inequality constraints, comparable to ``constraints_with_wildcard``.
         Constraints may include wildcard, in which case constraints will be
         applied across all horizons, or may be defined for specified time
-        periods.
+        periods. Constraints should be written in the form of 'C_ineq*y - d_ineq ≤ 0 '. 
 
     parallelize : boolean
         Indicate whether parallelization should be employed for generating the
@@ -91,14 +91,14 @@ class MFF:
     def __init__(
         self,
         df: pd.DataFrame,
-        forecaster: BaseForecaster = None,
+        forecaster: BaseForecaster | None = None,
         equality_constraints: list[str] = [],
         inequality_constraints: list[str] = [],
         parallelize: bool = True,
         n_forecast_error: int = 5,
         shrinkage_method: str = "oas",
         default_lam: float = -1,
-        max_lam: float = 129600,
+        max_lam: float = 129600
     ):
         self.df = df
         self.forecaster = forecaster
@@ -110,7 +110,9 @@ class MFF:
         self.default_lam = default_lam
         self.max_lam = max_lam
 
-    def fit(self):
+    def fit(
+        self,
+    ) -> pd.DataFrame:
         """
         Fits the model and generates reconciled forecasts for the input
         dataframe subject to defined constraints.
@@ -154,7 +156,9 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
+
         smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
+        
         Phi = GenSmoothingMatrix(W, smoothness)
 
         # 2nd stage forecast
@@ -169,6 +173,8 @@ class MFF:
         self.df0 = df0
         self.C = C
         self.d = d
+        self.C_ineq = C_ineq
+        self.d_ineq = d_ineq
         self.islands = islands
 
         self.df1 = df1
