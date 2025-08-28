@@ -15,7 +15,7 @@ output:
   word_document: default
   html_document:
     df_print: paged
-bibliography: citations.bib
+bibliography: paper.bib
 citeproc: true
 authors:
 - name: Sakai Ando
