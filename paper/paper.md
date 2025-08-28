@@ -90,7 +90,7 @@ i=1,...,M.
 $$
 
 
-Default parameter values $\lambda_i^*$ follow HP filter conventions (e.g., 1600 for quarterly data). It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
+Default parameter values $\lambda_i^* $ follow HP filter conventions (e.g., 1600 for quarterly data). It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
 
 
 # An example: single-variable GDP forecast
