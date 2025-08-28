@@ -41,7 +41,9 @@ Systematically imposing constraints while retaining smoothness is important but 
 
 Existing packages in R and Python assist forecast reconciliation and smoothing separately but not jointly. For instance, the `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] packages in R support reconciliation, but the reconciled forecast may not be smooth over time. This is also the case for `hierarchicalforecast` [@Olivaresetal2024] package in Python. On the other hand, packages, such as `smooth` [@Svetnukov2024] and `forecast` [@Hyndmanetal2024] for R and `statsmodels` [@seabold2010statsmodels] for Python, provide methods to generate smooth forecasts but do not have the functionality to impose constraints.
 
-To our knowledge, no package supports the simultaneous application of both reconciliation and smoothing, and this is the gap that `macroframe-forecast` attempts to fill. A more detailed explanation of `macroframe-forecast` can be found in XXX[@AndoDasOrazbayev]XXX.
+To our knowledge, no package supports the simultaneous application of both reconciliation and smoothing, and this is the gap that `macroframe-forecast` attempts to fill. A more detailed explanation of `macroframe-forecast` can be found in 
+
+<!---XXX[@AndoDasOrazbayev]XXX.--->
 
 # Method
 
