@@ -103,7 +103,7 @@ Default parameter values $\lambda_i^* $ follow HP filter conventions (e.g., 1600
 Using U.S. nominal GDP data (1950-2024), we forecast the values for 2025-2030 under the constraint that 2030 growth rate equals 4 percent. When the column name of the variable to be forecasted is `GDP`, the constraint is expressed as `GDP_2030 - 1.04 * GDP_2029 = 0`. The `MFF` class generates the first-step forecast via the default pipeline and reconciles them to satisfy the constraint while smoothing the trajectory. Assuming that the user has read the GDP data as a `pandas` dataframe named `df0` with index `year` and `GDP`, the forecasts (both first and second-step) can be generated as follows:
 
 ```python
-import macroframe_forecast
+from macroframe_forecast import MFF
 
 m = MFF(df0, equality_constraints = ['GDP_2030 - 1.04 * GDP_2029'])
 m.fit()
