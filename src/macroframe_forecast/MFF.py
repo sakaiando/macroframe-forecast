@@ -1,5 +1,5 @@
 # Disclaimer: Reuse of this tool and IMF information does not imply
-# any endorsement  of the research and/or product. Any research presented
+# any endorsement of the research and/or product. Any research presented
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
