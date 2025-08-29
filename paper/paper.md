@@ -34,7 +34,7 @@ affiliations:
 
 # Summary
 
-The Python package `macroframe-forecast` generates forecasts that are both temporally smooth and consistent with user-specified constraints. The framework consists of model estimation and reconciliation: first, unconstrained forecasts are produced using user-specified statistical or machine learning model; second, these forecasts are adjusted to satisfy linear equality and inequality constraints while minimizing volatility over time in the forecast horizon. The package offers a user-friendly interface for specifying constraints as strings and supports advanced customization of weights and smoothing parameters.  An example - forecasting U.S. GDP with a terminal GDP growth rate target - illustrates the usage.
+The Python package `macroframe-forecast` generates forecasts that are both temporally smooth and consistent with user-specified constraints. The framework consists of model estimation and reconciliation: first, unconstrained forecasts are produced using user-specified statistical or machine learning models; second, these forecasts are adjusted to satisfy linear equality and inequality constraints while minimizing volatility over time in the forecast horizon. The package offers a user-friendly interface for specifying constraints as strings and supports advanced customization of weights and smoothing parameters.  An example - forecasting U.S. GDP with a terminal GDP growth rate target - illustrates the usage.
 
 # Statement of need
 
@@ -75,7 +75,6 @@ $$
 & \ddots & \\
 & & \lambda_{M} F_{M}
 \end{bmatrix},
-\qquad
 F_i \;=\;
 \begin{bmatrix}
 1   & -2  & 1   & 0      &        &        &        \\
@@ -88,14 +87,13 @@ F_i \;=\;
     &     &     & 1      & -4     & 5      & -2     \\
     &     &     &  0      & 1      & -2     & 1
 \end{bmatrix},
-\qquad
 \lambda_i =   \frac{\lambda_i^*}{\sigma_i^2},
-\qquad
+
 i=1,...,M.
 $$
 
 
-Default parameter values $\lambda_i^* $ follow HP filter conventions (e.g., 1600 for quarterly data). It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
+Default parameter values $\lambda_i^*$ follow HP filter conventions (e.g., 1600 for quarterly data). It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
 
 
 # An example: single-variable GDP forecast
