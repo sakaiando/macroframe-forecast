@@ -75,6 +75,7 @@ $$
 & \ddots & \\
 & & \lambda_{M} F_{M}
 \end{bmatrix},
+\quad
 F_i \;=\;
 \begin{bmatrix}
 1   & -2  & 1   & 0      &        &        &        \\
@@ -87,7 +88,9 @@ F_i \;=\;
     &     &     & 1      & -4     & 5      & -2     \\
     &     &     &  0      & 1      & -2     & 1
 \end{bmatrix},
+\quad
 \lambda_i =   \frac{\lambda_i^*}{\sigma_i^2},
+\quad
 i=1,...,M.
 $$
 
