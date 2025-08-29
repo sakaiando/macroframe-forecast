@@ -88,7 +88,6 @@ F_i \;=\;
     &     &     &  0      & 1      & -2     & 1
 \end{bmatrix},
 \lambda_i =   \frac{\lambda_i^*}{\sigma_i^2},
-
 i=1,...,M.
 $$
 
