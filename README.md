@@ -61,3 +61,7 @@ More details about the theory and examples can be found in the following papers:
 * [A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025)](https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041).
 * [Smooth Forecast Reconciliation (2024)](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654)
 * [Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities (2023)](https://link.springer.com/article/10.1057/s41308-023-00225-8)
+
+# Disclaimer
+
+Reuse of this tool and IMF information does not imply any endorsement of the research and/or product. Any research presented should not be reported as representing the views of the IMF, its Executive Board, or member governments.
