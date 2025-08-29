@@ -1,0 +1,1151 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Contributing" href="contributing.html" /><link rel="prev" title="Examples" href="examples.html" />
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.07.19 -->
+        <title>Macroframework Forecasting Package API - macroframe-forecast 0.1.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">macroframe-forecast 0.1.5 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">macroframe-forecast 0.1.5 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Macroframework Forecasting Package API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#building-documentation">Building documentation</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/mff_documentation.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="macroframework-forecasting-package-api">
+<h1>Macroframework Forecasting Package API<a class="headerlink" href="#macroframework-forecasting-package-api" title="Link to this heading">¶</a></h1>
+<span class="target" id="module-macroframe_forecast.MFF"></span><dl class="py class">
+<dt class="sig sig-object py" id="macroframe_forecast.MFF.MFF">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">macroframe_forecast.MFF.</span></span><span class="sig-name descname"><span class="pre">MFF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecaster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseForecaster</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallelize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_forecast_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrinkage_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'oas'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">129600</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#macroframe_forecast.MFF.MFF" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for Macro-Framework Forecasting (MFF).</p>
+<p>This class facilitates forecasting of single frequency time series data
+using a two-step process. First step of the forecasting procedure generates
+unconstrained forecasts using the forecaster specified. In the next step,
+these forecasts are then reconclied so that they satisfy the supplied
+constrants, and smoothness of the forecasts is maintained.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Input dataframe containing time series data. Data should be in wide
+format, with each row containing data for one period, and each
+column containing data for one variable.</p>
+</dd>
+<dt><strong>forecaster</strong><span class="classifier">BaseForecaster, optional(default: None)</span></dt><dd><p>sktime BaseForecaster descendant. If not defined, then DefaultForecaster
+is used.</p>
+</dd>
+<dt><strong>constraints_with_wildcard</strong><span class="classifier">str, optional(default: None)</span></dt><dd><p>Constraints that hold with equality. Constraints may include wildcard,
+in which case constraints will be applied across all horizons, or
+may be defined for specified time periods.</p>
+</dd>
+<dt><strong>ineq_constraints_with_wildcard</strong><span class="classifier">str, optional(default: None)</span></dt><dd><p>Inequality constraints, comparable to <code class="docutils literal notranslate"><span class="pre">constraints_with_wildcard</span></code>.
+Constraints may include wildcard, in which case constraints will be
+applied across all horizons, or may be defined for specified time
+periods. Constraints should be written in the form of ‘C_ineq*y - d_ineq ≤ 0 ‘.</p>
+</dd>
+<dt><strong>parallelize</strong><span class="classifier">boolean</span></dt><dd><p>Indicate whether parallelization should be employed for generating the
+first step forecasts. Default value is <cite>True</cite>.</p>
+</dd>
+<dt><strong>n_forecast_error</strong><span class="classifier">int</span></dt><dd><p>Number of windows to split data into training and testing sets for
+generating matrix of forecast errors. Default is 5.</p>
+</dd>
+<dt><strong>shrinkage_method</strong><span class="classifier">str, optional(default: ‘oas’)</span></dt><dd><p>Method to be used for shrinking sample covariance matrix. Default is
+Oracle Shrinking Approximating Estimator (‘oas’). Other options are
+oas, identity and monotone_diagonal.</p>
+</dd>
+<dt><strong>default_lam</strong><span class="classifier">float, optional(default: -1)</span></dt><dd><p>The value of lambda to be used for calculating smoothing parameter if
+frequency of observations cannot be determined from index names. If this
+is set to -1, lambda is calculated empirically. Default is -1.</p>
+</dd>
+<dt><strong>max_lam</strong><span class="classifier">float, optional(default: 129600)</span></dt><dd><p>Maximum value of lamstar to be used for smoothing forecasts when being
+estimated empirically.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#macroframe_forecast.MFF.MFF.fit" title="macroframe_forecast.MFF.MFF.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>()</p></td>
+<td><p>Fits the model and generates reconciled forecasts for the input dataframe subject to defined constraints.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df2</strong><span class="classifier">pd.Dataframe</span></dt><dd><p>Output dataframe with all reconciled forecasts filled into the original
+input.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="macroframe_forecast.MFF.MFF.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#macroframe_forecast.MFF.MFF.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Fits the model and generates reconciled forecasts for the input
+dataframe subject to defined constraints.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-macroframe_forecast.MFF_mixed_frequency"></span><span class="target" id="module-macroframe_forecast.utils"></span><dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.AddIslandsToConstraints">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">AddIslandsToConstraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">C</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">islands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.AddIslandsToConstraints" title="Link to this definition">¶</a></dt>
+<dd><p>Add island values into the matrix form equality constraints which have been
+constructed by <code class="docutils literal notranslate"><span class="pre">StringToMatrixConstraints</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>C</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing matrix of the linear constraints on the left side of
+equation Cy=d.</p>
+</dd>
+<dt><strong>d</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing matrix of the linear constraints on the right side of
+equation Cy=d.</p>
+</dd>
+<dt><strong>islands</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing island values to be introduced into linear equation.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>C_aug</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the augmented C matrix, with island values incorporated.</p>
+</dd>
+<dt><strong>d_aug</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the augmented d vector, with island values incorporated.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0</span><span class="p">,</span> <span class="n">all_cells</span><span class="p">,</span> <span class="n">unknown_cells</span><span class="p">,</span> <span class="n">known_cells</span><span class="p">,</span> <span class="n">islands</span> <span class="o">=</span> <span class="n">OrganizeCells</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0_stacked</span> <span class="o">=</span> <span class="n">df0</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">constraints_with_wildcard</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a?+b?&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">C</span><span class="p">,</span><span class="n">d</span> <span class="o">=</span> <span class="n">StringToMatrixConstraints</span><span class="p">(</span><span class="n">df0_stacked</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">all_cells</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">unknown_cells</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">known_cells</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">constraints_with_wildcard</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">C</span><span class="p">,</span><span class="n">d</span> <span class="o">=</span> <span class="n">AddIslandsToConstraints</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">d</span><span class="p">,</span><span class="n">islands</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.BreakDataFrameIntoTimeSeriesList">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">BreakDataFrameIntoTimeSeriesList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.BreakDataFrameIntoTimeSeriesList" title="Link to this definition">¶</a></dt>
+<dd><p>Transform relevant dataframes into lists for ensuing reconciliation step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df0</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with all known and unknown values, without any islands.</p>
+</dd>
+<dt><strong>df1</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with unknown values as well as islands filled in with
+first step forecasts.</p>
+</dd>
+<dt><strong>pred</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with in-sample predictions generated using pseudo-historical
+datasets, output from <code class="docutils literal notranslate"><span class="pre">GenPredTrueData</span></code>.</p>
+</dd>
+<dt><strong>true</strong><span class="classifier">pd.DataFrame</span></dt><dd><dl class="simple">
+<dt>Dataframe with actual values of the variable corresponding to predicted</dt><dd><p>values contained in pred.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>ts_list</strong><span class="classifier">list</span></dt><dd><p>List containing all first step out of sample forecasts.</p>
+</dd>
+<dt><strong>pred_list</strong><span class="classifier">list</span></dt><dd><p>List of dataframes, with each dataframe containing in-sample forecasts
+for one variable.</p>
+</dd>
+<dt><strong>true_list</strong><span class="classifier">list</span></dt><dd><p>List of dataframes, with each dataframe containing the actual values
+for a variable corresponding to in-sample predictions stored in
+pred_list.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">YfromX</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">DefaultForecaster</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="n">YfromX</span><span class="p">(</span><span class="n">ElasticNetCV</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df1</span><span class="p">,</span><span class="n">df1_models</span> <span class="o">=</span> <span class="n">FillAllEmptyCells</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">DefaultForecaster</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span><span class="p">,</span><span class="n">true</span><span class="p">,</span><span class="n">model</span> <span class="o">=</span> <span class="n">GenPredTrueData</span><span class="p">(</span><span class="n">df0</span><span class="p">,</span><span class="n">forecaster</span><span class="p">,</span><span class="n">parallelize</span><span class="o">=</span><span class="n">parallelize</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ts_list</span><span class="p">,</span><span class="n">pred_list</span><span class="p">,</span><span class="n">true_list</span> <span class="o">=</span> <span class="n">BreakDataFrameIntoTimeSeriesList</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">df1</span><span class="p">,</span><span class="n">pred</span><span class="p">,</span><span class="n">true</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.CheckTrainingSampleSize">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">CheckTrainingSampleSize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_forecast_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.CheckTrainingSampleSize" title="Link to this definition">¶</a></dt>
+<dd><p>Check sample size available for training window. Raise an exception if the
+number of observations available is too low.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df0</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Input dataframe with island values replaced by nan.</p>
+</dd>
+<dt><strong>n_forecast_error</strong><span class="classifier">int</span></dt><dd><p>Number of training and testing sets to split data into for generating
+matrix of forecast errors.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>small_sample</strong><span class="classifier">bool</span></dt><dd><p>Indicator for whether the sample of observations available for training
+is small.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.CleanIslands">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">CleanIslands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Series</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.CleanIslands" title="Link to this definition">¶</a></dt>
+<dd><p>Separate island values from input dataframe, replacing them with nan.
+Called by <code class="docutils literal notranslate"><span class="pre">OrganizeCells</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Input dataframe with raw data.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>df_no_islands</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with island values replaced by nan.</p>
+</dd>
+<dt><strong>islands</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing island values.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0</span><span class="p">,</span> <span class="n">islands</span> <span class="o">=</span> <span class="n">CleanIslands</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.DefaultForecaster">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">DefaultForecaster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">small_sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">BaseForecaster</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.DefaultForecaster" title="Link to this definition">¶</a></dt>
+<dd><p>Set up forecasting pipeline, specifying the scaling (transforming) to be
+applied and forecasting model to be used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>small_sample</strong><span class="classifier">boolean</span></dt><dd><p>Indicator for whether the sample of observations available for training
+is small. By default this is turned to False.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>gscv</strong><span class="classifier">BaseForecaster</span></dt><dd><p>Instance of sktime’s Grid Search forecaster, derived from BaseForecaster,
+which is configured for hyperparameter tuning and model selection.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.FillAllEmptyCells">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">FillAllEmptyCells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecaster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseForecaster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallelize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.FillAllEmptyCells" title="Link to this definition">¶</a></dt>
+<dd><p>Generate forecasts for all unknown cells in the supplied dataframe.
+All forecasts are made independently from each other. (TBC)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df: pd.DataFrame</strong></dt><dd><p>Dataframe containing known values of all variables and nan for
+unknown values.</p>
+</dd>
+<dt><strong>forecaster</strong><span class="classifier">BaseForecaster</span></dt><dd><p>sktime BaseForecaster descendant</p>
+</dd>
+<dt><strong>parallelize</strong><span class="classifier">boolean</span></dt><dd><p>Indicate whether parallelization should be employed for generating the
+first step forecasts. Default value is <cite>True</cite>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">string</span><span class="w"> </span><span class="kn">import</span> <span class="n">ascii_lowercase</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">YfromX</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">mff.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">FillAllEmptyCells</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">DefaultForecaster</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="n">YfromX</span><span class="p">(</span><span class="n">ElasticNetCV</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df1</span><span class="p">,</span><span class="n">df1_models</span> <span class="o">=</span> <span class="n">FillAllEmptyCells</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">DefaultForecaster</span><span class="p">())</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.FillAnEmptyCell">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">FillAnEmptyCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecaster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseForecaster</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseForecaster</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.FillAnEmptyCell" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a forecast for a given cell based on the latest known value
+for the given column (variable) and using the predefined forecasting pipeline.
+Called by <code class="docutils literal notranslate"><span class="pre">FillAllEmptyCells</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing known values of all variables and nan for
+unknown values.</p>
+</dd>
+<dt><strong>row</strong><span class="classifier">str</span></dt><dd><p>Row index of cell to be forecasted.</p>
+</dd>
+<dt><strong>col</strong><span class="classifier">str</span></dt><dd><p>Column index of cell to be forecasted.</p>
+</dd>
+<dt><strong>forecaster</strong><span class="classifier">BaseForecaster</span></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>y_pred</strong><span class="classifier">double</span></dt><dd><p>Forecasted value of the variable for the given horizon.</p>
+</dd>
+<dt><strong>forecaster</strong><span class="classifier">BaseForecaster</span></dt><dd><p>sktime BaseForecaster descendant</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">string</span><span class="w"> </span><span class="kn">import</span> <span class="n">ascii_lowercase</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">YfromX</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">col</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">forecaster</span> <span class="o">=</span> <span class="n">YfromX</span><span class="p">(</span><span class="n">ElasticNetCV</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="p">,</span> <span class="n">forecaster</span> <span class="o">=</span> <span class="n">FillAnEmptyCell</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">row</span><span class="p">,</span><span class="n">col</span><span class="p">,</span><span class="n">forecaster</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.GenLamstar">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">GenLamstar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">129600</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.GenLamstar" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the smoothness parameter (lambda) associated with each variable
+being forecasted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pred_list</strong><span class="classifier">list</span></dt><dd><p>List of dataframes, with each dataframe containing in-sample forecasts
+for one variable.</p>
+</dd>
+<dt><strong>true_list</strong><span class="classifier">list</span></dt><dd><p>List of dataframes, with each dataframe containing the actual values
+for a variable corresponding to in-sample predictions stored in
+pred_list.</p>
+</dd>
+<dt><strong>default_lam</strong><span class="classifier">float, optional(default: -1)</span></dt><dd><p>The value of lambda to be used for calculating smoothing parameter if
+frequency of observations cannot be determined from index names. If this
+is set to -1, lambda is calculated empirically. The default value is -1.</p>
+</dd>
+<dt><strong>max_lam</strong><span class="classifier">float, optional</span></dt><dd><p>The upperbound of HP filter penalty term (lambda) searched by scipy
+minimizer. The default is 129600.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>lamstar</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing smoothing parameters to be used for each variable.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">W</span><span class="p">,</span><span class="n">shrinkage</span> <span class="o">=</span> <span class="n">GenWeightMatrix</span><span class="p">(</span><span class="n">pred_list</span><span class="p">,</span> <span class="n">true_list</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.GenPredTrueData">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">GenPredTrueData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecaster</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseForecaster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_forecast_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallelize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.GenPredTrueData" title="Link to this definition">¶</a></dt>
+<dd><p>Generate in-sample forecasts from existing data by constructing
+pseudo-historical datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with all known as well as unknown values.</p>
+</dd>
+<dt><strong>forecaster</strong><span class="classifier">BaseForecaster</span></dt><dd><p>sktime BaseForecaster descendant.</p>
+</dd>
+<dt><strong>n_forecast_error</strong><span class="classifier">int, optional</span></dt><dd><p>Number of horizons for which in-sample forecasts are generated.
+The default is 5.</p>
+</dd>
+<dt><strong>parallelize</strong><span class="classifier">boolean, optional</span></dt><dd><p>Indicate whether parallelization should be used. The default is True.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>pred</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with in-sample predictions generated using pseudo-historical
+datasets.</p>
+</dd>
+<dt><strong>true</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with actual values of the variable corresponding to predicted
+values contained in pred.</p>
+</dd>
+<dt><strong>model</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with information on the models used for generating each
+forecast.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">YfromX</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">DefaultForecaster</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="n">YfromX</span><span class="p">(</span><span class="n">ElasticNetCV</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span><span class="p">,</span><span class="n">true</span><span class="p">,</span><span class="n">model</span> <span class="o">=</span> <span class="n">GenPredTrueData</span><span class="p">(</span><span class="n">df0</span><span class="p">,</span><span class="n">forecaster</span><span class="p">,</span><span class="n">parallelize</span><span class="o">=</span><span class="n">parallelize</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.GenSmoothingMatrix">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">GenSmoothingMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamstar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.GenSmoothingMatrix" title="Link to this definition">¶</a></dt>
+<dd><p>Generate symmetric smoothing matrix using optimal lambda and weighting matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>W</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the weighting matrix.</p>
+</dd>
+<dt><strong>lamstar</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing smoothing parameters to be used for each variable.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Phi</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the smoothing matrix.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred_list_1</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>                            <span class="n">columns</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="s1">&#39;A&#39;</span><span class="p">],</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]]))</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span>
+<span class="gp">&gt;&gt;&gt; </span>               <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>                            <span class="n">columns</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="s1">&#39;B&#39;</span><span class="p">],</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]]))</span>
+<span class="gp">&gt;&gt;&gt; </span>               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true_list_1</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>                            <span class="n">columns</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="s1">&#39;A&#39;</span><span class="p">],</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]]))</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span>
+<span class="gp">&gt;&gt;&gt; </span>               <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>                            <span class="n">columns</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="s1">&#39;B&#39;</span><span class="p">],</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]]))</span>
+<span class="gp">&gt;&gt;&gt; </span>               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">smoothness</span> <span class="o">=</span> <span class="n">GenLamstar</span><span class="p">(</span><span class="n">pred_list_1</span><span class="p">,</span><span class="n">true_list_1</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.GenVecForecastWithIslands">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">GenVecForecastWithIslands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">islands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Series</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.GenVecForecastWithIslands" title="Link to this definition">¶</a></dt>
+<dd><p>Overwrite forecasted values for islands with known island value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>ts_list</strong><span class="classifier">list</span></dt><dd><p>List of all first step forecasted values.</p>
+</dd>
+<dt><strong>islands</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing island values.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>y1</strong><span class="classifier">pd.Series</span></dt><dd><p>Series of forecasted values with island values incorporated.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">YfromX</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0</span><span class="p">,</span> <span class="n">all_cells</span><span class="p">,</span> <span class="n">unknown_cells</span><span class="p">,</span> <span class="n">known_cells</span><span class="p">,</span> <span class="n">islands</span> <span class="o">=</span> <span class="n">OrganizeCells</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">DefaultForecaster</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="n">YfromX</span><span class="p">(</span><span class="n">ElasticNetCV</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df1</span><span class="p">,</span><span class="n">df1_models</span> <span class="o">=</span> <span class="n">FillAllEmptyCells</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">DefaultForecaster</span><span class="p">(),</span><span class="n">parallelize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ts_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">df1</span><span class="p">[</span><span class="n">df0</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">col</span><span class="p">:</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df0</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y1</span> <span class="o">=</span> <span class="n">GenVecForecastWithIslands</span><span class="p">(</span><span class="n">ts_list</span><span class="p">,</span><span class="n">islands</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.GenWeightMatrix">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">GenWeightMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrinkage_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'oas'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'oasd'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'oas'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.GenWeightMatrix" title="Link to this definition">¶</a></dt>
+<dd><p>Generate weighting matrix based on in-sample forecasts and actual values
+for the corresponding periods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pred_list</strong><span class="classifier">list</span></dt><dd><p>List of dataframes, with each dataframe containing in-sample forecasts
+for one variable..</p>
+</dd>
+<dt><strong>true_list</strong><span class="classifier">list</span></dt><dd><p>List of dataframes, with each dataframe containing the actual values
+for a variable corresponding to in-sample predictions stored in
+pred_list.</p>
+</dd>
+<dt><strong>shrinkage_method</strong><span class="classifier">str, optional</span></dt><dd><p>Type of algorithm to use for shrinking the covariance matrix, with
+options of identity, oas and oasd. The default is ‘oas’.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>W</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Weighting matrix to be used for reconciliation.</p>
+</dd>
+<dt>shrinkage: float</dt><dd><p>Shrinkage parameter associated with the weight. Nan in case identity
+is selected as method.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Col</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">W</span><span class="p">,</span><span class="n">shrinkage</span> <span class="o">=</span> <span class="n">GenWeightMatrix</span><span class="p">(</span><span class="n">pred_list</span><span class="p">,</span> <span class="n">true_list</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.HP_matrix">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">HP_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.HP_matrix" title="Link to this definition">¶</a></dt>
+<dd><p>Create the degenerate penta-diagonal matrix (the one used in HP Filter),
+with dimensions (size x size).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>size</strong><span class="classifier">integer</span></dt><dd><p>Number of rows for the square matrix.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>F</strong><span class="classifier">np.array</span></dt><dd><p>Array containing the F matrix.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.OrganizeCells">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">OrganizeCells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Series</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.OrganizeCells" title="Link to this definition">¶</a></dt>
+<dd><p>Extract island values (if existing) from input dataframe, replacing them
+with nan values. This is useful for generating first step forecasts, which
+disregard known island values for the prediction. Also identifies separate
+Pandas series of names of cells for known and unknown values in the input
+dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Input dataframe with raw data.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>df0</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with island values replaced by nan.</p>
+</dd>
+<dt><strong>all_cells</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing cell names of all cells in the input dataframe.</p>
+</dd>
+<dt><strong>unknown_cells</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing cell names of cells whose values are to be forecasted.</p>
+</dd>
+<dt><strong>known_cells</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing cell names of cells whose values are known.</p>
+</dd>
+<dt><strong>islands</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing island values.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0</span><span class="p">,</span> <span class="n">all_cells</span><span class="p">,</span> <span class="n">unknown_cells</span><span class="p">,</span> <span class="n">known_cells</span><span class="p">,</span> <span class="n">islands</span> <span class="o">=</span> <span class="n">OrganizeCells</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.Reconciliation">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">Reconciliation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C_ineq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_ineq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.Reconciliation" title="Link to this definition">¶</a></dt>
+<dd><p>Reconcile first step forecasts to satisfy equality as well as inequality
+constraints, subject to smoothening.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>y1</strong><span class="classifier">pd.Series</span></dt><dd><p>Series of all forecasted and island values.</p>
+</dd>
+<dt><strong>W</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the weighting matrix.</p>
+</dd>
+<dt><strong>Phi</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the smoothing matrix.</p>
+</dd>
+<dt><strong>C</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing matrix of the linear constraints on the left side of
+the equality constraint Cy=d.</p>
+</dd>
+<dt><strong>d</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing matrix of the linear constraints on the right side of
+the equality constraint Cy=d.</p>
+</dd>
+<dt><strong>C_ineq</strong><span class="classifier">pd.DataFrame, optional</span></dt><dd><p>Dataframe containing matrix of the linear constraints on the left side of
+the inequality constraint C_ineq · y - d_ineq ≤ 0. The default is None.</p>
+</dd>
+<dt><strong>d_ineq</strong><span class="classifier">pd.DataFrame, optional</span></dt><dd><p>Dataframe containing matrix of the linear constraints on the right side of
+the inequality constraint C_ineq · y - d_ineq ≤ 0.  The default is None.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>y2</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe containing the final reconciled forecasts for all variables.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sktime.forecasting.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">YfromX</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0</span><span class="p">,</span> <span class="n">all_cells</span><span class="p">,</span> <span class="n">unknown_cells</span><span class="p">,</span> <span class="n">known_cells</span><span class="p">,</span> <span class="n">islands</span> <span class="o">=</span> <span class="n">OrganizeCells</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">DefaultForecaster</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="n">YfromX</span><span class="p">(</span><span class="n">ElasticNetCV</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df1</span><span class="p">,</span><span class="n">df1_models</span> <span class="o">=</span> <span class="n">FillAllEmptyCells</span><span class="p">(</span><span class="n">df0</span><span class="p">,</span><span class="n">DefaultForecaster</span><span class="p">(),</span><span class="n">parallelize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span><span class="p">,</span><span class="n">true</span><span class="p">,</span><span class="n">model</span> <span class="o">=</span> <span class="n">GenPredTrueData</span><span class="p">(</span><span class="n">df0</span><span class="p">,</span><span class="n">DefaultForecaster</span><span class="p">(),</span><span class="n">parallelize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ts_list</span><span class="p">,</span><span class="n">pred_list</span><span class="p">,</span><span class="n">true_list</span> <span class="o">=</span> <span class="n">BreakDataFrameIntoTimeSeriesList</span><span class="p">(</span><span class="n">df0</span><span class="p">,</span><span class="n">df1</span><span class="p">,</span><span class="n">pred</span><span class="p">,</span><span class="n">true</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">ts_list</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">C</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="n">y1</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">W</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span><span class="n">index</span><span class="o">=</span><span class="n">y1</span><span class="o">.</span><span class="n">index</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">y1</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">smoothness</span> <span class="o">=</span> <span class="n">GenLamstar</span><span class="p">(</span><span class="n">pred_list</span><span class="p">,</span><span class="n">true_list</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Phi</span> <span class="o">=</span> <span class="n">GenSmoothingMatrix</span><span class="p">(</span><span class="n">W</span><span class="p">,</span><span class="n">smoothness</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y2</span> <span class="o">=</span> <span class="n">Reconciliation</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span><span class="n">W</span><span class="p">,</span><span class="n">Phi</span><span class="p">,</span><span class="n">C</span><span class="p">,</span><span class="n">d</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y2</span> <span class="o">=</span> <span class="n">Reconciliation</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">y1</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">W</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">Phi</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">C</span><span class="p">,</span><span class="n">m</span><span class="o">.</span><span class="n">d</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.StringToMatrixConstraints">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">StringToMatrixConstraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df0_stacked</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown_cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints_with_wildcard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wildcard_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'?'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.StringToMatrixConstraints" title="Link to this definition">¶</a></dt>
+<dd><p>Convert equality constraints from list to matrix form for horizons to
+be forecasted (Cy = d, where C and d are dataframes containing the
+linear constraints). The input dataframe should not be in a standard wide
+format, but instead all columns should be stacked on one another. This is
+needed to control for dealing with the case of mixed frequency among
+observations. All island values in the dinput dataframe should be replaced
+by nan prior to this step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df0_stacked</strong><span class="classifier">pd.Series</span></dt><dd><p>Stacked version of df0 (input  dataframe with islands removed).</p>
+</dd>
+<dt><strong>all_cells</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing cell names of all cells in the input dataframe.</p>
+</dd>
+<dt><strong>unknown_cells</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing cell names of cells whose values are to be forecasted.</p>
+</dd>
+<dt><strong>known_cells</strong><span class="classifier">pd.Series</span></dt><dd><p>Series containing cell names of cells whose values are known..</p>
+</dd>
+<dt><strong>constraints_with_wildcard</strong><span class="classifier">str, optional</span></dt><dd><p>String specifying equality constraints that have to hold.
+The default is [].</p>
+</dd>
+<dt><strong>wildcard_string</strong><span class="classifier">str, optional</span></dt><dd><p>String that is used as wildcard identifier in constraint.
+The default is ‘?’.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>C: pd.DataFrame</dt><dd><p>Dataframe containing matrix of the linear constraints on the left side of
+equation Cy=d.</p>
+</dd>
+<dt>d: pd.DataFrame</dt><dd><p>Dataframe containing matrix of the linear constraints on the right side of
+equation Cy=d.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0</span><span class="p">,</span> <span class="n">all_cells</span><span class="p">,</span> <span class="n">unknown_cells</span><span class="p">,</span> <span class="n">known_cells</span><span class="p">,</span> <span class="n">islands</span> <span class="o">=</span> <span class="n">OrganizeCells</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0_stacked</span> <span class="o">=</span> <span class="n">df0</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">constraints_with_wildcard</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a?+b?&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">C</span><span class="p">,</span><span class="n">d</span> <span class="o">=</span> <span class="n">StringToMatrixConstraints</span><span class="p">(</span><span class="n">df0_stacked</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">all_cells</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">unknown_cells</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">known_cells</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                                <span class="n">constraints_with_wildcard</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.expand_wildcard">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">expand_wildcard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints_with_alphabet_wildcard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wildcard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#macroframe_forecast.utils.expand_wildcard" title="Link to this definition">¶</a></dt>
+<dd><p>Expand constraints with wildcard to all possible time periods. This is
+called within <code class="docutils literal notranslate"><span class="pre">StringToMatrixConstraints</span></code>, and the wildcard character
+has already been replaced by a random letter before this function is
+called.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>constraints_with_alphabet_wildcard</strong><span class="classifier">string</span></dt><dd><p>Linear equality constraints with wildcard string replaced
+with alphabets.</p>
+</dd>
+<dt><strong>var_list</strong><span class="classifier">list</span></dt><dd><p>List of indices of all cells (known and unknown) in raw dataframe.</p>
+</dd>
+<dt><strong>wildcard</strong><span class="classifier">string</span></dt><dd><p>Alphabet which has replaced wildcard string in the constraints.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                  <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;YE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df0_stacked</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">all_cells_index</span> <span class="o">=</span> <span class="n">df0_stacked</span><span class="o">.</span><span class="n">index</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">var_list</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">all_cells_index</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                     <span class="n">index</span> <span class="o">=</span> <span class="n">all_cells_index</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">constraints_with_alphabet_wildcard</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ax + bx&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alphabet_wildcard</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">constraints</span> <span class="o">=</span> <span class="n">expand_wildcard</span><span class="p">(</span><span class="n">constraints_with_alphabet_wildcard</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                              <span class="n">var_list</span> <span class="o">=</span> <span class="n">var_list</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>                              <span class="n">wildcard</span> <span class="o">=</span> <span class="n">alphabet_wildcard</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.find_permissible_wildcard">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">find_permissible_wildcard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints_with_wildcard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#macroframe_forecast.utils.find_permissible_wildcard" title="Link to this definition">¶</a></dt>
+<dd><p>Generate random letter to be used in constraints.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="macroframe_forecast.utils.find_strings_to_replace_wildcard">
+<span class="sig-prename descclassname"><span class="pre">macroframe_forecast.utils.</span></span><span class="sig-name descname"><span class="pre">find_strings_to_replace_wildcard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wildcard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#macroframe_forecast.utils.find_strings_to_replace_wildcard" title="Link to this definition">¶</a></dt>
+<dd><p>Identify list of strings to be substituted with the wildcard character.</p>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="contributing.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Contributing</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="examples.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Examples</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024-2025, IMF
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Macroframework Forecasting Package API</a><ul>
+<li><a class="reference internal" href="#macroframe_forecast.MFF.MFF"><code class="docutils literal notranslate"><span class="pre">MFF</span></code></a><ul>
+<li><a class="reference internal" href="#macroframe_forecast.MFF.MFF.fit"><code class="docutils literal notranslate"><span class="pre">MFF.fit()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.AddIslandsToConstraints"><code class="docutils literal notranslate"><span class="pre">AddIslandsToConstraints()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.BreakDataFrameIntoTimeSeriesList"><code class="docutils literal notranslate"><span class="pre">BreakDataFrameIntoTimeSeriesList()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.CheckTrainingSampleSize"><code class="docutils literal notranslate"><span class="pre">CheckTrainingSampleSize()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.CleanIslands"><code class="docutils literal notranslate"><span class="pre">CleanIslands()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.DefaultForecaster"><code class="docutils literal notranslate"><span class="pre">DefaultForecaster()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.FillAllEmptyCells"><code class="docutils literal notranslate"><span class="pre">FillAllEmptyCells()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.FillAnEmptyCell"><code class="docutils literal notranslate"><span class="pre">FillAnEmptyCell()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.GenLamstar"><code class="docutils literal notranslate"><span class="pre">GenLamstar()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.GenPredTrueData"><code class="docutils literal notranslate"><span class="pre">GenPredTrueData()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.GenSmoothingMatrix"><code class="docutils literal notranslate"><span class="pre">GenSmoothingMatrix()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.GenVecForecastWithIslands"><code class="docutils literal notranslate"><span class="pre">GenVecForecastWithIslands()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.GenWeightMatrix"><code class="docutils literal notranslate"><span class="pre">GenWeightMatrix()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.HP_matrix"><code class="docutils literal notranslate"><span class="pre">HP_matrix()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.OrganizeCells"><code class="docutils literal notranslate"><span class="pre">OrganizeCells()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.Reconciliation"><code class="docutils literal notranslate"><span class="pre">Reconciliation()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.StringToMatrixConstraints"><code class="docutils literal notranslate"><span class="pre">StringToMatrixConstraints()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.expand_wildcard"><code class="docutils literal notranslate"><span class="pre">expand_wildcard()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.find_permissible_wildcard"><code class="docutils literal notranslate"><span class="pre">find_permissible_wildcard()</span></code></a></li>
+<li><a class="reference internal" href="#macroframe_forecast.utils.find_strings_to_replace_wildcard"><code class="docutils literal notranslate"><span class="pre">find_strings_to_replace_wildcard()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=59fadc99"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
