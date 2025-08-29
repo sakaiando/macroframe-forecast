@@ -104,8 +104,10 @@ Using U.S. nominal GDP data (1950-2024), we forecast the values for 2025-2030 un
 
 ```python
 from macroframe_forecast import MFF
+from macroframe_forecast.examples import generate_example_GDP_df
 
-m = MFF(df0, equality_constraints = ['GDP_2030 - 1.04 * GDP_2029'])
+df0 = generate_example_GDP_df()
+m = MFF(df0, equality_constraints=["GDP_2030 - 1.04 * GDP_2029"])
 m.fit()
 ```
 
