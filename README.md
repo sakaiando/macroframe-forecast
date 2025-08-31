@@ -3,6 +3,11 @@
 
 [![!pypi](https://img.shields.io/pypi/v/macroframe-forecast?color=green)](https://pypi.org/project/macroframe-forecast/) [![Downloads](https://static.pepy.tech/personalized-badge/macroframe-forecast?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/macroframe-forecast)
 
+This package is based on the following papers:
+* [A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025)](https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041).
+* [Smooth Forecast Reconciliation (2024)](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654)
+* [Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities (2023)](https://link.springer.com/article/10.1057/s41308-023-00225-8)
+
 # Documentation
 
 Please refer to [this link](https://sakaiando.github.io/macroframe-forecast/) for documentation.
@@ -54,13 +59,6 @@ print("shrinkage", np.round(shrinkage, 3))
 for ri, ci in np.argwhere(df.isna()):
     print(df1_model.index[ri], df1_model.columns[ci], df1_model.iloc[ri, ci].best_params_)
 ```
-
-# References
-
-More details about the theory and examples can be found in the following papers:
-* [A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025)](https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041).
-* [Smooth Forecast Reconciliation (2024)](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654)
-* [Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities (2023)](https://link.springer.com/article/10.1057/s41308-023-00225-8)
 
 # Disclaimer
 
