@@ -1,7 +1,7 @@
 # `macroframe-forecast`: a Python package to assist with macroframework forecasting
 
 
-[![!pypi](https://img.shields.io/pypi/v/macroframe-forecast?color=green)](https://pypi.org/project/macroframe-forecast/) [![Downloads](https://static.pepy.tech/personalized-badge/macroframe-forecast?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/macroframe-forecast)
+[![!pypi](https://img.shields.io/pypi/v/macroframe-forecast?color=green)](https://pypi.org/project/macroframe-forecast/) [![Downloads](https://static.pepy.tech/personalized-badge/macroframe-forecast?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/macroframe-forecast) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sakaiando/macroframe-forecast/HEAD)
 
 This package is based on the following papers:
 * [A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025)](https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041).
