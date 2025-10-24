@@ -3,6 +3,8 @@
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
+# Mix-frequency is not working properly yet, waiting for Pandas to fix error: https://github.com/pandas-dev/pandas/issues/59775
+
 import pandas as pd
 
 from .utils import (
@@ -20,9 +22,6 @@ from .utils import (
     StringToMatrixConstraints,
     get_freq_of_freq,
 )
-
-# %%
-
 
 class MFF_mixed_freqency:
     def __init__(
