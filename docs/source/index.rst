@@ -36,39 +36,38 @@ The relevant import from `macroframe-foreacst` is `MFF`:
 
    import numpy as np
    import pandas as pd
-   from sktime.datasets import load_macroeconomic
-
+   import matplotlib.pyplot as plt
    from macroframe_forecast import MFF
-
-   df_true = load_macroeconomic().iloc[:, :5]
-
-   # input dataframe
+   
+   # true data
+   df_true = pd.DataFrame({
+       'var1': np.random.randn(30),  # 100 random values from normal distribution
+       'var2': np.random.randn(30)
+   })
+   df_true['sum'] = df_true['var1'] + df_true['var2']
+   
+   # input dataframe, 
    df = df_true.copy()
    fh = 5
-   df.iloc[-fh:, 0] = np.nan
-
+   df.iloc[-fh:, 1:] = np.nan
+   
    # apply MFF
-   m = MFF(df, equality_constraints=[])
+   m = MFF(df, equality_constraints=['var1_? + var2_? - sum_?'])
    df2 = m.fit()
-   df0 = m.df0
-   df1 = m.df1
-   df1_model = m.df1_model
-   smoothness = m.smoothness
-   shrinkage = m.shrinkage
-
-   # plot results
-   t0 = -30
-   ax = df0.iloc[t0:, 0].plot(label="df0")
-   df1.iloc[t0:, 0].plot(ax=ax, label="df1")
-   df2.iloc[t0:, 0].plot(ax=ax, label="df2")
-   df_true.iloc[t0:, 0].plot(ax=ax, label="df_true")
-   ax.axvline(x=df0.index[-fh])
-   ax.legend()
-
-   print("smoothness", smoothness.values)
-   print("shrinkage", np.round(shrinkage, 3))
-   for ri, ci in np.argwhere(df.isna()):
-      print(df1_model.index[ri], df1_model.columns[ci], df1_model.iloc[ri, ci].best_params_)
+   
+   # plots results
+   fig,axes = plt.subplots(3,1,sharey=True, figsize=(9,9))
+   
+   axes[0].plot(df2['var2'], label='forecasted var2')
+   axes[0].plot(df_true['var2'], label='true var2')
+   axes[0].legend()
+   
+   axes[1].plot(df2['sum'], label='forecasted sum')
+   axes[1].plot(df_true['sum'], label='true sum')
+   axes[1].legend()
+   
+   axes[2].plot( df2['var1'] + df2['var2'] - df2['sum'], label='summation error')
+   axes[2].legend()
 
 
 .. toctree::
