@@ -35,7 +35,7 @@ df_true = pd.DataFrame({
 })
 df_true['sum'] = df_true['var1'] + df_true['var2']
 
-# input dataframe, 
+# input dataframe
 df = df_true.copy()
 fh = 5
 df.iloc[-fh:, 1:] = np.nan
