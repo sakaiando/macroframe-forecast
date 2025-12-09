@@ -131,19 +131,18 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        # Initiate DefaultForecaster only if a forecaster has not already been
-        # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
-        # if false.
-        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
-        if forecaster is None:
-            forecaster = DefaultForecaster(small_sample)
-
         # get constraint matrices
         C, d = StringToMatrixConstraints(df0.T.stack(), all_cells, unknown_cells, known_cells, equality_constraints)
         C, d = AddIslandsToConstraints(C, d, islands)
         C_ineq, d_ineq = StringToMatrixConstraints(
             df0.T.stack(), all_cells, unknown_cells, known_cells, inequality_constraints
         )
+
+        # Initiate DefaultForecaster only if a forecaster has not already been defined by the user.
+        # Use OLS PCA if small_sample is True, and Grid Search if false.
+        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
+        if forecaster is None:
+            forecaster = DefaultForecaster(small_sample)
         
         # 1st stage forecast and its model
         df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=parallelize)
