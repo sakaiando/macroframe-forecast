@@ -131,11 +131,10 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
-
         # Initiate DefaultForecaster only if a forecaster has not already been
         # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
         # if false.
+        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
         if forecaster is None:
             forecaster = DefaultForecaster(small_sample)
 
