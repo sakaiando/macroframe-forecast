@@ -156,9 +156,7 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-
         smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
-        
         Phi = GenSmoothingMatrix(W, smoothness)
 
         # 2nd stage forecast
