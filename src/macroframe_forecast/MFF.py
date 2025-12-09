@@ -159,7 +159,7 @@ class MFF:
         smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
         Phi = GenSmoothingMatrix(W, smoothness)
 
-        # 2nd stage forecast
+        # 2nd stage reconciled forecast
         y2 = Reconciliation(y1, W, Phi, C, d, C_ineq, d_ineq)
 
         # reshape vector y2 into df2
