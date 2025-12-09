@@ -138,11 +138,13 @@ class MFF:
         if forecaster is None:
             forecaster = DefaultForecaster(small_sample)
 
+        # get constraint matrices
         C, d = StringToMatrixConstraints(df0.T.stack(), all_cells, unknown_cells, known_cells, equality_constraints)
         C, d = AddIslandsToConstraints(C, d, islands)
         C_ineq, d_ineq = StringToMatrixConstraints(
             df0.T.stack(), all_cells, unknown_cells, known_cells, inequality_constraints
         )
+        
         # 1st stage forecast and its model
         df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=parallelize)
 
