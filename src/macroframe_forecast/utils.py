@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import sympy as sp
-from dask import compute, delayed
+from dask.distributed import Client
 from numpy import ndarray
 from numpy.linalg import inv
 from pandas import DataFrame, Index, PeriodIndex, Series
@@ -105,7 +105,9 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     pipe_y_elasticnet = TransformedTargetForecaster(
         steps=[
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
-            ("forecaster", DirectReductionForecaster(ElasticNetCV(max_iter=5000, cv=TimeSeriesSplit(n_splits=5)))),
+            ("forecaster", DirectReductionForecaster(ElasticNetCV(max_iter=5000,
+                                                                  cv=TimeSeriesSplit(n_splits=5)),
+                                                     window_length = 5)),
         ]
     )
 
@@ -161,7 +163,7 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
                     "ols_pca",
                 ]
             },
-            backend="dask",
+            backend=None,
         )
 
     else:
@@ -550,25 +552,22 @@ def FillAnEmptyCell(
     """
     warnings.filterwarnings("ignore", category=UserWarning)
 
+    # clone a forecaster
+    f = forecaster.clone()
+    
     # last historical data and forecast horizon in num
     T = np.argwhere(df.loc[:, col].isna()).min() - 1
     h = np.where(df.index == row)[0][0] - T
 
-    y = df.iloc[:T, :].loc[:, [col]]
+    y = df.iloc[:T, :].loc[:, col]
 
     X = df.iloc[: T + h].drop(columns=[col]).dropna(axis=1)
     X_train = X.iloc[:T, :]
     X_pred = X.iloc[T:, :]
 
-    y_pred = forecaster.fit(y=y, X=X_train, fh=h).predict(X=X_pred)
+    y_pred = f.fit(y=y, X=X_train, fh=h).predict(X=X_pred)
 
-    return y_pred, forecaster
-
-
-@delayed
-def delayed_FillAnEmptyCell(df, row, col, forecaster):
-    return FillAnEmptyCell(df, row, col, forecaster)
-
+    return y_pred, f
 
 def FillAllEmptyCells(
     df: DataFrame, forecaster: BaseForecaster, parallelize: bool = True
@@ -625,18 +624,19 @@ def FillAllEmptyCells(
     # apply dask
     if parallelize:
         start = time()
-        results = compute(
-            *[delayed_FillAnEmptyCell(df, row, col, copy.deepcopy(forecaster)) for (row, col) in na_cells],
-            scheduler="processes",
-        )
-        end = time()
-        print("Dask filled", len(results), "out-of-sample cells:", round(end - start, 3), "seconds")
+        client = Client()
+        df_future = client.scatter(df,broadcast=True)
+        forecaster_future = client.scatter(forecaster, broadcast=True)
+        futures = [client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future)
+                   for (row, col) in na_cells]
+        results = client.gather(futures)
+        client.close()
+        print("Dask filled", len(results), "out-of-sample cells:", round(time() - start, 3), "seconds")
 
     else:
         start = time()
         results = [FillAnEmptyCell(df, row, col, forecaster) for row, col in na_cells]
-        end = time()
-        print("Forecast", len(results), "cells:", round(end - start, 3), "seconds")
+        print("Forecast", len(results), "cells:", round(time() - start, 3), "seconds")
 
     # fill empty cells
     df1 = df.copy()
@@ -712,17 +712,17 @@ def GenPredTrueData(
 
     if parallelize:
         start = time()
-        results = compute(
-            *[delayed(FillAnEmptyCell)(df_list[dfi], row, col, copy.deepcopy(forecaster)) for (dfi, row, col) in tasks],
-            scheduler="processes",
-        )  # processes, multiprocesses, threads won't work
-        end = time()
-        print("Dask filled", len(results), "in-sample cells:", round(end - start, 3), "seconds")
+        client = Client()
+        df_futures = client.scatter(df_list, broadcast=True)
+        forecaster_future = client.scatter(forecaster, broadcast=True)
+        futures = [client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future) for (dfi, row, col) in tasks]
+        results = client.gather(futures)
+        client.close()
+        print("Dask filled", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
     else:
         start = time()
         results = [FillAnEmptyCell(df_list[dfi], row, col, forecaster) for (dfi, row, col) in tasks]
-        end = time()
-        print("Fill", len(results), "in-sample cells:", round(end - start, 3), "seconds")
+        print("Fill", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
 
     # repackage results by filling na of df_list
     filled_list = copy.deepcopy(df_list)
