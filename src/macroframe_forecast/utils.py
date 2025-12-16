@@ -642,7 +642,7 @@ def FillAllEmptyCells(
     df1 = df.copy()
     df1_models = df.copy().astype(object)
     for idx, rowcol in enumerate(na_cells):
-        df1.loc[rowcol] = results[idx][0].iloc[0, 0]
+        df1.loc[rowcol] = results[idx][0].iloc[0]
         df1_models.loc[rowcol] = results[idx][1]
 
     return df1, df1_models
@@ -729,7 +729,7 @@ def GenPredTrueData(
     model_list = [df.astype(object) for df in copy.deepcopy(df_list)]
     for task_idx, task in enumerate(tasks):
         dfi, row, col = task
-        filled_list[dfi].loc[row, col] = results[task_idx][0].iloc[0, 0]
+        filled_list[dfi].loc[row, col] = results[task_idx][0].iloc[0]
         model_list[dfi].loc[row, col] = results[task_idx][1]
 
     # reduce n samples into a dataframe
