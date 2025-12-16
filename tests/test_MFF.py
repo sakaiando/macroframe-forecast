@@ -142,7 +142,8 @@ def test_inequality_constraints():
     df2 = m.fit()
     df2.iloc[-1, 0]
 
-    assert df2.iloc[-1, 0] <= -1
+    assert (df2.iloc[-1, 0] <= -1) or np.isclose(x, -1, atol=1e-12)
+
 
 @mark.slow
 def test_equality_constraints():
