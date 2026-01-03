@@ -38,8 +38,6 @@ from sktime.split import ExpandingGreedySplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.feature_selection import FeatureSelection
 
-# %%
-
 
 def CheckTrainingSampleSize(df0: DataFrame, n_forecast_error: int = 5) -> bool:
     """
