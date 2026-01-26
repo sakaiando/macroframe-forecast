@@ -132,10 +132,10 @@ class MFF:
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
         # get constraint matrices
-        C, d = StringToMatrixConstraints(df0.T.stack(), all_cells, unknown_cells, known_cells, equality_constraints)
+        C, d = StringToMatrixConstraints(df0.T.stack(future_stack=True), all_cells, unknown_cells, known_cells, equality_constraints)
         C, d = AddIslandsToConstraints(C, d, islands)
         C_ineq, d_ineq = StringToMatrixConstraints(
-            df0.T.stack(), all_cells, unknown_cells, known_cells, inequality_constraints
+            df0.T.stack(future_stack=True), all_cells, unknown_cells, known_cells, inequality_constraints
         )
 
         # Initiate DefaultForecaster only if a forecaster has not already been defined by the user.
@@ -166,7 +166,8 @@ class MFF:
         y2 = y2.T.stack(future_stack=True)
         y2.index = y2.index.droplevel(level=0)
         df2 = df0.copy()
-        df2.update(y2, overwrite=False)  # fill only nan cells of df0
+        # fill only nan cells of df0 (overwrite=False behavior)
+        df2 = df2.where(df2.notna(), y2)
 
         self.df0 = df0
         self.C = C

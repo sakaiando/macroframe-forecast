@@ -208,7 +208,7 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
         first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
         df_no_islands.iloc[first_na_index:, coli] = np.nan
 
-    islands: Series = df[df_no_islands.isna()].T.stack()
+    islands: Series = df[df_no_islands.isna()].T.stack(future_stack=True)
     return df_no_islands, islands
 
 
@@ -263,7 +263,7 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     all_cells = pd.Series([f"{a}_{b}" for a, b in all_cells_index], index=all_cells_index)
 
     # unknown cells with nan
-    unknown_cells_index = df0.isna()[df0.isna()].T.stack().index
+    unknown_cells_index = df0.isna()[df0.isna()].T.stack(future_stack=True).index
     unknown_cells = pd.Series([f"{a}_{b}" for a, b in unknown_cells_index], index=unknown_cells_index)
 
     # known cells
@@ -731,22 +731,22 @@ def GenPredTrueData(
         model_list[dfi].loc[row, col] = results[task_idx][1]
 
     # reduce n samples into a dataframe
-    colname = df.isna()[df.isna()].T.stack().index
+    colname = df.isna()[df.isna()].T.stack(future_stack=True).index
     idxname = pd.Index(
         [df_list[n].index[np.argwhere(df_list[n].isna())[:, 0].min()] for n in range(n_forecast_error)], name="LastData"
     )
     pred = pd.DataFrame(
-        [filled_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [filled_list[n][df_list[n].isna()].T.stack(future_stack=True).to_numpy() for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     model = pd.DataFrame(
-        [model_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [model_list[n][df_list[n].isna()].T.stack(future_stack=True).to_numpy() for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     true = pd.DataFrame(
-        [df[df_list[n].isna()].T.stack().values for n in range(n_forecast_error)], index=idxname, columns=colname
+        [df[df_list[n].isna()].T.stack(future_stack=True).to_numpy() for n in range(n_forecast_error)], index=idxname, columns=colname
     )
 
     return pred, true, model
@@ -801,7 +801,7 @@ def BreakDataFrameIntoTimeSeriesList(
     >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
     >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df,df1,pred,true)
     """
-    ts_list = [df1[df0.isna()].loc[:, col:col].dropna().T.stack() for col in df0.columns[df0.isna().any()]]
+    ts_list = [df1[df0.isna()].loc[:, col:col].dropna().T.stack(future_stack=True) for col in df0.columns[df0.isna().any()]]
     pred_list = [pred.loc[:, ts.index] for ts in ts_list]
     true_list = [true.loc[:, ts.index] for ts in ts_list]
 
@@ -876,7 +876,8 @@ def GenVecForecastWithIslands(ts_list: list[DataFrame], islands: list[Series]) -
     except Exception:  # only used in mixed-freq, pd.concat cann't process 4 mix-freq series
         y1 = ConcatMixFreqMultiIndexSeries(ts_list, axis=0)
 
-    y1.update(islands)
+    # Update y1 with island values where islands exist
+    y1.loc[islands.index] = islands
 
     return y1
 
@@ -938,7 +939,7 @@ def GenWeightMatrix(
     if shrinkage_method == "oas":
         from sklearn.covariance import OAS
 
-        oas = OAS().fit(fe.values)
+        oas = OAS().fit(fe.to_numpy())
         W = pd.DataFrame(oas.covariance_, index=sample_cov.index, columns=sample_cov.columns)
         rho = oas.shrinkage_
         return W, rho
@@ -1170,7 +1171,7 @@ def Reconciliation(
     assert (C.index == d.index).all()
 
     def DropLinDepRows(C_aug, d_aug):
-        C = C_aug.values
+        C = C_aug.to_numpy()
 
         # Convert the matrix to a SymPy Matrix
         sympy_matrix = sp.Matrix(C)
@@ -1201,12 +1202,12 @@ def Reconciliation(
     # reconcile with np.array
     W_inv = inv(W)
     denom = inv(W_inv + Phi)
-    Cn = C.values
-    dn = d.values
+    Cn = C.to_numpy()
+    dn = d.to_numpy()
     CdC_inv = inv(Cn @ denom @ Cn.T)  # removing linearly dependent rows to use inv doesn't change results much
 
     In = np.eye(len(y1))
-    y1n = y1.values.reshape(-1, 1)
+    y1n = y1.to_numpy().reshape(-1, 1)
     y2n = (In - denom @ Cn.T @ CdC_inv @ Cn) @ denom @ W_inv @ y1n + denom @ Cn.T @ CdC_inv @ dn
 
     if C_ineq is not None and C_ineq.shape[0] > 0:
@@ -1214,11 +1215,13 @@ def Reconciliation(
 
         # augment C_ineq, d_ineq to be compatible with y1
         C_ineq_aug = pd.DataFrame(np.zeros([len(C_ineq.index), len(y1)]), index=C_ineq.index, columns=y1.index)
-        C_ineq_aug.update(C_ineq)
+        # Update with C_ineq values where they exist
+        C_ineq_aug.loc[C_ineq.index, C_ineq.columns] = C_ineq
         d_ineq_aug = pd.DataFrame(np.zeros([len(d_ineq.index), 1]), index=d_ineq.index)
-        d_ineq_aug.update(d_ineq)
-        Cn_ineq = C_ineq_aug.values
-        dn_ineq = d_ineq_aug.values
+        # Update with d_ineq values where they exist
+        d_ineq_aug.loc[d_ineq.index, d_ineq.columns] = d_ineq
+        Cn_ineq = C_ineq_aug.to_numpy()
+        dn_ineq = d_ineq_aug.to_numpy()
 
         # use CVXPY to solve numerically
         P = W_inv + Phi
