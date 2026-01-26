@@ -172,3 +172,60 @@ def test_equality_constraints():
     df2.iloc[-1, 0]
 
     assert round(df2.iloc[-1, 0],2) == -1
+
+
+@mark.slow
+def test_smoothness_parameter():
+    """Test that the smoothness parameter can be passed directly and is used correctly."""
+    n = 30
+    p = 3
+    fh = 1
+    df_true = pd.DataFrame(
+        np.random.rand(n, p),
+        columns=[f"{L}{i}" for i in range(int(np.ceil(p / 26))) for L in ascii_uppercase][:p],
+        index=pd.date_range(start="2000", periods=n, freq="YE").year,
+    )
+    df_true.iloc[:, -1] = df_true.iloc[:, :-1].sum(axis=1)
+    df = df_true.copy()
+    df.iloc[-fh:, : np.ceil(p / 2).astype(int)] = np.nan
+    df.iloc[-1, 0] = df_true.iloc[-1, 0]  # island
+    equality_constraints = ["A0?+B0?-C0?"]
+    
+    # Create a custom smoothness series with specific values
+    smoothness = pd.Series([100.0, 200.0, 300.0], index=df.columns)
+    
+    # Test with custom smoothness
+    m = MFF(df, equality_constraints=equality_constraints, parallelize=False, smoothness=smoothness)
+    df2 = m.fit()
+    
+    # Should produce forecasts without errors
+    assert df2.iloc[-1, 0] == df_true.iloc[-1, 0]
+    assert ~np.isnan(df2.iloc[-1, 1])
+    assert ~np.isnan(df2.iloc[-1, 2])
+
+
+def test_smoothness_backward_compatibility():
+    """Test that when smoothness is not provided, the old behavior is maintained."""
+    n = 30
+    p = 3
+    fh = 1
+    df_true = pd.DataFrame(
+        np.random.rand(n, p),
+        columns=[f"{L}{i}" for i in range(int(np.ceil(p / 26))) for L in ascii_uppercase][:p],
+        index=pd.date_range(start="2000", periods=n, freq="YE").year,
+    )
+    df_true.iloc[:, -1] = df_true.iloc[:, :-1].sum(axis=1)
+    df = df_true.copy()
+    df.iloc[-fh:, : np.ceil(p / 2).astype(int)] = np.nan
+    df.iloc[-1, 0] = df_true.iloc[-1, 0]  # island
+    equality_constraints = ["A0?+B0?-C0?"]
+    
+    # Test without smoothness parameter (default behavior)
+    m = MFF(df, equality_constraints=equality_constraints, parallelize=False)
+    df2 = m.fit()
+    
+    # Should produce forecasts without errors
+    assert df2.iloc[-1, 0] == df_true.iloc[-1, 0]
+    assert ~np.isnan(df2.iloc[-1, 1])
+    assert ~np.isnan(df2.iloc[-1, 2])
+
