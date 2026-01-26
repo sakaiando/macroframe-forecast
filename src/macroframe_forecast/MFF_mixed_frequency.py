@@ -56,7 +56,7 @@ class MFF_mixed_freqency:
             known_cells_list.append(known_cells_k)
             islands_list.append(islands_k)
 
-        df0_stacked = ConcatMixFreqMultiIndexSeries([df0.T.stack() for df0 in df0_list], axis=0)
+        df0_stacked = ConcatMixFreqMultiIndexSeries([df0.T.stack(future_stack=True) for df0 in df0_list], axis=0)
         all_cells = pd.concat(all_cells_list, axis=0)
         unknown_cells = pd.concat(unknown_cells_list, axis=0)
         known_cells = pd.concat(known_cells_list, axis=0)
@@ -91,7 +91,7 @@ class MFF_mixed_freqency:
         df0wide_colflat = pd.concat(df0wide_colflat_list)
 
         # 1st step forecast
-        df0wide.columns = df0wide_colflat.values.tolist()  # colname has to be single index
+        df0wide.columns = df0wide_colflat.to_numpy().tolist()  # colname has to be single index
         df1wide, df1wide_model = FillAllEmptyCells(df0wide, forecaster)
         predwide, truewide, modelwide = GenPredTrueData(df0wide, forecaster)
 
@@ -100,12 +100,15 @@ class MFF_mixed_freqency:
         for df0i, df0 in enumerate(df0_list):
             if df0.index.freqstr[0] == lowest_freq:
                 df1_freq = df0.copy()
-                df1_freq.update(df1wide.loc[:, df0wide_colflat_list[df0i].values])
+                # Update df1_freq with values from df1wide where df1wide has data
+                df1_freq = df1_freq.where(df1_freq.notna(), df1wide.loc[:, df0wide_colflat_list[df0i].to_numpy()])
             else:
-                df1wide_freq = df1wide.loc[:, df0wide_colflat_list[df0i].values]
+                df1wide_freq = df1wide.loc[:, df0wide_colflat_list[df0i].to_numpy()]
                 df1wide_freq.columns = pd.MultiIndex.from_tuples(df0wide_colflat_list[df0i].index)
                 df1_freq = df0wide_list[df0i].copy().stack(future_stack=True)  # storage
-                df1_freq.update(df1wide_freq.stack(future_stack=True))
+                # Update df1_freq with stacked df1wide_freq values
+                df1wide_freq_stacked = df1wide_freq.stack(future_stack=True)
+                df1_freq = df1_freq.where(df1_freq.notna(), df1wide_freq_stacked)
                 df1_freq.index = df0_list[df0i].index
 
             df1_list.append(df1_freq)
@@ -116,7 +119,8 @@ class MFF_mixed_freqency:
         for df0i, df0 in enumerate(df0_list):
             # get nan cells
             df0wide_freq = df0wide_list[df0i].copy()
-            df0wide_freq.columns = df0wide_colflat_list[df0i].values
+            df0wide_freq.columns = df0wide_colflat_list[df0i].to_numpy()
+            # Note: Using .stack() without future_stack because boolean filtering relies on old behavior
             na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().index
 
             # slice predwide
@@ -137,6 +141,7 @@ class MFF_mixed_freqency:
                 true_freq.columns = pred_freq_colname
 
             # change col order
+            # Note: Using .stack() without future_stack because boolean filtering relies on old behavior
             pred_freq = pred_freq.loc[:, df0.isna()[df0.isna()].T.stack().index]
             true_freq = true_freq.loc[:, pred_freq.columns]
 

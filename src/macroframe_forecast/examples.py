@@ -43,7 +43,7 @@ def example1():  # no constraints
     ax.axvline(x=df0.index[-fh])
     ax.legend()
 
-    print("smoothness", smoothness.values)
+    print("smoothness", smoothness.to_numpy())
     print("shrinkage", np.round(shrinkage, 3))
     for ri, ci in np.argwhere(df.isna()):
         print(df1_model.index[ri], df1_model.columns[ci], df1_model.iloc[ri, ci].best_params_)
@@ -101,7 +101,7 @@ def example2():
     ax.axvline(x=df0.index[-fh], label="fh=1")
     ax.legend(loc="lower left")
 
-    print("smoothness", smoothness.values)
+    print("smoothness", smoothness.to_numpy())
     print("shrinkage", np.round(shrinkage, 3))
 
     # confirm constraints
@@ -361,8 +361,8 @@ def generate_example_GDP_df() -> DataFrame:
 
     # Time period hs to be set as the index. Here year is the time identifier,
     # therefore setting this as the index.
-    GDP_data_true.set_index(GDP_data_true["year"], inplace=True)
-    GDP_data_true.drop(columns="year", inplace=True)
+    GDP_data_true = GDP_data_true.set_index(GDP_data_true["year"])
+    GDP_data_true = GDP_data_true.drop(columns="year")
 
     # Creating a copy which is used for geenrating the forecasts. Removing the last
     # six years of data for ease of forecasts
