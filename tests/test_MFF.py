@@ -218,6 +218,7 @@ def test_smoothness_parameter():
     
     # Create a custom smoothness with different values but same structure
     custom_smoothness = original_smoothness.copy()
+    # Use an arbitrary fixed value to test that custom smoothness is accepted and used
     custom_smoothness[:] = 500.0  # Set all smoothness values to a fixed value
     
     # Test with custom smoothness
