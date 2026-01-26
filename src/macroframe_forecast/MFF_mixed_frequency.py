@@ -120,7 +120,8 @@ class MFF_mixed_freqency:
             # get nan cells
             df0wide_freq = df0wide_list[df0i].copy()
             df0wide_freq.columns = df0wide_colflat_list[df0i].to_numpy()
-            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack(future_stack=True).index
+            # Note: Using .stack() without future_stack because boolean filtering relies on old behavior
+            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().index
 
             # slice predwide
             pred_freq = predwide.loc[:, na_cells]
@@ -140,7 +141,8 @@ class MFF_mixed_freqency:
                 true_freq.columns = pred_freq_colname
 
             # change col order
-            pred_freq = pred_freq.loc[:, df0.isna()[df0.isna()].T.stack(future_stack=True).index]
+            # Note: Using .stack() without future_stack because boolean filtering relies on old behavior
+            pred_freq = pred_freq.loc[:, df0.isna()[df0.isna()].T.stack().index]
             true_freq = true_freq.loc[:, pred_freq.columns]
 
             # append pred, true for each frequency

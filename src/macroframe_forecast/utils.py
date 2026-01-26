@@ -208,7 +208,9 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
         first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
         df_no_islands.iloc[first_na_index:, coli] = np.nan
 
-    islands: Series = df[df_no_islands.isna()].T.stack(future_stack=True)
+    # Note: Using .stack() without future_stack because boolean filtering
+    # df[df_no_islands.isna()] relies on old behavior of dropping NaN
+    islands: Series = df[df_no_islands.isna()].T.stack()
     return df_no_islands, islands
 
 
@@ -263,7 +265,9 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     all_cells = pd.Series([f"{a}_{b}" for a, b in all_cells_index], index=all_cells_index)
 
     # unknown cells with nan
-    unknown_cells_index = df0.isna()[df0.isna()].T.stack(future_stack=True).index
+    # Note: Using .stack() without future_stack because boolean filtering
+    # df0.isna()[df0.isna()] relies on old behavior of dropping NaN
+    unknown_cells_index = df0.isna()[df0.isna()].T.stack().index
     unknown_cells = pd.Series([f"{a}_{b}" for a, b in unknown_cells_index], index=unknown_cells_index)
 
     # known cells
@@ -731,22 +735,25 @@ def GenPredTrueData(
         model_list[dfi].loc[row, col] = results[task_idx][1]
 
     # reduce n samples into a dataframe
-    colname = df.isna()[df.isna()].T.stack(future_stack=True).index
+    # Note: Using .stack() without future_stack here because the boolean filtering
+    # df.isna()[df.isna()] relies on the old behavior of dropping NaN from the result.
+    # With future_stack=True, the dimensions would not match.
+    colname = df.isna()[df.isna()].T.stack().index
     idxname = pd.Index(
         [df_list[n].index[np.argwhere(df_list[n].isna())[:, 0].min()] for n in range(n_forecast_error)], name="LastData"
     )
     pred = pd.DataFrame(
-        [filled_list[n][df_list[n].isna()].T.stack(future_stack=True).to_numpy() for n in range(n_forecast_error)],
+        [filled_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     model = pd.DataFrame(
-        [model_list[n][df_list[n].isna()].T.stack(future_stack=True).to_numpy() for n in range(n_forecast_error)],
+        [model_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     true = pd.DataFrame(
-        [df[df_list[n].isna()].T.stack(future_stack=True).to_numpy() for n in range(n_forecast_error)], index=idxname, columns=colname
+        [df[df_list[n].isna()].T.stack().values for n in range(n_forecast_error)], index=idxname, columns=colname
     )
 
     return pred, true, model
@@ -801,6 +808,7 @@ def BreakDataFrameIntoTimeSeriesList(
     >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
     >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df,df1,pred,true)
     """
+    # Note: Using .dropna().T.stack(future_stack=True) is safe because dropna() removes NaN rows first
     ts_list = [df1[df0.isna()].loc[:, col:col].dropna().T.stack(future_stack=True) for col in df0.columns[df0.isna().any()]]
     pred_list = [pred.loc[:, ts.index] for ts in ts_list]
     true_list = [true.loc[:, ts.index] for ts in ts_list]
