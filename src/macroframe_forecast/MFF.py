@@ -79,6 +79,12 @@ class MFF:
         Maximum value of lamstar to be used for smoothing forecasts when being
         estimated empirically.
 
+    smoothness : pd.Series, optional(default: None)
+        Pre-calculated smoothness parameters for each variable. If provided,
+        these values will be used directly instead of being calculated from
+        default_lam and max_lam. This allows users to have explicit control
+        over the smoothness parameter.
+
     Returns
     -------
     df2 : pd.Dataframe
@@ -98,7 +104,8 @@ class MFF:
         n_forecast_error: int = 5,
         shrinkage_method: str = "oas",
         default_lam: float = -1,
-        max_lam: float = 129600
+        max_lam: float = 129600,
+        smoothness: pd.Series | None = None
     ):
         self.df = df
         self.forecaster = forecaster
@@ -109,6 +116,7 @@ class MFF:
         self.shrinkage_method = shrinkage_method
         self.default_lam = default_lam
         self.max_lam = max_lam
+        self.smoothness = smoothness
 
     def fit(
         self,
@@ -127,6 +135,7 @@ class MFF:
         shrinkage_method = self.shrinkage_method
         default_lam = self.default_lam
         max_lam = self.max_lam
+        smoothness = self.smoothness
 
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
@@ -156,7 +165,9 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-        smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
+        # Use provided smoothness if available, otherwise calculate it
+        if smoothness is None:
+            smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
         Phi = GenSmoothingMatrix(W, smoothness)
 
         # 2nd stage reconciled forecast
