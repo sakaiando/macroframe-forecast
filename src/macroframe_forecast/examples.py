@@ -361,8 +361,8 @@ def generate_example_GDP_df() -> DataFrame:
 
     # Time period hs to be set as the index. Here year is the time identifier,
     # therefore setting this as the index.
-    GDP_data_true.set_index(GDP_data_true["year"], inplace=True)
-    GDP_data_true.drop(columns="year", inplace=True)
+    GDP_data_true = GDP_data_true.set_index(GDP_data_true["year"])
+    GDP_data_true = GDP_data_true.drop(columns="year")
 
     # Creating a copy which is used for geenrating the forecasts. Removing the last
     # six years of data for ease of forecasts

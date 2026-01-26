@@ -208,7 +208,7 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
         first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
         df_no_islands.iloc[first_na_index:, coli] = np.nan
 
-    islands: Series = df[df_no_islands.isna()].T.stack()
+    islands: Series = df[df_no_islands.isna()].T.stack().dropna()
     return df_no_islands, islands
 
 
@@ -263,7 +263,7 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     all_cells = pd.Series([f"{a}_{b}" for a, b in all_cells_index], index=all_cells_index)
 
     # unknown cells with nan
-    unknown_cells_index = df0.isna()[df0.isna()].T.stack().index
+    unknown_cells_index = df0.isna()[df0.isna()].T.stack().dropna().index
     unknown_cells = pd.Series([f"{a}_{b}" for a, b in unknown_cells_index], index=unknown_cells_index)
 
     # known cells
@@ -491,7 +491,14 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
     >>>                                 constraints_with_wildcard)
     >>> C,d = AddIslandsToConstraints(C,d,islands)
     """
-    C_aug_index = islands.index.union(C.index, sort=False)  # singleton constraints prioritize over islands
+    # Handle Pandas 3.0 compatibility: convert MultiIndex to flat index when mixing index types
+    islands_idx = islands.index
+    C_idx = C.index
+    if isinstance(islands_idx, pd.MultiIndex) and not isinstance(C_idx, pd.MultiIndex):
+        islands_idx = islands_idx.to_flat_index()
+    elif isinstance(C_idx, pd.MultiIndex) and not isinstance(islands_idx, pd.MultiIndex):
+        C_idx = C_idx.to_flat_index()
+    C_aug_index = islands_idx.union(C_idx, sort=False)  # singleton constraints prioritize over islands
     C_aug = pd.DataFrame(np.zeros([len(C_aug_index), len(C.columns)]), index=C_aug_index, columns=C.columns)
     d_aug = pd.DataFrame(np.zeros([len(C_aug_index), 1]), index=C_aug_index)
     for idx in islands.index:
@@ -731,22 +738,22 @@ def GenPredTrueData(
         model_list[dfi].loc[row, col] = results[task_idx][1]
 
     # reduce n samples into a dataframe
-    colname = df.isna()[df.isna()].T.stack().index
+    colname = df.isna()[df.isna()].T.stack().dropna().index
     idxname = pd.Index(
         [df_list[n].index[np.argwhere(df_list[n].isna())[:, 0].min()] for n in range(n_forecast_error)], name="LastData"
     )
     pred = pd.DataFrame(
-        [filled_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [filled_list[n][df_list[n].isna()].T.stack().dropna().values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     model = pd.DataFrame(
-        [model_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [model_list[n][df_list[n].isna()].T.stack().dropna().values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     true = pd.DataFrame(
-        [df[df_list[n].isna()].T.stack().values for n in range(n_forecast_error)], index=idxname, columns=colname
+        [df[df_list[n].isna()].T.stack().dropna().values for n in range(n_forecast_error)], index=idxname, columns=colname
     )
 
     return pred, true, model
