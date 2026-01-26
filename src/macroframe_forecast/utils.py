@@ -501,8 +501,9 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
     for idx in islands.index:
         C_aug.loc[C_aug.index == idx, idx] = 1
         d_aug.loc[d_aug.index == idx] = islands.loc[idx]
-    C_aug.update(C)
-    d_aug.update(d)
+    # Update C_aug and d_aug with constraint matrices
+    C_aug.loc[C.index, C.columns] = C
+    d_aug.loc[d.index, d.columns] = d
 
     return C_aug, d_aug
 
@@ -1053,7 +1054,7 @@ def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_la
             def obj(x):
                 return np.mean(
                     [
-                        loss_fn(x, T, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
+                        loss_fn(x, T, y_true.iloc[i : i + 1, :].T.to_numpy(), y_pred.iloc[i : i + 1, :].T.to_numpy())
                         for i in range(y_pred.shape[0])
                     ]
                 )
