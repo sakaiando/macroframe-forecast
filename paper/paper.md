@@ -46,6 +46,13 @@ Existing packages in R and Python assist forecast reconciliation and smoothing s
 
 To our knowledge, no package supports the simultaneous application of both reconciliation and smoothing, and this is the gap that `macroframe-forecast` attempts to fill. A more detailed explanation of `macroframe-forecast` can be found in @Andoetal2025.
 
+# State of the field
+
+Several tools support macroeconomic forecasting, but none let users produce multiple smooth forecasts that also satisfy various constraints. General‑purpose econometric environments like Python’s statsmodels and smooth offer flexible time‑series and multivariate models (ARIMA, VAR, VECM), yet enforcing accounting identities or judgmental constraints remains largely manual and ad hoc.
+Existing reconciliation packages in R and Python — `hts`, `FoReco`, `hierarchicalforecast` — can impose constraints, but the resulting reconciled series often display unnatural kinks that are difficult to justify. Enforcing constraints typically disrupts smoothness, while smoothing breaks constraints, meaning both properties must be ensured simultaneously, requiring a dedicated theory and a package that implements it.
+`macroframe‑forecast` was developed to fill this gap. It begins with any unconstrained forecast — whether from statistical models in `sktime`, expert judgment, or hybrid methods—and systematically enforces high‑dimensional accounting identities, inequality constraints, and long‑run conditions while preserving temporal smoothness. Users can specify constraints in human‑readable strings, which the package automatically converts into the appropriate matrix form, reducing misspecification risk.
+In this way, `macroframe‑forecast` offers a unique scholarly and practical contribution, complementing rather than competing with existing forecasting or reconciliation tools.
+
 # Software Design
 
 The design of `macroframe-forecast` reflects a trade-off between flexibility, transparency, and computational efficiency. The package adopts a two-step architecture - first generating unconstrained forecasts, then adjusting them through reconciliation and smoothing - which clearly separates model estimation from constraint enforcement. To give users flexibility in choosing forecasting method most suitable for their specific context, we deliberately designed the unconstrained forecasting step  to explicitly support any forecasting model implemented in `sktime` without modifying the reconciliation logic.
