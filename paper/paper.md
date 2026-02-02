@@ -48,7 +48,7 @@ To our knowledge, no package supports the simultaneous application of both recon
 
 # State of the field
 
-Several tools support macroeconomic forecasting, but none let users produce multiple smooth forecasts that also satisfy various constraints. General‑purpose econometric environments like Python’s `statsmodels` [@seabold2010statsmodels] and R's `smooth` [@Svetnukov2024] offer flexible time‑series and multivariate models (ARIMA, VAR, VECM), yet enforcing accounting identities or judgmental constraints remains largely manual and ad hoc. 
+Several tools support macroeconomic forecasting, but none let users produce multiple smooth forecasts that also satisfy various constraints. General‑purpose econometric packages like Python’s `statsmodels` [@seabold2010statsmodels] and R's `smooth` [@Svetnukov2024] offer flexible time‑series and multivariate models (ARIMA, VAR, VECM), yet enforcing accounting identities or judgmental constraints remains largely manual and ad hoc. 
 
 Existing reconciliation packages in R and Python — `hts` [@Hyndmanetal2021], `FoReco` [@GirolimettoDiFonzoPackage2023], `hierarchicalforecast` [@Olivaresetal2024] — can impose constraints, but the resulting reconciled series often display unnatural kinks that are difficult to justify. Enforcing constraints typically disrupts smoothness, while smoothing breaks constraints, meaning both properties must be ensured simultaneously, requiring a dedicated theory and a package that implements it.
 
