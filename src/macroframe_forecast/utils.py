@@ -1031,20 +1031,29 @@ def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_la
 
     # optimal lambda
     if default_lam == -1:
-
-        def loss_fn(x, T, yt, yp):
-            return (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp)
-
         for tsidxi, tsidx in enumerate(tsidx_list):
             y_pred = pred_list[tsidxi]
             y_true = true_list[tsidxi]
             T = len(tsidx)
 
+            # Precompute eigendecomposition of the (symmetric PSD) HP matrix once
+            # per variable so each optimizer evaluation avoids rebuilding F and
+            # inverting (I + x*F). Since F = V diag(eigvals) V.T,
+            # inv(I + x*F) @ y = V @ diag(1 / (1 + x*eigvals)) @ V.T @ y.
+            F = HP_matrix(T)
+            eigvals, V = np.linalg.eigh(F)
+
+            def loss_fn_eigen(x, yt, yp, _eigvals=eigvals, _V=V):
+                scale = 1.0 / (1.0 + x * _eigvals)
+                smoothed = (_V * scale) @ (_V.T @ yp)
+                residual = yt - smoothed
+                return (residual.T @ residual).item()
+
             # TODO: pick a better name for the function
             def obj(x):
                 return np.mean(
                     [
-                        loss_fn(x, T, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
+                        loss_fn_eigen(x, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
                         for i in range(y_pred.shape[0])
                     ]
                 )
