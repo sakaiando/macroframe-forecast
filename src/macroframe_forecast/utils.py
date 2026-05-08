@@ -103,9 +103,10 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     pipe_y_elasticnet = TransformedTargetForecaster(
         steps=[
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
-            ("forecaster", DirectReductionForecaster(ElasticNetCV(max_iter=5000,
-                                                                  cv=TimeSeriesSplit(n_splits=5)),
-                                                     window_length = 5)),
+            (
+                "forecaster",
+                DirectReductionForecaster(ElasticNetCV(max_iter=5000, cv=TimeSeriesSplit(n_splits=5)), window_length=5),
+            ),
         ]
     )
 
@@ -165,7 +166,7 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
         )
 
     else:
-        gscv = NaiveForecaster(strategy = "last")
+        gscv = NaiveForecaster(strategy="last")
 
     return gscv
 
@@ -552,7 +553,7 @@ def FillAnEmptyCell(
 
     # clone a forecaster
     f = forecaster.clone()
-    
+
     # last historical data and forecast horizon in num
     T = np.argwhere(df.loc[:, col].isna()).min() - 1
     h = np.where(df.index == row)[0][0] - T
@@ -566,6 +567,7 @@ def FillAnEmptyCell(
     y_pred = f.fit(y=y, X=X_train, fh=h).predict(X=X_pred)
 
     return y_pred, f
+
 
 def FillAllEmptyCells(
     df: DataFrame, forecaster: BaseForecaster, parallelize: bool = True
@@ -623,10 +625,9 @@ def FillAllEmptyCells(
     if parallelize:
         start = time()
         client = Client()
-        df_future = client.scatter(df,broadcast=True)
+        df_future = client.scatter(df, broadcast=True)
         forecaster_future = client.scatter(forecaster, broadcast=True)
-        futures = [client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future)
-                   for (row, col) in na_cells]
+        futures = [client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future) for (row, col) in na_cells]
         results = client.gather(futures)
         client.close()
         print("Dask filled", len(results), "out-of-sample cells:", round(time() - start, 3), "seconds")
@@ -713,7 +714,9 @@ def GenPredTrueData(
         client = Client()
         df_futures = client.scatter(df_list, broadcast=True)
         forecaster_future = client.scatter(forecaster, broadcast=True)
-        futures = [client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future) for (dfi, row, col) in tasks]
+        futures = [
+            client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future) for (dfi, row, col) in tasks
+        ]
         results = client.gather(futures)
         client.close()
         print("Dask filled", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
@@ -1137,7 +1140,7 @@ def Reconciliation(
         Dataframe containing matrix of the linear constraints on the left side of
         the inequality constraint C_ineq · y - d_ineq ≤ 0. The default is None.
     d_ineq : pd.DataFrame, optional
-        Dataframe containing matrix of the linear constraints on the right side of 
+        Dataframe containing matrix of the linear constraints on the right side of
         the inequality constraint C_ineq · y - d_ineq ≤ 0.  The default is None.
 
     Returns
@@ -1179,30 +1182,37 @@ def Reconciliation(
     assert (C.index == d.index).all()
 
     def DropLinDepRows(C_aug, d_aug):
-        C = C_aug.values
+        # Convert the DataFrame to a numpy array
+        C = C_aug.to_numpy()
 
-        # Convert the matrix to a SymPy Matrix
-        sympy_matrix = sp.Matrix(C)
+        # C has shape (0, n): no rows means no linear dependencies; nothing to drop
+        if C.shape[0] == 0:
+            return C_aug, d_aug
 
-        # Compute the RREF and get the indices of linearly independent rows
-        rref_matrix, independent_rows = sympy_matrix.T.rref()
+        # Compute pivoted QR and get the indices of linearly independent rows
+        _, R, P = scipy.linalg.qr(C.T, pivoting=True)
+
+        Rdiag_abs = np.abs(np.diag(R))
+
+        # Compute rank tolerance
+        tol = np.finfo(R.dtype).eps * max(C.shape) * Rdiag_abs.max()
+
+        # Numerical rank = R-diagonal entries above tolerance
+        rank = int((Rdiag_abs > tol).sum())
 
         # Extract the independent rows
-        independent_rows = list(independent_rows)
+        independent = P[:rank]
 
-        # dependent rows
-        all_rows = set(range(C.shape[0]))
-        dependent_rows = list(all_rows - set(independent_rows))
+        # Positional indices of rows to drop
+        dropped = sorted(set(range(C.shape[0])) - set(independent.tolist()))
 
-        C = C_aug.iloc[independent_rows, :]
-        d = d_aug.iloc[independent_rows, :]
-
-        if dependent_rows != []:
+        if dropped:
             print(
                 "Constraints are linearly dependent. The following constraints are dropped.",
-                C_aug.index[dependent_rows],
+                C_aug.index[dropped],
             )
-        return C, d
+
+        return C_aug.iloc[independent, :], d_aug.iloc[independent, :]
 
     # keep lin indep rows
     C, d = DropLinDepRows(C, d)
@@ -1234,9 +1244,9 @@ def Reconciliation(
         q = -2 * W_inv @ y1n
         x = cp.Variable([len(y1), 1])
         objective = cp.Minimize(cp.quad_form(x, P, assume_PSD=True) + q.T @ x)
-        
+
         # If equality constraints do not exist, dropping C matrix from solver
-        if C.shape[0] >0:
+        if C.shape[0] > 0:
             constraints = [Cn @ x == dn, Cn_ineq @ x <= dn_ineq]
         else:
             constraints = [Cn_ineq @ x <= dn_ineq]
