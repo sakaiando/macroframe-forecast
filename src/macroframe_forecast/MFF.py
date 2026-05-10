@@ -23,9 +23,6 @@ from macroframe_forecast.utils import (
     StringToMatrixConstraints,
 )
 
-# %% MFF
-
-
 class MFF:
     """A class for Macro-Framework Forecasting (MFF).
 
