@@ -25,12 +25,13 @@ from .utils import (
 
 class MFF_mixed_freqency:
     def __init__(
-        self, df_dict, forecaster=DefaultForecaster(), constraints_with_wildcard=[], ineq_constraints_with_wildcard=[]
+        self, df_dict, forecaster=DefaultForecaster(), constraints_with_wildcard=[], ineq_constraints_with_wildcard=[], smoothness=None
     ):
         self.df_dict = df_dict
         self.forecaster = forecaster
         self.constraints_with_wildcard = constraints_with_wildcard
         self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
+        self.smoothness = smoothness
 
     def fit(self):
         df_dict = self.df_dict
@@ -38,6 +39,7 @@ class MFF_mixed_freqency:
         constraints_with_wildcard = self.constraints_with_wildcard
         # TODO: delete, the assignment below, if not needed
         ineq_constraints_with_wildcard = self.ineq_constraints_with_wildcard  # noqa: F841
+        smoothness = self.smoothness
 
         # create constraints
         freq_order = ["Y", "Q", "M", "W", "D", "H", "T", "S"]
@@ -162,7 +164,9 @@ class MFF_mixed_freqency:
 
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list)
-        smoothness = GenLamstar(pred_list, true_list)
+        # Use provided smoothness if available, otherwise calculate it
+        if smoothness is None:
+            smoothness = GenLamstar(pred_list, true_list)
         Phi = GenSmoothingMatrix(W, smoothness)
 
         y2 = Reconciliation(y1, W, Phi, C, d)
