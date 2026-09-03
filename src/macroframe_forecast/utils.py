@@ -555,8 +555,8 @@ def FillAnEmptyCell(
     f = forecaster.clone()
 
     # last historical data and forecast horizon in num
-    T = np.argwhere(df.loc[:, col].isna()).min() - 1
-    h = np.where(df.index == row)[0][0] - T
+    T = np.argwhere(df.loc[:, col].isna()).min()
+    h = np.where(df.index == row)[0][0] - T + 1
 
     y = df.iloc[:T, :].loc[:, col]
 
@@ -564,7 +564,7 @@ def FillAnEmptyCell(
     X_train = X.iloc[:T, :]
     X_pred = X.iloc[T:, :]
 
-    y_pred = f.fit(y=y, X=X_train, fh=h).predict(X=X_pred)
+    y_pred = f.fit(y=y, X=X_train, fh=[h]).predict(X=X_pred)
 
     return y_pred, f
 
