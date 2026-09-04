@@ -59,6 +59,11 @@ axes[2].plot( df2['var1'] + df2['var2'] - df2['sum'], label='summation error')
 axes[2].legend()
 ```
 
+# Demo notebooks
+
+The [single-frequency forecasting quick start](notebooks/01_single_frequency_quickstart.ipynb)
+provides a small, reproducible example of forecasting and reconciling an accounting identity.
+
 # Disclaimer
 
 Reuse of this tool and IMF information does not imply any endorsement of the research and/or product. Any research presented should not be reported as representing the views of the IMF, its Executive Board, or member governments.
