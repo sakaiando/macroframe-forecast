@@ -569,8 +569,16 @@ def FillAnEmptyCell(
     return y_pred, f
 
 
+def _disable_nested_dask(forecaster: BaseForecaster) -> BaseForecaster:
+    """Clone a forecaster and disable nested Dask grid-search scheduling."""
+    forecaster = forecaster.clone()
+    if isinstance(forecaster, ForecastingGridSearchCV) and forecaster.backend in {"dask", "dask_lazy"}:
+        forecaster.set_params(backend=None)
+    return forecaster
+
+
 def FillAllEmptyCells(
-    df: DataFrame, forecaster: BaseForecaster, parallelize: bool = True
+    df: DataFrame, forecaster: BaseForecaster, parallelize: bool = True, client: Client | None = None
 ) -> tuple[DataFrame, DataFrame]:
     """
     Generate forecasts for all unknown cells in the supplied dataframe.
@@ -588,6 +596,8 @@ def FillAllEmptyCells(
     parallelize : boolean
         Indicate whether parallelization should be employed for generating the
         first step forecasts. Default value is `True`.
+    client : dask.distributed.Client, optional
+        Existing Dask client to use when parallelizing.
 
     Return
     ------
@@ -624,12 +634,19 @@ def FillAllEmptyCells(
     # apply dask
     if parallelize:
         start = time()
-        client = Client()
-        df_future = client.scatter(df, broadcast=True)
-        forecaster_future = client.scatter(forecaster, broadcast=True)
-        futures = [client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future) for (row, col) in na_cells]
-        results = client.gather(futures)
-        client.close()
+        close_client = client is None
+        if close_client:
+            client = Client()
+        try:
+            df_future = client.scatter(df, broadcast=True)
+            forecaster_future = client.scatter(_disable_nested_dask(forecaster), broadcast=True)
+            futures = [
+                client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future) for (row, col) in na_cells
+            ]
+            results = client.gather(futures)
+        finally:
+            if close_client:
+                client.close()
         print("Dask filled", len(results), "out-of-sample cells:", round(time() - start, 3), "seconds")
 
     else:
@@ -648,7 +665,11 @@ def FillAllEmptyCells(
 
 
 def GenPredTrueData(
-    df: DataFrame, forecaster: BaseForecaster, n_forecast_error: int = 5, parallelize: bool = True
+    df: DataFrame,
+    forecaster: BaseForecaster,
+    n_forecast_error: int = 5,
+    parallelize: bool = True,
+    client: Client | None = None,
 ) -> tuple[DataFrame, DataFrame, DataFrame]:
     """
     Generate in-sample forecasts from existing data by constructing
@@ -665,6 +686,8 @@ def GenPredTrueData(
         The default is 5.
     parallelize : boolean, optional
         Indicate whether parallelization should be used. The default is True.
+    client : dask.distributed.Client, optional
+        Existing Dask client to use when parallelizing.
 
     Returns
     -------
@@ -711,14 +734,20 @@ def GenPredTrueData(
 
     if parallelize:
         start = time()
-        client = Client()
-        df_futures = client.scatter(df_list, broadcast=True)
-        forecaster_future = client.scatter(forecaster, broadcast=True)
-        futures = [
-            client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future) for (dfi, row, col) in tasks
-        ]
-        results = client.gather(futures)
-        client.close()
+        close_client = client is None
+        if close_client:
+            client = Client()
+        try:
+            df_futures = client.scatter(df_list, broadcast=True)
+            forecaster_future = client.scatter(_disable_nested_dask(forecaster), broadcast=True)
+            futures = [
+                client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future)
+                for (dfi, row, col) in tasks
+            ]
+            results = client.gather(futures)
+        finally:
+            if close_client:
+                client.close()
         print("Dask filled", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
     else:
         start = time()

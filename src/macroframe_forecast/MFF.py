@@ -5,6 +5,7 @@
 
 
 import pandas as pd
+from dask.distributed import Client
 from sktime.forecasting.base import BaseForecaster
 
 from macroframe_forecast.utils import (
@@ -141,11 +142,18 @@ class MFF:
         if forecaster is None:
             forecaster = DefaultForecaster(small_sample)
         
-        # 1st stage forecast and its model
-        df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=parallelize)
-
-        # get pseudo out-of-sample prediction, true values, and prediction models
-        pred, true, model = GenPredTrueData(df0, forecaster, n_forecast_error=n_forecast_error, parallelize=parallelize)
+        # 1st stage forecast and pseudo out-of-sample predictions
+        if parallelize:
+            with Client() as client:
+                df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=True, client=client)
+                pred, true, model = GenPredTrueData(
+                    df0, forecaster, n_forecast_error=n_forecast_error, parallelize=True, client=client
+                )
+        else:
+            df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=False)
+            pred, true, model = GenPredTrueData(
+                df0, forecaster, n_forecast_error=n_forecast_error, parallelize=False
+            )
 
         # break dataframe into list of time series
         ts_list, pred_list, true_list = BreakDataFrameIntoTimeSeriesList(df0, df1, pred, true)
