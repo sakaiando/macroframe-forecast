@@ -3,6 +3,16 @@ Contributing
 
 Contributions to the code are welcome!
 
+Support
+=======
+
+For usage questions or support requests, email the maintainers at
+`sando@imf.org <mailto:sando@imf.org>`_ and
+`sorazbayev@imf.org <mailto:sorazbayev@imf.org>`_.
+
+For reproducible bugs or feature requests, please open an issue in the
+`issue tracker <https://github.com/sakaiando/macroframe-forecast/issues>`_.
+
 For development of the code, it's recommended to install the editable version of the package, so the edits are immediately reflected for testing:
 
 ```shell
