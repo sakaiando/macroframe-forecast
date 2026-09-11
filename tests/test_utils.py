@@ -1,11 +1,15 @@
 from numpy.random import sample
 from pandas import DataFrame, Index, PeriodIndex, Series
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import SingleWindowSplitter
 
 from macroframe_forecast.utils import (
     FillAllEmptyCells,
     FillAnEmptyCell,
     GenPredTrueData,
+    _disable_nested_dask,
     expand_wildcard,
     find_permissible_wildcard,
     find_strings_to_replace_wildcard,
@@ -111,3 +115,17 @@ def test_first_stage_forecasts_are_not_flattened():
 
     assert np.allclose(filled.iloc[-3:, 0], [380.0, 390.0, 400.0])
     assert np.allclose(pred, true)
+
+
+def test_disable_nested_dask_grid_search():
+    forecaster = ForecastingGridSearchCV(
+        forecaster=NaiveForecaster(),
+        param_grid={"strategy": ["last", "mean"]},
+        cv=SingleWindowSplitter(fh=1),
+        backend="dask",
+    )
+
+    parallel_forecaster = _disable_nested_dask(forecaster)
+
+    assert parallel_forecaster.backend is None
+    assert forecaster.backend == "dask"
