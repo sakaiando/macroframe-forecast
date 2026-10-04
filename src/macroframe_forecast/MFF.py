@@ -1,5 +1,5 @@
 # Disclaimer: Reuse of this tool and IMF information does not imply
-# any endorsement  of the research and/or product. Any research presented
+# any endorsement of the research and/or product. Any research presented
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
@@ -22,9 +22,6 @@ from macroframe_forecast.utils import (
     Reconciliation,
     StringToMatrixConstraints,
 )
-
-# %% MFF
-
 
 class MFF:
     """A class for Macro-Framework Forecasting (MFF).
@@ -131,19 +128,19 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
-
-        # Initiate DefaultForecaster only if a forecaster has not already been
-        # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
-        # if false.
-        if forecaster is None:
-            forecaster = DefaultForecaster(small_sample)
-
+        # get constraint matrices
         C, d = StringToMatrixConstraints(df0.T.stack(), all_cells, unknown_cells, known_cells, equality_constraints)
         C, d = AddIslandsToConstraints(C, d, islands)
         C_ineq, d_ineq = StringToMatrixConstraints(
             df0.T.stack(), all_cells, unknown_cells, known_cells, inequality_constraints
         )
+
+        # Initiate DefaultForecaster only if a forecaster has not already been defined by the user.
+        # Use OLS PCA if small_sample is True, and Grid Search if false.
+        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
+        if forecaster is None:
+            forecaster = DefaultForecaster(small_sample)
+        
         # 1st stage forecast and its model
         df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=parallelize)
 
@@ -156,12 +153,10 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-
         smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
-        
         Phi = GenSmoothingMatrix(W, smoothness)
 
-        # 2nd stage forecast
+        # 2nd stage reconciled forecast
         y2 = Reconciliation(y1, W, Phi, C, d, C_ineq, d_ineq)
 
         # reshape vector y2 into df2
