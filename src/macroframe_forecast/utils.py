@@ -615,7 +615,7 @@ def FillAllEmptyCells(
     >>> df.iloc[-5:,:1] = np.nan
     >>> def DefaultForecaster():
     >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
+    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster(),parallelize=False)
 
     """
 
