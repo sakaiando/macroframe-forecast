@@ -3,6 +3,8 @@
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
+# Mix-frequency is not working properly yet, waiting for Pandas to fix error: https://github.com/pandas-dev/pandas/issues/59775
+
 import pandas as pd
 
 from .utils import (
@@ -20,9 +22,6 @@ from .utils import (
     StringToMatrixConstraints,
     get_freq_of_freq,
 )
-
-# %%
-
 
 class MFF_mixed_freqency:
     def __init__(
@@ -118,7 +117,7 @@ class MFF_mixed_freqency:
             # get nan cells
             df0wide_freq = df0wide_list[df0i].copy()
             df0wide_freq.columns = df0wide_colflat_list[df0i].values
-            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().index
+            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().dropna().index
 
             # slice predwide
             pred_freq = predwide.loc[:, na_cells]
@@ -138,7 +137,7 @@ class MFF_mixed_freqency:
                 true_freq.columns = pred_freq_colname
 
             # change col order
-            pred_freq = pred_freq.loc[:, df0.isna()[df0.isna()].T.stack().index]
+            pred_freq = pred_freq.loc[:, df0.isna()[df0.isna()].T.stack().dropna().index]
             true_freq = true_freq.loc[:, pred_freq.columns]
 
             # append pred, true for each frequency

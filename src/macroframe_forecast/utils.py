@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import sympy as sp
-from dask import compute, delayed
+from dask.distributed import Client
 from numpy import ndarray
 from numpy.linalg import inv
 from pandas import DataFrame, Index, PeriodIndex, Series
@@ -37,8 +37,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingGreedySplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.feature_selection import FeatureSelection
-
-# %%
 
 
 def CheckTrainingSampleSize(df0: DataFrame, n_forecast_error: int = 5) -> bool:
@@ -105,7 +103,10 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     pipe_y_elasticnet = TransformedTargetForecaster(
         steps=[
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
-            ("forecaster", DirectReductionForecaster(ElasticNetCV(max_iter=5000, cv=TimeSeriesSplit(n_splits=5)))),
+            (
+                "forecaster",
+                DirectReductionForecaster(ElasticNetCV(max_iter=5000, cv=TimeSeriesSplit(n_splits=5)), window_length=5),
+            ),
         ]
     )
 
@@ -161,11 +162,11 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
                     "ols_pca",
                 ]
             },
-            backend="dask",
+            backend=None,
         )
 
     else:
-        gscv = NaiveForecaster(strategy = "last")
+        gscv = NaiveForecaster(strategy="last")
 
     return gscv
 
@@ -208,7 +209,7 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
         first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
         df_no_islands.iloc[first_na_index:, coli] = np.nan
 
-    islands: Series = df[df_no_islands.isna()].T.stack()
+    islands: Series = df[df_no_islands.isna()].T.stack().dropna()
     return df_no_islands, islands
 
 
@@ -263,7 +264,7 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     all_cells = pd.Series([f"{a}_{b}" for a, b in all_cells_index], index=all_cells_index)
 
     # unknown cells with nan
-    unknown_cells_index = df0.isna()[df0.isna()].T.stack().index
+    unknown_cells_index = df0.isna()[df0.isna()].T.stack().dropna().index
     unknown_cells = pd.Series([f"{a}_{b}" for a, b in unknown_cells_index], index=unknown_cells_index)
 
     # known cells
@@ -491,7 +492,14 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
     >>>                                 constraints_with_wildcard)
     >>> C,d = AddIslandsToConstraints(C,d,islands)
     """
-    C_aug_index = islands.index.union(C.index, sort=False)  # singleton constraints prioritize over islands
+    # Handle Pandas 3.0 compatibility: convert MultiIndex to flat index when mixing index types
+    islands_idx = islands.index
+    C_idx = C.index
+    if isinstance(islands_idx, pd.MultiIndex) and not isinstance(C_idx, pd.MultiIndex):
+        islands_idx = islands_idx.to_flat_index()
+    elif isinstance(C_idx, pd.MultiIndex) and not isinstance(islands_idx, pd.MultiIndex):
+        C_idx = C_idx.to_flat_index()
+    C_aug_index = islands_idx.union(C_idx, sort=False)  # singleton constraints prioritize over islands
     C_aug = pd.DataFrame(np.zeros([len(C_aug_index), len(C.columns)]), index=C_aug_index, columns=C.columns)
     d_aug = pd.DataFrame(np.zeros([len(C_aug_index), 1]), index=C_aug_index)
     for idx in islands.index:
@@ -550,24 +558,22 @@ def FillAnEmptyCell(
     """
     warnings.filterwarnings("ignore", category=UserWarning)
 
-    # last historical data and forecast horizon in num
-    T = np.argwhere(df.loc[:, col].isna()).min() - 1
-    h = np.where(df.index == row)[0][0] - T
+    # clone a forecaster
+    f = forecaster.clone()
 
-    y = df.iloc[:T, :].loc[:, [col]]
+    # last historical data and forecast horizon in num
+    T = np.argwhere(df.loc[:, col].isna()).min()
+    h = np.where(df.index == row)[0][0] - T + 1
+
+    y = df.iloc[:T, :].loc[:, col]
 
     X = df.iloc[: T + h].drop(columns=[col]).dropna(axis=1)
     X_train = X.iloc[:T, :]
     X_pred = X.iloc[T:, :]
 
-    y_pred = forecaster.fit(y=y, X=X_train, fh=h).predict(X=X_pred)
+    y_pred = f.fit(y=y, X=X_train, fh=[h]).predict(X=X_pred)
 
-    return y_pred, forecaster
-
-
-@delayed
-def delayed_FillAnEmptyCell(df, row, col, forecaster):
-    return FillAnEmptyCell(df, row, col, forecaster)
+    return y_pred, f
 
 
 def FillAllEmptyCells(
@@ -625,24 +631,24 @@ def FillAllEmptyCells(
     # apply dask
     if parallelize:
         start = time()
-        results = compute(
-            *[delayed_FillAnEmptyCell(df, row, col, copy.deepcopy(forecaster)) for (row, col) in na_cells],
-            scheduler="processes",
-        )
-        end = time()
-        print("Dask filled", len(results), "out-of-sample cells:", round(end - start, 3), "seconds")
+        client = Client()
+        df_future = client.scatter(df, broadcast=True)
+        forecaster_future = client.scatter(forecaster, broadcast=True)
+        futures = [client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future) for (row, col) in na_cells]
+        results = client.gather(futures)
+        client.close()
+        print("Dask filled", len(results), "out-of-sample cells:", round(time() - start, 3), "seconds")
 
     else:
         start = time()
         results = [FillAnEmptyCell(df, row, col, forecaster) for row, col in na_cells]
-        end = time()
-        print("Forecast", len(results), "cells:", round(end - start, 3), "seconds")
+        print("Forecast", len(results), "cells:", round(time() - start, 3), "seconds")
 
     # fill empty cells
     df1 = df.copy()
     df1_models = df.copy().astype(object)
     for idx, rowcol in enumerate(na_cells):
-        df1.loc[rowcol] = results[idx][0].iloc[0, 0]
+        df1.loc[rowcol] = results[idx][0].iloc[0]
         df1_models.loc[rowcol] = results[idx][1]
 
     return df1, df1_models
@@ -712,43 +718,45 @@ def GenPredTrueData(
 
     if parallelize:
         start = time()
-        results = compute(
-            *[delayed(FillAnEmptyCell)(df_list[dfi], row, col, copy.deepcopy(forecaster)) for (dfi, row, col) in tasks],
-            scheduler="processes",
-        )  # processes, multiprocesses, threads won't work
-        end = time()
-        print("Dask filled", len(results), "in-sample cells:", round(end - start, 3), "seconds")
+        client = Client()
+        df_futures = client.scatter(df_list, broadcast=True)
+        forecaster_future = client.scatter(forecaster, broadcast=True)
+        futures = [
+            client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future) for (dfi, row, col) in tasks
+        ]
+        results = client.gather(futures)
+        client.close()
+        print("Dask filled", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
     else:
         start = time()
         results = [FillAnEmptyCell(df_list[dfi], row, col, forecaster) for (dfi, row, col) in tasks]
-        end = time()
-        print("Fill", len(results), "in-sample cells:", round(end - start, 3), "seconds")
+        print("Fill", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
 
     # repackage results by filling na of df_list
     filled_list = copy.deepcopy(df_list)
     model_list = [df.astype(object) for df in copy.deepcopy(df_list)]
     for task_idx, task in enumerate(tasks):
         dfi, row, col = task
-        filled_list[dfi].loc[row, col] = results[task_idx][0].iloc[0, 0]
+        filled_list[dfi].loc[row, col] = results[task_idx][0].iloc[0]
         model_list[dfi].loc[row, col] = results[task_idx][1]
 
     # reduce n samples into a dataframe
-    colname = df.isna()[df.isna()].T.stack().index
+    colname = df.isna()[df.isna()].T.stack().dropna().index
     idxname = pd.Index(
         [df_list[n].index[np.argwhere(df_list[n].isna())[:, 0].min()] for n in range(n_forecast_error)], name="LastData"
     )
     pred = pd.DataFrame(
-        [filled_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [filled_list[n][df_list[n].isna()].T.stack().dropna().values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     model = pd.DataFrame(
-        [model_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [model_list[n][df_list[n].isna()].T.stack().dropna().values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     true = pd.DataFrame(
-        [df[df_list[n].isna()].T.stack().values for n in range(n_forecast_error)], index=idxname, columns=colname
+        [df[df_list[n].isna()].T.stack().dropna().values for n in range(n_forecast_error)], index=idxname, columns=colname
     )
 
     return pred, true, model
@@ -1033,20 +1041,29 @@ def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_la
 
     # optimal lambda
     if default_lam == -1:
-
-        def loss_fn(x, T, yt, yp):
-            return (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp).T @ (yt - inv(np.eye(T) + x * HP_matrix(T)) @ yp)
-
         for tsidxi, tsidx in enumerate(tsidx_list):
             y_pred = pred_list[tsidxi]
             y_true = true_list[tsidxi]
             T = len(tsidx)
 
+            # Precompute eigendecomposition of the (symmetric PSD) HP matrix once
+            # per variable so each optimizer evaluation avoids rebuilding F and
+            # inverting (I + x*F). Since F = V diag(eigvals) V.T,
+            # inv(I + x*F) @ y = V @ diag(1 / (1 + x*eigvals)) @ V.T @ y.
+            F = HP_matrix(T)
+            eigvals, V = np.linalg.eigh(F)
+
+            def loss_fn_eigen(x, yt, yp, _eigvals=eigvals, _V=V):
+                scale = 1.0 / (1.0 + x * _eigvals)
+                smoothed = (_V * scale) @ (_V.T @ yp)
+                residual = yt - smoothed
+                return (residual.T @ residual).item()
+
             # TODO: pick a better name for the function
             def obj(x):
                 return np.mean(
                     [
-                        loss_fn(x, T, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
+                        loss_fn_eigen(x, y_true.iloc[i : i + 1, :].T.values, y_pred.iloc[i : i + 1, :].T.values)
                         for i in range(y_pred.shape[0])
                     ]
                 )
@@ -1130,7 +1147,7 @@ def Reconciliation(
         Dataframe containing matrix of the linear constraints on the left side of
         the inequality constraint C_ineq · y - d_ineq ≤ 0. The default is None.
     d_ineq : pd.DataFrame, optional
-        Dataframe containing matrix of the linear constraints on the right side of 
+        Dataframe containing matrix of the linear constraints on the right side of
         the inequality constraint C_ineq · y - d_ineq ≤ 0.  The default is None.
 
     Returns
@@ -1172,30 +1189,37 @@ def Reconciliation(
     assert (C.index == d.index).all()
 
     def DropLinDepRows(C_aug, d_aug):
-        C = C_aug.values
+        # Convert the DataFrame to a numpy array
+        C = C_aug.to_numpy()
 
-        # Convert the matrix to a SymPy Matrix
-        sympy_matrix = sp.Matrix(C)
+        # C has shape (0, n): no rows means no linear dependencies; nothing to drop
+        if C.shape[0] == 0:
+            return C_aug, d_aug
 
-        # Compute the RREF and get the indices of linearly independent rows
-        rref_matrix, independent_rows = sympy_matrix.T.rref()
+        # Compute pivoted QR and get the indices of linearly independent rows
+        _, R, P = scipy.linalg.qr(C.T, pivoting=True)
+
+        Rdiag_abs = np.abs(np.diag(R))
+
+        # Compute rank tolerance
+        tol = np.finfo(R.dtype).eps * max(C.shape) * Rdiag_abs.max()
+
+        # Numerical rank = R-diagonal entries above tolerance
+        rank = int((Rdiag_abs > tol).sum())
 
         # Extract the independent rows
-        independent_rows = list(independent_rows)
+        independent = P[:rank]
 
-        # dependent rows
-        all_rows = set(range(C.shape[0]))
-        dependent_rows = list(all_rows - set(independent_rows))
+        # Positional indices of rows to drop
+        dropped = sorted(set(range(C.shape[0])) - set(independent.tolist()))
 
-        C = C_aug.iloc[independent_rows, :]
-        d = d_aug.iloc[independent_rows, :]
-
-        if dependent_rows != []:
+        if dropped:
             print(
                 "Constraints are linearly dependent. The following constraints are dropped.",
-                C_aug.index[dependent_rows],
+                C_aug.index[dropped],
             )
-        return C, d
+
+        return C_aug.iloc[independent, :], d_aug.iloc[independent, :]
 
     # keep lin indep rows
     C, d = DropLinDepRows(C, d)
@@ -1227,9 +1251,9 @@ def Reconciliation(
         q = -2 * W_inv @ y1n
         x = cp.Variable([len(y1), 1])
         objective = cp.Minimize(cp.quad_form(x, P, assume_PSD=True) + q.T @ x)
-        
+
         # If equality constraints do not exist, dropping C matrix from solver
-        if C.shape[0] >0:
+        if C.shape[0] > 0:
             constraints = [Cn @ x == dn, Cn_ineq @ x <= dn_ineq]
         else:
             constraints = [Cn_ineq @ x <= dn_ineq]

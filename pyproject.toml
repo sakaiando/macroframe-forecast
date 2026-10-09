@@ -1,6 +1,6 @@
 [project]
 name = "macroframe-forecast"
-version = "0.1.5"
+version = "0.1.6"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
 requires-python = ">=3.11"
