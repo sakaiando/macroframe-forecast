@@ -684,6 +684,7 @@ def GenPredTrueData(
     >>> import pandas as pd
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import ElasticNetCV
+    >>> from macroframe_forecast.utils import GenPredTrueData
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
@@ -692,7 +693,7 @@ def GenPredTrueData(
     >>> df.iloc[-5:,:1] = np.nan
     >>> def DefaultForecaster():
     >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
+    >>> pred,true,model = GenPredTrueData(df,forecaster,parallelize=False)
     """
 
     # last historical data and length of forecast horizon
