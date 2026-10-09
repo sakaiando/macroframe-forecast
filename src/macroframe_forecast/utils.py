@@ -598,14 +598,15 @@ def FillAllEmptyCells(
         Dataframe with all known cells, with unknown cells containing details
         of the forecaster used for generating forecast of that cell.
 
-    Examples
-    --------
+    Example
+    -------
+
     >>> from string import ascii_lowercase
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sklearn.linear_model import ElasticNetCV
     >>> from sktime.forecasting.compose import YfromX
-    >>> from mff.utils import FillAllEmptyCells
+    >>> from macroframe_forecast.utils import FillAllEmptyCells
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
