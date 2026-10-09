@@ -43,17 +43,19 @@ class MFF:
         sktime BaseForecaster descendant. If not defined, then DefaultForecaster
         is used.
 
-    constraints_with_wildcard : str, optional(default: None)
-        Constraints that hold with equality. Constraints may include wildcard,
-        in which case constraints will be applied across all horizons, or
-        may be defined for specified time periods.
+    equality_constraints : list of str, optional(default: [])
+        Constraints that hold with equality. Each string specifies a constraint.
+        Constraints may include a wildcard to apply across all horizons, or may
+        refer to specified time periods. An empty list supplies no equality
+        constraints.
 
-    ineq_constraints_with_wildcard : str, optional(default: None)
-        Inequality constraints, comparable to ``constraints_with_wildcard``.
-        Constraints may include wildcard, in which case constraints will be
-        applied across all horizons, or may be defined for specified time
-        periods. Constraints should be written in the form of 'C_ineq*y - d_ineq ≤ 0 '. 
-
+    inequality_constraints : list of str, optional(default: [])
+        Inequality constraints, comparable to ``equality_constraints``.
+        Constraints may include a wildcard to apply across all horizons, or may
+        refer to specified time periods. Constraints should be written in the
+        form ``C_ineq*y - d_ineq <= 0``. An empty list supplies no inequality
+        constraints.
+    
     parallelize : boolean
         Indicate whether parallelization should be employed for generating the
         first step forecasts. Default value is `True`.
