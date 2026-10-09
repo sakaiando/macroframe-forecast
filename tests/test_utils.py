@@ -1,7 +1,11 @@
 from numpy.random import sample
 from pandas import DataFrame, Index, PeriodIndex, Series
+from sktime.forecasting.trend import PolynomialTrendForecaster
 
 from macroframe_forecast.utils import (
+    FillAllEmptyCells,
+    FillAnEmptyCell,
+    GenPredTrueData,
     expand_wildcard,
     find_permissible_wildcard,
     find_strings_to_replace_wildcard,
@@ -72,3 +76,38 @@ def test_get_freq_of_freq_datetime():
     assert get_freq_of_freq(test_index_2, "H").equals(Index(hours, dtype="int32"))
     assert get_freq_of_freq(test_index_2, "T").equals(Index(minutes, dtype="int32"))
     assert get_freq_of_freq(test_index_2, "S").equals(Index(seconds, dtype="int32"))
+
+
+def test_fill_an_empty_cell_uses_target_horizon():
+    import numpy as np
+    import pandas as pd
+
+    df = pd.DataFrame(
+        {"a": 10.0 * np.arange(1, 41), "b": 1.0 * np.arange(1, 41)},
+        index=pd.date_range("1986", periods=40, freq="YE").year,
+    )
+    df.iloc[-3:, 0] = np.nan
+    forecaster = PolynomialTrendForecaster(degree=1)
+
+    for row, expected in zip(df.index[-3:], [380.0, 390.0, 400.0]):
+        prediction, _ = FillAnEmptyCell(df, row, "a", forecaster)
+        assert len(prediction) == 1
+        assert np.isclose(prediction.iloc[0], expected)
+
+
+def test_first_stage_forecasts_are_not_flattened():
+    import numpy as np
+    import pandas as pd
+
+    df = pd.DataFrame(
+        {"a": 10.0 * np.arange(1, 41), "b": 1.0 * np.arange(1, 41)},
+        index=pd.date_range("1986", periods=40, freq="YE").year,
+    )
+    df.iloc[-3:, 0] = np.nan
+    forecaster = PolynomialTrendForecaster(degree=1)
+
+    filled, _ = FillAllEmptyCells(df, forecaster, parallelize=False)
+    pred, true, _ = GenPredTrueData(df, forecaster, n_forecast_error=2, parallelize=False)
+
+    assert np.allclose(filled.iloc[-3:, 0], [380.0, 390.0, 400.0])
+    assert np.allclose(pred, true)
