@@ -574,7 +574,7 @@ def FillAllEmptyCells(
 ) -> tuple[DataFrame, DataFrame]:
     """
     Generate forecasts for all unknown cells in the supplied dataframe.
-    All forecasts are made independently from each other. (TBC)
+    All forecasts are made independently from each other.
 
     Parameters
     ----------
