@@ -684,6 +684,7 @@ def GenPredTrueData(
     >>> import pandas as pd
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import ElasticNetCV
+    >>> from macroframe_forecast.utils import GenPredTrueData
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
@@ -692,7 +693,7 @@ def GenPredTrueData(
     >>> df.iloc[-5:,:1] = np.nan
     >>> def DefaultForecaster():
     >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
+    >>> pred,true,model = GenPredTrueData(df,forecaster,parallelize=False)
     """
 
     # last historical data and length of forecast horizon
@@ -792,6 +793,7 @@ def BreakDataFrameIntoTimeSeriesList(
     >>> import pandas as pd
     >>> from sktime.forecasting.compose import YfromX
     >>> from sklearn.linear_model import ElasticNetCV
+    >>> from macroframe_forecast.utils import BreakDataFrameIntoTimeSeriesList, FillAllEmptyCells, GenPredTrueData
     >>> n = 30
     >>> p = 2
     >>> df = pd.DataFrame(np.random.sample([n,p]),
@@ -800,8 +802,8 @@ def BreakDataFrameIntoTimeSeriesList(
     >>> df.iloc[-5:,:1] = np.nan
     >>> def DefaultForecaster():
     >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
+    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster(),parallelize=False)
+    >>> pred,true,model = GenPredTrueData(df,forecaster,parallelize=False)
     >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df,df1,pred,true)
     """
     ts_list = [df1[df0.isna()].loc[:, col:col].dropna().T.stack() for col in df0.columns[df0.isna().any()]]
