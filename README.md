@@ -8,7 +8,7 @@ This package assists forecasting with constraints and is based on the following 
 * [Smooth Forecast Reconciliation (2024)](https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654)
 * [Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities (2023)](https://link.springer.com/article/10.1057/s41308-023-00225-8)
 
-It is tailored to multivariate economic forecasting with large *N* and small *T* (many time series and short sample periods), but can also be applied to other problems.
+The targeted audience is policy makers that conduct multivariate economic forecasting with large *N* and small *T* (many time series and short sample periods), but the methodology can also be applied to other problems.
 
 # Documentation
 
