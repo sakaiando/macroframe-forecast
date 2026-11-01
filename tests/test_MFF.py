@@ -11,8 +11,24 @@ import pandas as pd
 from pytest import mark
 
 from macroframe_forecast import MFF, MFF_mixed_freqency
+from macroframe_forecast.utils import AddIslandsToConstraints
 
 # %%
+
+
+def test_add_islands_to_constraints_with_mixed_index_types():
+    island_index = pd.MultiIndex.from_tuples([("B0", 2000)])
+    cell_index = pd.MultiIndex.from_tuples([("A0", 2001), ("B0", 2000)])
+    constraints = pd.DataFrame([[1.0, -1.0]], index=["A0_2001-B0_2000"], columns=cell_index)
+    rhs = pd.DataFrame([0.0], index=constraints.index)
+    islands = pd.Series([2.0], index=island_index)
+
+    augmented, augmented_rhs = AddIslandsToConstraints(constraints, rhs, islands)
+
+    assert list(augmented.index) == [("B0", 2000), "A0_2001-B0_2000"]
+    assert augmented.at[("B0", 2000), ("B0", 2000)] == 1
+    assert augmented_rhs.at[("B0", 2000), 0] == 2
+    assert augmented.loc["A0_2001-B0_2000"].equals(constraints.loc["A0_2001-B0_2000"])
 
 
 @mark.slow
@@ -91,6 +107,11 @@ def test_MFF_mixed_frequency():
 
     mff = MFF_mixed_freqency(df_dict, constraints_with_wildcard=constraints_with_wildcard)
     df2_list = mff.fit()
+    assert len(df2_list) == 2
+    assert df2_list[0].index.equals(dfA.index)
+    assert df2_list[1].index.equals(dfQ.index)
+    assert df2_list[0].iloc[-fhA:, :2].notna().all().all()
+    assert df2_list[1].iloc[-fhQ:, :2].notna().all().all()
     assert ~np.isnan(df2_list[0].iloc[-1, 0])
 
 

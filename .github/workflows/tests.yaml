@@ -5,11 +5,14 @@ on: [pull_request, workflow_dispatch]
 jobs:
   docs:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12' 
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           pip install pytest .
@@ -18,3 +21,17 @@ jobs:
       - name: Run tests
         run: |
           pytest -m ""
+
+  minimum-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
+      - name: Install minimum direct dependencies
+        run: uv pip install --system --resolution lowest-direct . 'pytest>=8.4.0'
+      - name: Run tests
+        run: pytest -m ""

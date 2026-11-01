@@ -107,7 +107,9 @@ def test_first_stage_forecasts_are_not_flattened():
     forecaster = PolynomialTrendForecaster(degree=1)
 
     filled, _ = FillAllEmptyCells(df, forecaster, parallelize=False)
-    pred, true, _ = GenPredTrueData(df, forecaster, n_forecast_error=2, parallelize=False)
+    pred, true, model = GenPredTrueData(df, forecaster, n_forecast_error=2, parallelize=False)
 
     assert np.allclose(filled.iloc[-3:, 0], [380.0, 390.0, 400.0])
     assert np.allclose(pred, true)
+    assert pred.shape == true.shape == model.shape == (2, 3)
+    assert list(pred.columns) == [("a", year) for year in df.index[-3:]]

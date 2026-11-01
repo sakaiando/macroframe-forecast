@@ -3,7 +3,7 @@ name = "macroframe-forecast"
 version = "0.1.6"
 description = "Macroframework forecasting with accounting identities"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 maintainers = [
     { name = "Sakai Ando", email = "sando@imf.org" },
     { name = "Sultan Orazbayev", email = "sorazbayev@imf.org" },
