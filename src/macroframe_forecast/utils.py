@@ -193,13 +193,14 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
         --------
         >>> import numpy as np
         >>> import pandas as pd
-        >>> n = 30
-        >>> p = 2
-        >>> df = pd.DataFrame(np.random.sample([n,p]),
-        >>>                   columns=['a','b'],
-        >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-        >>> df.iloc[-5:-1,:1] = np.nan
+        >>> from macroframe_forecast.utils import CleanIslands
+        >>> df = pd.DataFrame(
+        ...     {"a": [1.0, np.nan, 3.0], "b": [2.0, 3.0, 4.0]},
+        ...     index=pd.period_range("2020", periods=3, freq="Y"),
+        ... )
         >>> df0, islands = CleanIslands(df)
+        >>> len(islands)
+        1
 
     """
     df_no_islands = df.copy()  # to keep original df as it is
@@ -218,7 +219,7 @@ def _get_missing_cells(df: DataFrame) -> pd.MultiIndex:
     return missing[missing].index
 
 
-def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
+def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series, Series]:
     """
     Extract island values (if existing) from input dataframe, replacing them
     with nan values. This is useful for generating first step forecasts, which
@@ -252,12 +253,11 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> n = 30
-    >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> from macroframe_forecast.utils import OrganizeCells
+    >>> df = pd.DataFrame(
+    ...     {"a": [1.0, np.nan, np.nan], "b": [2.0, 3.0, 4.0]},
+    ...     index=pd.period_range("2020", periods=3, freq="Y"),
+    ... )
     >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
     """
 
@@ -280,7 +280,31 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
 
 
 def find_permissible_wildcard(constraints_with_wildcard: list[str], _seed: int = 0) -> str:
-    """Generate random letter to be used in constraints."""
+    """Choose a letter that does not occur in the supplied constraints.
+
+    The selected letter can temporarily replace the constraint wildcard while
+    constraints are parsed as symbolic expressions.
+
+    Parameters
+    ----------
+    constraints_with_wildcard : list[str]
+        Constraint expressions in which the user wildcard may appear.
+    _seed : int, optional
+        Seed used to choose a reproducible candidate. Defaults to ``0``.
+
+    Returns
+    -------
+    str
+        A lowercase letter sequence that does not occur in any constraint.
+
+    Examples
+    --------
+    >>> from macroframe_forecast.utils import find_permissible_wildcard
+    >>> constraints = ["a? + b?"]
+    >>> wildcard = find_permissible_wildcard(constraints)
+    >>> wildcard not in "".join(constraints)
+    True
+    """
     wild_card_length = 1
     seed(_seed)
     candidate = "".join(sample(ascii_lowercase, wild_card_length))
@@ -292,7 +316,31 @@ def find_permissible_wildcard(constraints_with_wildcard: list[str], _seed: int =
 
 
 def find_strings_to_replace_wildcard(constraint: str, var_list: Series, wildcard: str) -> list[str]:
-    """Identify list of strings to be substituted with the wildcard character."""
+    """Find suffixes shared by variables that match a wildcard constraint.
+
+    Parameters
+    ----------
+    constraint : str
+        One constraint expression containing the temporary wildcard marker.
+    var_list : pd.Series
+        Series of variable-and-period labels, such as ``"GDP_2030"``.
+    wildcard : str
+        Temporary marker replacing the user's wildcard in ``constraint``.
+
+    Returns
+    -------
+    list[str]
+        Sorted suffixes that occur in the variable labels for every symbol
+        in the constraint.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from macroframe_forecast.utils import find_strings_to_replace_wildcard
+    >>> variables = pd.Series(["a_2020", "b_2020", "a_2021", "b_2021"])
+    >>> find_strings_to_replace_wildcard("aX + bX", variables, wildcard="X")
+    ['_2020', '_2021']
+    """
 
     varlist_regex = ["^" + str(v).replace(wildcard, "(.*)") + "$" for v in sp.sympify(constraint).free_symbols]
     missing_string_set_list = []
@@ -318,15 +366,15 @@ def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Ser
 
     Parameters
     ----------
-    constraints_with_alphabet_wildcard : string
+    constraints_with_alphabet_wildcard : list[str]
         Linear equality constraints with wildcard string replaced
         with alphabets.
-    var_list : list
-        List of indices of all cells (known and unknown) in raw dataframe.
+    var_list : pd.Series
+        Series of names for all cells (known and unknown) in the dataframe.
     wildcard : string
         Alphabet which has replaced wildcard string in the constraints.
 
-    Return
+    Returns
     ------
     expanded_constraints : list
         Expanded list of constraints over all time periods.
@@ -335,20 +383,11 @@ def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Ser
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> n = 30
-    >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df0_stacked = df.T.stack()
-    >>> all_cells_index = df0_stacked.index
-    >>> var_list = pd.Series([f'{a}_{b}' for a, b in all_cells_index],
-    >>>                      index = all_cells_index)
-    >>> constraints_with_alphabet_wildcard = ['ax + bx']
-    >>> alphabet_wildcard = 'x'
-    >>> constraints = expand_wildcard(constraints_with_alphabet_wildcard,
-    >>>                               var_list = var_list,
-    >>>                               wildcard = alphabet_wildcard)
+    >>> from macroframe_forecast.utils import expand_wildcard
+    >>> var_list = pd.Series(["a_2020", "b_2020", "a_2021", "b_2021"])
+    >>> constraints = expand_wildcard(["ax + bx"], var_list, wildcard="x")
+    >>> constraints
+    ['a_2020 + b_2020', 'a_2021 + b_2021']
 
     """
     expanded_constraints = []
@@ -408,20 +447,18 @@ def StringToMatrixConstraints(
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> n = 30
-    >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> from macroframe_forecast.utils import OrganizeCells, StringToMatrixConstraints
+    >>> df = pd.DataFrame(
+    ...     {"a": [1.0, np.nan, np.nan], "b": [2.0, 3.0, 4.0]},
+    ...     index=pd.period_range("2020", periods=3, freq="Y"),
+    ... )
     >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
-    >>> df0_stacked = df0.T.stack()
-    >>> constraints_with_wildcard = ['a?+b?']
-    >>> C,d = StringToMatrixConstraints(df0_stacked,
-    >>>                                 all_cells,
-    >>>                                 unknown_cells,
-    >>>                                 known_cells,
-    >>>                                 constraints_with_wildcard)
+    >>> df0_stacked = df0.T.stack(future_stack=True)
+    >>> C, d = StringToMatrixConstraints(
+    ...     df0_stacked, all_cells, unknown_cells, known_cells, ["a? + b?"]
+    ... )
+    >>> C.shape
+    (2, 2)
     """
 
     if constraints_with_wildcard is None:
@@ -481,21 +518,20 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> n = 30
-    >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:-1,:1] = np.nan
+    >>> from macroframe_forecast.utils import AddIslandsToConstraints, OrganizeCells, StringToMatrixConstraints
+    >>> df = pd.DataFrame(
+    ...     {"a": [1.0, np.nan, 3.0, 4.0], "b": [2.0, 3.0, 4.0, 5.0]},
+    ...     index=pd.period_range("2020", periods=4, freq="Y"),
+    ... )
+    >>> df.iloc[1, 0] = np.nan
     >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
-    >>> df0_stacked = df0.T.stack()
-    >>> constraints_with_wildcard = ['a?+b?']
-    >>> C,d = StringToMatrixConstraints(df0_stacked,
-    >>>                                 all_cells,
-    >>>                                 unknown_cells,
-    >>>                                 known_cells,
-    >>>                                 constraints_with_wildcard)
-    >>> C,d = AddIslandsToConstraints(C,d,islands)
+    >>> df0_stacked = df0.T.stack(future_stack=True)
+    >>> C, d = StringToMatrixConstraints(
+    ...     df0_stacked, all_cells, unknown_cells, known_cells, ["a? + b?"]
+    ... )
+    >>> C_aug, d_aug = AddIslandsToConstraints(C, d, islands)
+    >>> len(C_aug)
+    5
     """
     island_index = pd.Index(islands.index.to_list(), dtype=object, tupleize_cols=False)
     constraint_index = pd.Index(C.index.to_list(), dtype=object, tupleize_cols=False)
@@ -513,7 +549,7 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
 
 def FillAnEmptyCell(
     df: DataFrame, row: int | str, col: int | str, forecaster: BaseForecaster
-) -> tuple[float, BaseForecaster]:
+) -> tuple[Series, BaseForecaster]:
     """
     Generate a forecast for a given cell based on the latest known value
     for the given column (variable) and using the predefined forecasting pipeline.
@@ -524,37 +560,38 @@ def FillAnEmptyCell(
     df : pd.DataFrame
         Dataframe containing known values of all variables and nan for
         unknown values.
-    row : str
+    row : int or str
         Row index of cell to be forecasted.
-    col : str
+    col : int or str
         Column index of cell to be forecasted.
     forecaster : BaseForecaster
-
+        ``sktime`` forecaster used to generate the prediction.
 
     Returns
     -------
-    y_pred : double
-        Forecasted value of the variable for the given horizon.
-    forecaster : BaseForecaster
-         sktime BaseForecaster descendant
+    y_pred : pd.Series
+        Forecast for the requested period.
+    fitted_forecaster : BaseForecaster
+        Fitted clone of the supplied forecaster.
 
     Examples
     --------
     >>> from string import ascii_lowercase
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> from sktime.forecasting.compose import YfromX
+    >>> from macroframe_forecast.utils import DefaultForecaster, FillAnEmptyCell
     >>> n = 30
     >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=list(ascii_lowercase[:p]),
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df = pd.DataFrame(
+    ...     np.random.sample([n, p]),
+    ...     columns=list(ascii_lowercase[:p]),
+    ...     index=pd.date_range(start='2000', periods=n, freq='YE').year,
+    ... )
     >>> df.iloc[-5:,:1] = np.nan
     >>> row = df.index[-1]
     >>> col = df.columns[0]
-    >>> forecaster = YfromX(ElasticNetCV())
-    >>> y_pred, forecaster = FillAnEmptyCell(df,row,col,forecaster)
+    >>> forecaster = DefaultForecaster(small_sample=True)
+    >>> y_pred, forecaster = FillAnEmptyCell(df, row, col, forecaster)
     """
     warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -879,20 +916,29 @@ def GenVecForecastWithIslands(ts_list: list[DataFrame], islands: list[Series]) -
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.forecasting.compose import YfromX
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> n = 30
-    >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:-1,:1] = np.nan
-    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
-    >>> def DefaultForecaster():
-    >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster(),parallelize=False)
-    >>> ts_list = [df1[df0.isna()].loc[:,col:col].dropna().T.stack() for col in df0.columns[df.isna().any()]]
-    >>> y1 = GenVecForecastWithIslands(ts_list,islands)
+    >>> from macroframe_forecast.utils import (
+    ...     DefaultForecaster,
+    ...     FillAllEmptyCells,
+    ...     GenVecForecastWithIslands,
+    ...     OrganizeCells,
+    ... )
+    >>> df = pd.DataFrame(
+    ...     {"a": np.arange(1.0, 9.0), "b": np.arange(2.0, 10.0)},
+    ...     index=pd.period_range("2020", periods=8, freq="Y"),
+    ... )
+    >>> df.iloc[-4:-1, 0] = np.nan
+    >>> df.iloc[-2, 0] = 50.0
+    >>> df0, _, _, _, islands = OrganizeCells(df)
+    >>> forecaster = DefaultForecaster(small_sample=True)
+    >>> df1, _ = FillAllEmptyCells(df0, forecaster, parallelize=False)  # doctest: +ELLIPSIS
+    Forecast 4 cells: ... seconds
+    >>> ts_list = [
+    ...     df1[df0.isna()].loc[:, col:col].dropna().T.stack(future_stack=True)
+    ...     for col in df0.columns[df0.isna().any()]
+    ... ]
+    >>> y1 = GenVecForecastWithIslands(ts_list, islands)
+    >>> bool(y1.loc[("a", pd.Period("2026", freq="Y"))] == 50.0)
+    True
     """
     try:
         y1 = pd.concat(ts_list, axis=0)
@@ -940,6 +986,7 @@ def GenWeightMatrix(
     --------
     >>> import pandas as pd
     >>> import numpy as np
+    >>> from macroframe_forecast.utils import GenWeightMatrix
     >>> pred_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
     >>> true_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
     >>> W,shrinkage = GenWeightMatrix(pred_list, true_list)
@@ -1190,28 +1237,15 @@ def Reconciliation(
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.forecasting.compose import YfromX
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> n = 30
-    >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:,:1] = np.nan
-    >>> df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
-    >>> def DefaultForecaster():
-    >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> df1,df1_models = FillAllEmptyCells(df0,DefaultForecaster(),parallelize=False)
-    >>> pred,true,model = GenPredTrueData(df0,DefaultForecaster(),parallelize=False)
-    >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df0,df1,pred,true)
-    >>> y1 = pd.concat(ts_list)
-    >>> C = pd.DataFrame(columns = y1.index).astype(float)
-    >>> d = pd.DataFrame().astype(float)
-    >>> W = pd.DataFrame(np.eye(5),index=y1.index,columns=y1.index)
-    >>> smoothness = GenLamstar(pred_list,true_list)
-    >>> Phi = GenSmoothingMatrix(W,smoothness)
-    >>> y2 = Reconciliation(y1,W,Phi,C,d)
-    >>> y2 = Reconciliation(m.y1,m.W,m.Phi,m.C,m.d)
+    >>> from macroframe_forecast.utils import Reconciliation
+    >>> cells = pd.Index(["a_2030", "b_2030"])
+    >>> y1 = pd.Series([1.0, 3.0], index=cells)
+    >>> W = pd.DataFrame(np.eye(2), index=cells, columns=cells)
+    >>> Phi = pd.DataFrame(np.zeros((2, 2)), index=cells, columns=cells)
+    >>> C = pd.DataFrame([[1.0, 1.0]], index=["a + b = 0"], columns=cells)
+    >>> d = pd.DataFrame([0.0], index=C.index)
+    >>> y2 = Reconciliation(y1, W, Phi, C, d)
+    >>> np.testing.assert_allclose(y2.iloc[:, 0].sum(), 0.0)
 
     """
     assert (y1.index == W.index).all()
@@ -1304,6 +1338,33 @@ def Reconciliation(
 
 
 def get_freq_of_freq(periodindex: PeriodIndex, freqstr: Literal["Y", "Q", "M", "W", "D", "H", "T", "S"]) -> Index:
+    """Get each period's position within its containing calendar period.
+
+    For example, quarterly periods map to quarter numbers, while monthly
+    periods map to month numbers.
+
+    Parameters
+    ----------
+    periodindex : pd.PeriodIndex
+        Periods whose within-year, within-day, or within-hour positions are
+        required.
+    freqstr : {"Y", "Q", "M", "W", "D", "H", "T", "S"}
+        Frequency whose position to return: year, quarter, month, week, day,
+        hour, minute, or second.
+
+    Returns
+    -------
+    pd.Index
+        Integer positions for each period, corresponding to ``freqstr``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from macroframe_forecast.utils import get_freq_of_freq
+    >>> periods = pd.period_range("2024Q1", periods=4, freq="Q")
+    >>> get_freq_of_freq(periods, "Q").tolist()
+    [1, 2, 3, 4]
+    """
     if freqstr == "Y":
         return periodindex.year
     if freqstr == "Q":
@@ -1323,8 +1384,35 @@ def get_freq_of_freq(periodindex: PeriodIndex, freqstr: Literal["Y", "Q", "M", "
 
 
 def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: int) -> DataFrame:
-    # used only in mixed freq case, pd.concat doesn't work for more than 4 mix-freq series
-    # doesn't work when there are more than 3 freq!
+    """Concatenate frames whose MultiIndex contains mixed period frequencies.
+
+    First attempts ordinary pandas concatenation. If pandas cannot combine the
+    mixed-frequency index levels directly, groups the frames by frequency,
+    concatenates each group, and combines the groups.
+
+    Parameters
+    ----------
+    df_list : list[pd.DataFrame]
+        Frames to concatenate. The concatenated axis must use a MultiIndex
+        whose second level contains ``Period`` values.
+    axis : {0, 1}
+        Concatenation axis: ``0`` for rows or ``1`` for columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        The concatenated frames.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from macroframe_forecast.utils import ConcatMixFreqMultiIndexSeries
+    >>> first = pd.DataFrame([[1]], index=pd.MultiIndex.from_tuples([("GDP", pd.Period("2024", freq="Y"))]))
+    >>> second = pd.DataFrame([[2]], index=pd.MultiIndex.from_tuples([("CPI", pd.Period("2024Q1", freq="Q"))]))
+    >>> combined = ConcatMixFreqMultiIndexSeries([first, second], axis=0)
+    >>> len(combined)
+    2
+    """
     try:
         return pd.concat(df_list, axis=axis)
     except Exception:

@@ -73,6 +73,29 @@ class MFF:
     max_lam : float, optional
         Maximum smoothing parameter considered when estimating it empirically.
         Defaults to ``129600``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from macroframe_forecast import MFF
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> periods = pd.period_range("2000", periods=20, freq="Y")
+    >>> values = np.random.default_rng(0).normal(size=20)
+    >>> df = pd.DataFrame({"a": values}, index=periods)
+    >>> df.iloc[-2:, 0] = np.nan
+    >>> model = MFF(
+    ...     df,
+    ...     forecaster=NaiveForecaster(strategy="last"),
+    ...     equality_constraints=["a? - 5"],
+    ...     parallelize=False,
+    ...     n_forecast_error=2,
+    ... )
+    >>> forecasts = model.fit()  # doctest: +ELLIPSIS
+    Forecast 2 cells: ... seconds
+    Fill 4 in-sample cells: ... seconds
+    >>> np.allclose(forecasts["a"].iloc[-2:], 5.0)
+    True
     """
 
     def __init__(
