@@ -59,13 +59,12 @@ axes[2].plot( df2['var1'] + df2['var2'] - df2['sum'], label='summation error')
 axes[2].legend()
 ```
 
-# Support
+# Support and contributions
 
-For usage questions or support requests, please email the maintainers at
-[sando@imf.org](mailto:sando@imf.org) and [sorazbayev@imf.org](mailto:sorazbayev@imf.org).
-
-If you find a reproducible bug or want to request a feature, please open an issue in the
-[issue tracker](https://github.com/sakaiando/macroframe-forecast/issues).
+For usage questions, support requests, reproducible bug reports, or feature requests, please open an issue in the
+[GitHub issue tracker](https://github.com/sakaiando/macroframe-forecast/issues). See
+[CONTRIBUTING.md](CONTRIBUTING.md) for what to include in a report, how to set up a development environment, run tests,
+and submit a contribution.
 
 # Disclaimer
 
