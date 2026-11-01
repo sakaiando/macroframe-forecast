@@ -581,7 +581,7 @@ def FillAllEmptyCells(
 ) -> tuple[DataFrame, DataFrame]:
     """
     Generate forecasts for all unknown cells in the supplied dataframe.
-    All forecasts are made independently from each other. (TBC)
+    Each unknown cell is forecast independently of the other unknown cells.
 
     Parameters
     ----------
@@ -592,11 +592,11 @@ def FillAllEmptyCells(
     forecaster : BaseForecaster
         sktime BaseForecaster descendant
 
-    parallelize : boolean
+    parallelize : bool
         Indicate whether parallelization should be employed for generating the
         first step forecasts. Default value is `True`.
 
-    Return
+    Returns
     ------
     df1: pd.DataFrame
         Dataframe with all known cells, as well as unknown cells filled in by
@@ -610,18 +610,18 @@ def FillAllEmptyCells(
     >>> from string import ascii_lowercase
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> from sktime.forecasting.compose import YfromX
-    >>> from mff.utils import FillAllEmptyCells
+    >>> from macroframe_forecast.utils import DefaultForecaster, FillAllEmptyCells
     >>> n = 30
     >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=list(ascii_lowercase[:p]),
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
+    >>> df = pd.DataFrame(
+    ...     np.random.sample([n, p]),
+    ...     columns=list(ascii_lowercase[:p]),
+    ...     index=pd.date_range(start='2000', periods=n, freq='YE').year,
+    ... )
     >>> df.iloc[-5:,:1] = np.nan
-    >>> def DefaultForecaster():
-    >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
+    >>> forecaster = DefaultForecaster(small_sample=True)
+    >>> df1, df1_models = FillAllEmptyCells(df, forecaster, parallelize=False)  # doctest: +ELLIPSIS
+    Forecast 5 cells: ... seconds
 
     """
 
@@ -670,7 +670,7 @@ def GenPredTrueData(
     n_forecast_error : int, optional
         Number of horizons for which in-sample forecasts are generated.
         The default is 5.
-    parallelize : boolean, optional
+    parallelize : bool, optional
         Indicate whether parallelization should be used. The default is True.
 
     Returns
@@ -689,17 +689,19 @@ def GenPredTrueData(
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.forecasting.compose import YfromX
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> n = 30
+    >>> from macroframe_forecast.utils import GenPredTrueData
+    >>> n = 40
     >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:,:1] = np.nan
-    >>> def DefaultForecaster():
-    >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
+    >>> df = pd.DataFrame(
+    ...     np.random.sample([n, p]),
+    ...     columns=['a', 'b'],
+    ...     index=pd.date_range(start='2000', periods=n, freq='YE').year,
+    ... )
+    >>> df.iloc[-3:, :1] = np.nan
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> forecaster = PolynomialTrendForecaster(degree=1)
+    >>> pred, true, model = GenPredTrueData(df, forecaster, n_forecast_error=2, parallelize=False)  # doctest: +ELLIPSIS
+    Fill 6 in-sample cells: ... seconds
     """
 
     # last historical data and length of forecast horizon
@@ -800,19 +802,28 @@ def BreakDataFrameIntoTimeSeriesList(
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.forecasting.compose import YfromX
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> n = 30
+    >>> from macroframe_forecast.utils import (
+    ...     BreakDataFrameIntoTimeSeriesList,
+    ...     FillAllEmptyCells,
+    ...     GenPredTrueData,
+    ...     OrganizeCells,
+    ... )
+    >>> n = 40
     >>> p = 2
-    >>> df = pd.DataFrame(np.random.sample([n,p]),
-    >>>                   columns=['a','b'],
-    >>>                   index=pd.date_range(start='2000',periods=n,freq='YE').year)
-    >>> df.iloc[-5:,:1] = np.nan
-    >>> def DefaultForecaster():
-    >>>     return YfromX(ElasticNetCV(max_iter=5000))
-    >>> df1,df1_models = FillAllEmptyCells(df,DefaultForecaster())
-    >>> pred,true,model = GenPredTrueData(df0,forecaster,parallelize=parallelize)
-    >>> ts_list,pred_list,true_list = BreakDataFrameIntoTimeSeriesList(df,df1,pred,true)
+    >>> df = pd.DataFrame(
+    ...     np.random.sample([n, p]),
+    ...     columns=['a', 'b'],
+    ...     index=pd.date_range(start='2000', periods=n, freq='YE').year,
+    ... )
+    >>> df.iloc[-3:, :1] = np.nan
+    >>> df0, _, _, _, _ = OrganizeCells(df)
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> forecaster = PolynomialTrendForecaster(degree=1)
+    >>> df1, _ = FillAllEmptyCells(df0, forecaster, parallelize=False)  # doctest: +ELLIPSIS
+    Forecast 3 cells: ... seconds
+    >>> pred, true, _ = GenPredTrueData(df0, forecaster, n_forecast_error=2, parallelize=False)  # doctest: +ELLIPSIS
+    Fill 6 in-sample cells: ... seconds
+    >>> ts_list, pred_list, true_list = BreakDataFrameIntoTimeSeriesList(df0, df1, pred, true)
     """
     ts_list = [df1[df0.isna()].loc[:, col:col].dropna().T.stack() for col in df0.columns[df0.isna().any()]]
     pred_list = [pred.loc[:, ts.index] for ts in ts_list]
@@ -895,7 +906,9 @@ def GenVecForecastWithIslands(ts_list: list[DataFrame], islands: list[Series]) -
 
 
 def GenWeightMatrix(
-    pred_list: list[DataFrame], true_list: list[DataFrame], shrinkage_method: Literal["oas", "oasd"] = "oas"
+    pred_list: list[DataFrame],
+    true_list: list[DataFrame],
+    shrinkage_method: Literal["oas", "identity", "oasd", "monotone diagonal"] = "oas",
 ) -> tuple[DataFrame, float]:
     """
     Generate weighting matrix based on in-sample forecasts and actual values
@@ -912,7 +925,8 @@ def GenWeightMatrix(
         pred_list.
     shrinkage_method : str, optional
         Type of algorithm to use for shrinking the covariance matrix, with
-        options of identity, oas and oasd. The default is 'oas'.
+        options ``"identity"``, ``"oas"``, ``"oasd"``, and
+        ``"monotone diagonal"``. Defaults to ``"oas"``.
 
     Returns
     -------
@@ -1017,9 +1031,17 @@ def GenLamstar(pred_list: list, true_list: list, default_lam: float = -1, max_la
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> pred_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
-    >>> true_list = [pd.DataFrame(np.random.rand(5, 5), columns=[f'Col{i+1}' for i in range(5)]) for _ in range(2)]
-    >>> W,shrinkage = GenWeightMatrix(pred_list, true_list)
+    >>> from macroframe_forecast.utils import GenLamstar
+    >>> periods = pd.period_range("2000", periods=5, freq="Y")
+    >>> pred_list = [
+    ...     pd.DataFrame(
+    ...         np.random.rand(5, 5),
+    ...         columns=pd.MultiIndex.from_arrays([[name] * 5, periods]),
+    ...     )
+    ...     for name in ("A", "B")
+    ... ]
+    >>> true_list = [pred - 0.1 for pred in pred_list]
+    >>> lamstar = GenLamstar(pred_list, true_list)
     """
     # index of time series to deal with mixed-frequency
     tsidx_list = [df.columns for df in pred_list]
@@ -1100,17 +1122,23 @@ def GenSmoothingMatrix(W: DataFrame, lamstar: Series) -> DataFrame:
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> pred_list_1 = [pd.DataFrame(np.random.rand(5, 5),
-    >>>                             columns=pd.MultiIndex.from_product([['A'], [f'Col{i+1}' for i in range(5)]])) if i == 0 else
-    >>>                pd.DataFrame(np.random.rand(5, 5),
-    >>>                             columns=pd.MultiIndex.from_product([['B'], [f'Col{i+1}' for i in range(5)]]))
-    >>>                for i in range(2)]
-    >>> true_list_1 = [pd.DataFrame(np.random.rand(5, 5),
-    >>>                             columns=pd.MultiIndex.from_product([['A'], [f'Col{i+1}' for i in range(5)]])) if i == 0 else
-    >>>                pd.DataFrame(np.random.rand(5, 5),
-    >>>                             columns=pd.MultiIndex.from_product([['B'], [f'Col{i+1}' for i in range(5)]]))
-    >>>                for i in range(2)]
-    >>> smoothness = GenLamstar(pred_list_1,true_list_1)
+    >>> from macroframe_forecast.utils import (
+    ...     GenLamstar,
+    ...     GenSmoothingMatrix,
+    ...     GenWeightMatrix,
+    ... )
+    >>> periods = pd.period_range("2000", periods=5, freq="Y")
+    >>> pred_list = [
+    ...     pd.DataFrame(
+    ...         np.random.rand(5, 5),
+    ...         columns=pd.MultiIndex.from_arrays([[name] * 5, periods]),
+    ...     )
+    ...     for name in ("A", "B")
+    ... ]
+    >>> true_list = [pred - 0.1 for pred in pred_list]
+    >>> W, shrinkage = GenWeightMatrix(pred_list, true_list)
+    >>> lamstar = GenLamstar(pred_list, true_list)
+    >>> Phi = GenSmoothingMatrix(W, lamstar)
 
     """
     lam = lamstar / [np.diag(W.loc[tsidx, tsidx]).min() for tsidx in lamstar.index]

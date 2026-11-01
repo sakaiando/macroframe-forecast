@@ -4,6 +4,8 @@
 # its Executive Board, member governments.
 
 
+from typing import Literal
+
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 
@@ -23,66 +25,54 @@ from macroframe_forecast.utils import (
     StringToMatrixConstraints,
 )
 
+
 class MFF:
     """A class for Macro-Framework Forecasting (MFF).
 
-    This class facilitates forecasting of single frequency time series data
-    using a two-step process. First step of the forecasting procedure generates
-    unconstrained forecasts using the forecaster specified. In the next step,
-    these forecasts are then reconclied so that they satisfy the supplied
-    constrants, and smoothness of the forecasts is maintained.
+    Forecast single-frequency time series data by generating initial forecasts
+    and reconciling them to satisfy the supplied constraints while maintaining
+    forecast smoothness.
 
     Parameters
     ----------
     df : pd.DataFrame
-       Input dataframe containing time series data. Data should be in wide
-       format, with each row containing data for one period, and each
-       column containing data for one variable.
+        Input data in wide format, with periods in rows and variables in
+        columns. Missing values indicate cells to forecast.
 
-    forecaster : BaseForecaster, optional(default: None)
-        sktime BaseForecaster descendant. If not defined, then DefaultForecaster
+    forecaster : BaseForecaster, optional
+        An ``sktime`` forecaster. If omitted, the package's default forecaster
         is used.
 
-    constraints_with_wildcard : str, optional(default: None)
-        Constraints that hold with equality. Constraints may include wildcard,
-        in which case constraints will be applied across all horizons, or
-        may be defined for specified time periods.
+    equality_constraints : list[str], optional
+        Linear equality constraints, expressed as strings that equal zero.
+        Use ``?`` as a wildcard to apply a constraint across forecast periods.
+        Defaults to an empty list.
 
-    ineq_constraints_with_wildcard : str, optional(default: None)
-        Inequality constraints, comparable to ``constraints_with_wildcard``.
-        Constraints may include wildcard, in which case constraints will be
-        applied across all horizons, or may be defined for specified time
-        periods. Constraints should be written in the form of 'C_ineq*y - d_ineq ≤ 0 '. 
+    inequality_constraints : list[str], optional
+        Linear inequality constraints, expressed in the form ``expression <= 0``.
+        Use ``?`` as a wildcard to apply a constraint across forecast periods.
+        Defaults to an empty list.
 
-    parallelize : boolean
-        Indicate whether parallelization should be employed for generating the
-        first step forecasts. Default value is `True`.
+    parallelize : bool, optional
+        Whether to parallelize generation of the initial forecasts. Defaults
+        to ``True``.
 
-    n_forecast_error : int
-        Number of windows to split data into training and testing sets for
-        generating matrix of forecast errors. Default is 5.
+    n_forecast_error : int, optional
+        Number of pseudo-out-of-sample forecast windows used to estimate
+        forecast errors. Defaults to ``5``.
 
-    shrinkage_method : str, optional(default: 'oas')
-        Method to be used for shrinking sample covariance matrix. Default is
-        Oracle Shrinking Approximating Estimator ('oas'). Other options are
-        oas, identity and monotone_diagonal.
+    shrinkage_method : {"oas", "identity", "oasd", "monotone diagonal"}, optional
+        Method used to shrink the sample covariance matrix. Defaults to
+        ``"oas"``.
 
-    default_lam : float, optional(default: -1)
-        The value of lambda to be used for calculating smoothing parameter if
-        frequency of observations cannot be determined from index names. If this
-        is set to -1, lambda is calculated empirically. Default is -1.
+    default_lam : float, optional
+        Smoothing parameter used when observation frequency cannot be inferred
+        from the index. A value of ``-1`` estimates it empirically. Defaults to
+        ``-1``.
 
-    max_lam : float, optional(default: 129600)
-        Maximum value of lamstar to be used for smoothing forecasts when being
-        estimated empirically.
-
-    Returns
-    -------
-    df2 : pd.Dataframe
-        Output dataframe with all reconciled forecasts filled into the original
-        input.
-
-
+    max_lam : float, optional
+        Maximum smoothing parameter considered when estimating it empirically.
+        Defaults to ``129600``.
     """
 
     def __init__(
@@ -93,7 +83,7 @@ class MFF:
         inequality_constraints: list[str] = [],
         parallelize: bool = True,
         n_forecast_error: int = 5,
-        shrinkage_method: str = "oas",
+        shrinkage_method: Literal["oas", "identity", "oasd", "monotone diagonal"] = "oas",
         default_lam: float = -1,
         max_lam: float = 129600
     ):
@@ -110,9 +100,13 @@ class MFF:
     def fit(
         self,
     ) -> pd.DataFrame:
-        """
-        Fits the model and generates reconciled forecasts for the input
-        dataframe subject to defined constraints.
+        """Fit the model and return forecasts reconciled to the defined constraints.
+
+        Returns
+        -------
+        pd.DataFrame
+            A copy of the input data with forecasted values filled in and
+            reconciled to satisfy the constraints.
         """
 
         df = self.df
