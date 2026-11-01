@@ -31,6 +31,37 @@ def test_add_islands_to_constraints_with_mixed_index_types():
     assert augmented.loc["A0_2001-B0_2000"].equals(constraints.loc["A0_2001-B0_2000"])
 
 
+def test_mixed_frequency_reconciles_annual_quarterly_identity():
+    from sktime.forecasting.naive import NaiveForecaster
+
+    quarters = pd.period_range("2000Q1", periods=48, freq="Q")
+    quarterly_true = pd.DataFrame({"a": np.arange(1, 49, dtype=float) ** 2}, index=quarters)
+    annual_true = quarterly_true.groupby(quarterly_true.index.asfreq("Y")).sum()
+    quarterly = quarterly_true.copy()
+    annual = annual_true.copy()
+    quarterly.iloc[-8:] = np.nan
+    annual.iloc[-3:] = np.nan
+    model = MFF_mixed_freqency(
+        {"Y": annual, "Q": quarterly},
+        forecaster=NaiveForecaster(strategy="mean"),
+        constraints_with_wildcard=["?Q1+?Q2+?Q3+?Q4-?"],
+    )
+
+    annual_result, quarterly_result = model.fit()
+
+    assert annual_result.index.equals(annual.index)
+    assert quarterly_result.index.equals(quarterly.index)
+    assert annual_result.columns.equals(annual.columns)
+    assert quarterly_result.columns.equals(quarterly.columns)
+    assert annual_result.notna().all().all()
+    assert quarterly_result.notna().all().all()
+    pd.testing.assert_frame_equal(annual_result.iloc[:-3], annual.iloc[:-3])
+    pd.testing.assert_frame_equal(quarterly_result.iloc[:-8], quarterly.iloc[:-8])
+    quarterly_totals = quarterly_result.groupby(quarterly_result.index.asfreq("Y")).sum()
+    np.testing.assert_allclose(annual_result, quarterly_totals, rtol=1e-8, atol=1e-8)
+    np.testing.assert_allclose(annual_result.iloc[-3], annual_true.iloc[-3], rtol=1e-8, atol=1e-8)
+
+
 @mark.slow
 def test_MFF_non_parallel():
     n = 30
