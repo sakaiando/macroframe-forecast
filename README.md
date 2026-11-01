@@ -14,7 +14,10 @@ Please refer to [this link](https://sakaiando.github.io/macroframe-forecast/) fo
 
 # Installation
 
-To install the `macroframe-forecast` package, run the following from the repository root:
+Python 3.11 and 3.12 are the supported, tested versions. Python 3.13 and later
+are outside the supported range; see [PR #80](https://github.com/sakaiando/macroframe-forecast/pull/80)
+for the corresponding runtime compatibility and package metadata changes.
+To install the `macroframe-forecast` package, run:
 
 ```shell
 pip install macroframe-forecast

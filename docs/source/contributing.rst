@@ -20,7 +20,7 @@ repository root:
 
 .. code-block:: console
 
-   python -m pip install -e . furo numpydoc pre-commit pytest ruff sphinx
+   python -m pip install -e . furo numpydoc pre-commit pytest "ruff==0.11.13" sphinx
 
 The default pytest configuration skips tests marked ``slow``. Run the normal test suite with:
 
@@ -40,12 +40,29 @@ Run all tests, including slow tests, with:
 
    pytest -m ""
 
-For the configured formatting and lint checks, run:
+For reproducible coverage reporting, install the plugin and run the full suite:
+
+.. code-block:: console
+
+   python -m pip install "pytest-cov==7.0.0"
+   pytest -m "" --cov=macroframe_forecast --cov-report=term-missing --cov-report=html
+
+The HTML report is written to ``htmlcov/index.html``. No minimum percentage is
+required. Record ``python --version`` and ``python -m pip freeze`` with the
+report when comparing environments.
+
+For formatting and lint diagnostics, use Ruff 0.11.13, matching the pre-commit hooks:
 
 .. code-block:: console
 
    ruff format --check .
    ruff check .
+
+The repository has existing findings: Ruff 0.11.13 reports one unused-import
+finding and five files needing formatting. These diagnostics are not currently
+clean repository-wide; newer Ruff versions can report additional findings.
+Keep changes focused rather than reformatting unrelated files. See
+``CONTRIBUTING.md`` for details about the baseline and pre-commit behavior.
 
 Building documentation
 ======================
