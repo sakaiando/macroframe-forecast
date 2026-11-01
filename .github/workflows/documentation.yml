@@ -15,12 +15,15 @@ jobs:
           python-version: '3.12' 
       - name: Install dependencies
         run: |
-          pip install sphinx sphinx_rtd_theme myst_parser numpydoc pydata_sphinx_theme furo
+          pip install pytest sphinx sphinx_rtd_theme myst_parser numpydoc pydata_sphinx_theme furo
       - name: Install the package
         run: pip install .
+      - name: Run API docstring examples and constraint regressions
+        run: |
+          pytest --doctest-modules src/macroframe_forecast/MFF.py src/macroframe_forecast/MFF_mixed_frequency.py src/macroframe_forecast/utils.py src/macroframe_forecast/examples.py tests/test_api_docs.py
       - name: Sphinx build
         run: |
-          sphinx-build docs/source docs_ready
+          sphinx-build -W --keep-going docs/source docs_ready
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.ref == 'refs/heads/main' }}

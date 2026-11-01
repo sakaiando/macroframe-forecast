@@ -170,19 +170,22 @@ def example3():
 
 
 def generate_example_GDP_df() -> DataFrame:
-    """Utility function to generate example GDP data for quick demonstration purposes.
+    """Return annual GDP example data with six missing values to forecast.
 
-    Example:
+    Returns
+    -------
+    pd.DataFrame
+        One ``GDP`` column in trillions of US dollars, indexed by integer years
+        from 1950 through 2030. The final six values are missing.
 
-    ```python
-    from macroframe_forecast import MFF
-    from macroframe_forecast.examples import generate_example_GDP_df
-
-    df0 = generate_example_GDP_df()
-    m = MFF(df0, equality_constraints=["GDP_2030 - 1.04 * GDP_2029"])
-    m.fit()
-    ```
-
+    Examples
+    --------
+    >>> from macroframe_forecast.examples import generate_example_GDP_df
+    >>> df = generate_example_GDP_df()
+    >>> df.shape
+    (81, 1)
+    >>> df["GDP"].iloc[-6:].isna().all().item()
+    True
     """
     GDP_data_true = DataFrame(
         {

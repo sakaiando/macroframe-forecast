@@ -1,4 +1,4 @@
-.. module:: mff
+.. module:: macroframe_forecast
 
 .. Systematic Macroframework Forecasting documentation master file, created by
    sphinx-quickstart on Mon Feb 12 12:29:05 2024.
@@ -75,6 +75,7 @@ The relevant import from `macroframe-foreacst` is `MFF`:
    :caption: Contents:
 
    examples
+   api_reference/index
    mff_documentation
    contributing
 

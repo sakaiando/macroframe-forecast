@@ -375,7 +375,7 @@ def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Ser
         Alphabet which has replaced wildcard string in the constraints.
 
     Returns
-    ------
+    -------
     expanded_constraints : list
         Expanded list of constraints over all time periods.
 
@@ -401,7 +401,7 @@ def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Ser
 
 
 def StringToMatrixConstraints(
-    df0_stacked: DataFrame,  # stack df0 to accomodate mixed frequency
+    df0_stacked: Series,  # stack df0 to accomodate mixed frequency
     all_cells: Series,
     unknown_cells: Series,
     known_cells: Series,
@@ -409,7 +409,7 @@ def StringToMatrixConstraints(
     wildcard_string: str = "?",
 ) -> tuple[DataFrame, DataFrame]:
     """
-    Convert equality constraints from list to matrix form for horizons to
+    Convert linear constraint expressions from list to matrix form for horizons to
     be forecasted (Cy = d, where C and d are dataframes containing the
     linear constraints). The input dataframe should not be in a standard wide
     format, but instead all columns should be stacked on one another. This is
@@ -427,9 +427,11 @@ def StringToMatrixConstraints(
         Series containing cell names of cells whose values are to be forecasted.
     known_cells : pd.Series
         Series containing cell names of cells whose values are known..
-    constraints_with_wildcard : str, optional
-        String specifying equality constraints that have to hold.
-        The default is [].
+    constraints_with_wildcard : list[str], optional
+        Expressions interpreted as equal to zero for equalities or less than
+        or equal to zero for inequalities. Supply only the expression, such
+        as ``"a? - 5"``, without comparison operators. Defaults to ``None``
+        (no constraints).
     wildcard_string : str, optional
         String that is used as wildcard identifier in constraint.
         The default is '?'.
@@ -634,7 +636,7 @@ def FillAllEmptyCells(
         first step forecasts. Default value is `True`.
 
     Returns
-    ------
+    -------
     df1: pd.DataFrame
         Dataframe with all known cells, as well as unknown cells filled in by
         one-step forecasts.

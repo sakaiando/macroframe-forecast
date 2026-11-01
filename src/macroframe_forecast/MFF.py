@@ -49,7 +49,9 @@ class MFF:
         Defaults to an empty list.
 
     inequality_constraints : list[str], optional
-        Linear inequality constraints, expressed in the form ``expression <= 0``.
+        Linear expressions interpreted as less than or equal to zero. Pass
+        only the expression: ``"a? - 5"`` imposes an upper bound of 5 on ``a``.
+        Do not include a comparison operator such as ``<=`` in the string.
         Use ``?`` as a wildcard to apply a constraint across forecast periods.
         Defaults to an empty list.
 
@@ -88,6 +90,23 @@ class MFF:
     ...     df,
     ...     forecaster=NaiveForecaster(strategy="last"),
     ...     equality_constraints=["a? - 5"],
+    ...     parallelize=False,
+    ...     n_forecast_error=2,
+    ... )
+    >>> forecasts = model.fit()  # doctest: +ELLIPSIS
+    Forecast 2 cells: ... seconds
+    Fill 4 in-sample cells: ... seconds
+    >>> np.allclose(forecasts["a"].iloc[-2:], 5.0)
+    True
+
+    Inequalities use expression-only strings, just like equalities. Here the
+    unconstrained forecasts exceed 5, so the upper bound is binding.
+
+    >>> df["a"] += 10.0
+    >>> model = MFF(
+    ...     df,
+    ...     forecaster=NaiveForecaster(strategy="last"),
+    ...     inequality_constraints=["a? - 5"],
     ...     parallelize=False,
     ...     n_forecast_error=2,
     ... )
