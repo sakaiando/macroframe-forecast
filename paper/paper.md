@@ -64,7 +64,11 @@ Although existing packages support forecast reconciliation or smoothing individu
 
 # Research Impact Statement
 
-`macroframe-forecast` makes smooth forecast reconciliation available as a reusable Python workflow for producing forecasts that balance model output, temporal smoothness, and stated constraints. The underlying method is described in @Ando2024Smooth, and the package's concepts and examples are presented in @Andoetal2025. These publications document the method and the package; they are not evidence of independent software adoption. The repository provides installation instructions, documentation, and examples, allowing users to inspect and adapt the workflow. This makes the method accessible for applied forecasting, while the extent of third-party use remains to be established.
+`macroframe-forecast` enables economic policy makers to produce multivariate macroeconomic forecasts that are both smooth over time and internally consistent with accounting identities through an intuitive interface. While existing reconciliation tools such as `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] enforce accounting consistency, they can generate kinks in forecast paths, which may limit their usefulness in policy settings. Such artifacts may be difficult for policy makers to justify publicly and can weaken the credibility of forecasts when communicated to the media.
+
+In the absence of a systematic solution, macroframework forecasting has often relied on manual adjustments in spreadsheet environments, which can require substantial staff time and limit scalability and transparency. To our knowledge, `macroframe-forecast` is an open-source package that jointly addresses smoothness and accounting coherence, allowing experts to incorporate judgment within a statistical framework. By automating these adjustments, the package is intended to reduce the effort required to produce explainable, high-dimensional forecasts and may support institutional forecasting capacity.
+
+Community readiness is supported by documentation and reproducible example workflows. The project's license sets the terms for reuse and extension. As macroeconomic forecasting increasingly combines expert judgment with data-driven methods, `macroframe-forecast` provides an infrastructure with potential for adoption and downstream impact across economic policy institutions.
 
 # AI Usage Disclosure
 
