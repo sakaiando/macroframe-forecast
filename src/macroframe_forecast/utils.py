@@ -209,8 +209,13 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
         first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
         df_no_islands.iloc[first_na_index:, coli] = np.nan
 
-    islands: Series = df[df_no_islands.isna()].T.stack()
+    islands: Series = df.T.stack(future_stack=True).reindex(_get_missing_cells(df_no_islands)).dropna()
     return df_no_islands, islands
+
+
+def _get_missing_cells(df: DataFrame) -> pd.MultiIndex:
+    missing = df.isna().T.stack(future_stack=True)
+    return missing[missing].index
 
 
 def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
@@ -264,7 +269,7 @@ def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series]:
     all_cells = pd.Series([f"{a}_{b}" for a, b in all_cells_index], index=all_cells_index)
 
     # unknown cells with nan
-    unknown_cells_index = df0.isna()[df0.isna()].T.stack().index
+    unknown_cells_index = _get_missing_cells(df0)
     unknown_cells = pd.Series([f"{a}_{b}" for a, b in unknown_cells_index], index=unknown_cells_index)
 
     # known cells
@@ -492,7 +497,9 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
     >>>                                 constraints_with_wildcard)
     >>> C,d = AddIslandsToConstraints(C,d,islands)
     """
-    C_aug_index = islands.index.union(C.index, sort=False)  # singleton constraints prioritize over islands
+    island_index = pd.Index(islands.index.to_list(), dtype=object, tupleize_cols=False)
+    constraint_index = pd.Index(C.index.to_list(), dtype=object, tupleize_cols=False)
+    C_aug_index = island_index.append(constraint_index).drop_duplicates()
     C_aug = pd.DataFrame(np.zeros([len(C_aug_index), len(C.columns)]), index=C_aug_index, columns=C.columns)
     d_aug = pd.DataFrame(np.zeros([len(C_aug_index), 1]), index=C_aug_index)
     for idx in islands.index:
@@ -704,9 +711,9 @@ def GenPredTrueData(
 
     # unpack all the na cells for pseudo historical dataframes to use dask
     tasks = [
-        (dfi, df.index[rowi], df.columns[coli])
-        for dfi, df in enumerate(df_list)
-        for (rowi, coli) in np.argwhere(df.isna())
+        (dfi, row, col)
+        for dfi, pseudo_df in enumerate(df_list)
+        for col, row in _get_missing_cells(pseudo_df)
     ]
 
     if parallelize:
@@ -734,22 +741,25 @@ def GenPredTrueData(
         model_list[dfi].loc[row, col] = results[task_idx][1]
 
     # reduce n samples into a dataframe
-    colname = df.isna()[df.isna()].T.stack().index
+    colname = _get_missing_cells(df)
     idxname = pd.Index(
         [df_list[n].index[np.argwhere(df_list[n].isna())[:, 0].min()] for n in range(n_forecast_error)], name="LastData"
     )
+    missing_cells = [_get_missing_cells(pseudo_df) for pseudo_df in df_list]
     pred = pd.DataFrame(
-        [filled_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [filled_list[n].T.stack(future_stack=True).reindex(missing_cells[n]).values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     model = pd.DataFrame(
-        [model_list[n][df_list[n].isna()].T.stack().values for n in range(n_forecast_error)],
+        [model_list[n].T.stack(future_stack=True).reindex(missing_cells[n]).values for n in range(n_forecast_error)],
         index=idxname,
         columns=colname,
     )
     true = pd.DataFrame(
-        [df[df_list[n].isna()].T.stack().values for n in range(n_forecast_error)], index=idxname, columns=colname
+        [df.T.stack(future_stack=True).reindex(missing_cells[n]).values for n in range(n_forecast_error)],
+        index=idxname,
+        columns=colname,
     )
 
     return pred, true, model
