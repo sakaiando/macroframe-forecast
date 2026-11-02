@@ -61,6 +61,22 @@ def CheckTrainingSampleSize(df0: DataFrame, n_forecast_error: int = 5) -> bool:
         Indicator for whether the sample of observations available for training
         is small.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from macroframe_forecast.utils import CheckTrainingSampleSize
+    >>> df = pd.DataFrame({"a": np.arange(30, dtype=float)})
+    >>> df.iloc[-2:, 0] = np.nan
+    >>> CheckTrainingSampleSize(df, n_forecast_error=5)
+    False
+    >>> CheckTrainingSampleSize(df.iloc[-20:], n_forecast_error=5)
+    True
+    >>> CheckTrainingSampleSize(df.iloc[-5:], n_forecast_error=5)
+    Traceback (most recent call last):
+        ...
+    ValueError: Number of observations too low for given forecast horizon and n_sample_splits; consider reducing forecast horizon and/or n_sample_splits
+
     """
 
     forecast_horizon = max(np.argwhere(df0.isna())[:, 0]) - min(np.argwhere(df0.isna())[:, 0]) + 1
@@ -95,8 +111,20 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     Returns
     -------
     gscv : BaseForecaster
-        Instance of sktime's Grid Search forecaster, derived from BaseForecaster,
-        which is configured for hyperparameter tuning and model selection.
+        A grid-search forecaster configured for model selection, or a naive
+        last-value forecaster when ``small_sample=True``.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from macroframe_forecast.utils import DefaultForecaster
+    >>> forecaster = DefaultForecaster()
+    >>> isinstance(forecaster, ForecastingGridSearchCV)
+    True
+    >>> small_sample_forecaster = DefaultForecaster(small_sample=True)
+    >>> isinstance(small_sample_forecaster, NaiveForecaster)
+    True
 
     """
 
@@ -885,6 +913,19 @@ def HP_matrix(size: int) -> ndarray:
     -------
     F : np.array
         Array containing the F matrix.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from macroframe_forecast.utils import HP_matrix
+    >>> matrix = HP_matrix(3)
+    >>> matrix
+    array([[ 1., -2.,  1.],
+           [-2.,  4., -2.],
+           [ 1., -2.,  1.]])
+    >>> np.testing.assert_array_equal(matrix, matrix.T)
+    >>> np.testing.assert_array_equal(HP_matrix(1), np.zeros((1, 1)))
+    >>> np.testing.assert_array_equal(HP_matrix(2), np.zeros((2, 2)))
 
     """
     if size >= 2:
