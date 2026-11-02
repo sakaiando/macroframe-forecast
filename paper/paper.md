@@ -56,25 +56,17 @@ Existing reconciliation packages in R and Python — `hts` [@Hyndmanetal2021], `
 
 # Software Design
 
-The design of `macroframe-forecast` reflects a trade-off between flexibility, transparency, and computational efficiency. The package adopts a two-step architecture - first generating unconstrained forecasts, then adjusting them through reconciliation and smoothing - which clearly separates model estimation from constraint enforcement. To give users flexibility in choosing forecasting method most suitable for their specific context, we deliberately designed the unconstrained forecasting step  to explicitly support any forecasting model implemented in `sktime` [@Loningetal2019] without modifying the reconciliation logic.
- 
-The second step is formulated as a single quadratic programming problem with an explicit objective function and clearly defined equality and inequality constraints. This approach avoids ad hoc adjustments such as manually applying smoothing after constraints are imposed. Instead, forecast accuracy, smoothness over time, and consistency with constraints are handled jointly within one optimization problem. Constraints are specified using readable string expressions, reducing the need for users to work directly with matrices as in existing packages.
- 
-Although existing packages support forecast reconciliation or smoothing individually, there has not been a package that achives both. Incorporating smoothness penalties into reconciliation-focused packages, or adding general constraint handling to smoothing libraries, would have required substantial structural changes. Building a new package was therefore necessary to implement a transparent, theory-consistent framework that jointly enforces smoothness and constraints while remaining easy to use for applied macroeconomic forecasting.
+The single-frequency `MFF` class orchestrates a two-stage workflow while keeping forecast estimation separate from reconciliation. It prepares the input series, translates user-supplied equality and inequality expressions into constraint matrices, and generates initial forecasts with a user-supplied `sktime` forecaster [@Loningetal2019] or a default forecaster. Because the forecasting model is provided through this interface, users can change the first-stage model without changing the reconciliation procedure. The `MFF_mixed_freqency` class extends this workflow to inputs at multiple frequencies by arranging them on a common lowest-frequency index; its current reconciliation path supports equality constraints only, not inequalities.
+
+The shared helpers make the reconciliation stages explicit: `GenWeightMatrix` estimates forecast-error weights from pseudo-out-of-sample predictions, `GenLamstar` selects smoothness parameters, and `GenSmoothingMatrix` constructs the smoothness penalty. `Reconciliation` then balances deviations from the initial forecasts against temporal variation while satisfying the constraints in the same solve. For equality-only problems it computes the solution from the corresponding linear system; when inequality constraints are supplied, it formulates and solves the quadratic program with CVXPY. This avoids sequential post-processing, in which smoothing could undo a previously imposed constraint or reconciliation could reintroduce abrupt changes. The fitted `MFF` object retains intermediate forecasts and the matrices used in reconciliation, making the steps inspectable. String-based constraints reduce matrix bookkeeping, while requiring expressions to use the package's supported variable and horizon notation.
 
 # Research Impact Statement
 
-`macroframe‑forecas`t enables economic policy makers to produce multivariate macroeconomic forecasts that are both smooth over time and internally consistent with accounting identities through an intuitive interface. While existing reconciliation tools such as `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] enforce accounting consistency, they often generate unrealistic kinks in forecast paths, limiting their usefulness in policy settings. Such artifacts are difficult for policy makers to justify publicly and weaken the credibility of forecasts when communicated to the media.
- 
-In the absence of a systematic solution, macroframework forecasting has typically relied on manual adjustments in spreadsheet environments, requiring substantial staff time and limiting scalability and transparency. `macroframe‑forecast` is the first open‑source package to jointly ensure smoothness and accounting coherence, allowing experts to incorporate judgment without sacrificing statistical rigor. This significantly lowers the cost of producing explainable, high‑dimensional forecasts and improves institutional forecasting capacity.
- 
-Community readiness is demonstrated through comprehensive documentation, reproducible example workflows, and a permissive open‑source license that encourages reuse and extension. As macroeconomic forecasting increasingly combines expert judgment with data‑driven methods, macroframe‑forecast provides an infrastructure with strong potential for adoption and downstream impact across economic policy institutions.
+`macroframe-forecast` makes smooth forecast reconciliation available as a reusable Python workflow for producing forecasts that balance model output, temporal smoothness, and stated constraints. The underlying method is described in @Ando2024Smooth, and the package's concepts and examples are presented in @Andoetal2025. These publications document the method and the package; they are not evidence of independent software adoption. The repository provides installation instructions, documentation, and examples, allowing users to inspect and adapt the workflow. This makes the method accessible for applied forecasting, while the extent of third-party use remains to be established.
 
 # AI Usage Disclosure
 
 Generative AI tools (Microsoft Copilot, GitHub Copilot) were used to assist the development of this package, the writing of this manuscript, and the preparation of supporting materials. The majority of the work was produced by the authors, and the usage of AI tools was to facilitate code debugging, generate potential solutions, fix typos and assist with other minor tasks (e.g. formatting). All AI-generated inputs were reviewed and edited by the authors before incorporation in the code/paper.
-
-<!---XXX[@AndoDasOrazbayev]XXX.--->
 
 # Method
 
@@ -142,7 +134,7 @@ m.fit()
 \caption{US GDP forecasts: (a) levels and (b) growth.\label{fig:us_gdp}}
 \end{figure}
 
-Figure 1: Forecasts of U.S. nominal GDP, 2025-030, under the 4 percent growth constraint in 2030.  
+Figure 1: Forecasts of U.S. nominal GDP, 2025-2030, under the 4 percent growth constraint in 2030.
 *Source:* IMF April 2025 World Economic Outlook database and authors' calculations.  
 *Note:* Panel (a) shows the forecast of annual US GDP in trillion USD. Panel (b) shows the growth rates computed from the level forecasts.
 
