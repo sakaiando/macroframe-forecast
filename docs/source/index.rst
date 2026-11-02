@@ -19,7 +19,12 @@ This repository contains the Python code for the forecasting method described in
 Installation
 ------------
 
-To install the `macroframe-foreacst` package, run the following in the terminal/shell:
+Python 3.11 and 3.12 are the supported, tested versions. Python 3.13 and later
+are outside the supported range; see
+`PR #80 <https://github.com/sakaiando/macroframe-forecast/pull/80>`_
+for the corresponding runtime compatibility and package metadata changes.
+
+To install the ``macroframe-forecast`` package, run the following in the terminal/shell:
 
 .. code-block:: console
 
