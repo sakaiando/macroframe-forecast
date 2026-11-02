@@ -40,10 +40,11 @@ The relevant import from `macroframe-foreacst` is `MFF`:
    from macroframe_forecast import MFF
    
    # true data
+   rng = np.random.default_rng(0)
    df_true = pd.DataFrame({
-       'var1': np.random.randn(30),  # 100 random values from normal distribution
-       'var2': np.random.randn(30)
-   })
+       'var1': rng.normal(size=30),
+       'var2': rng.normal(size=30),
+   }, index=pd.period_range("2000", periods=30, freq="Y"))
    df_true['sum'] = df_true['var1'] + df_true['var2']
    
    # input dataframe, 
@@ -52,21 +53,25 @@ The relevant import from `macroframe-foreacst` is `MFF`:
    df.iloc[-fh:, 1:] = np.nan
    
    # apply MFF
-   m = MFF(df, equality_constraints=['var1_? + var2_? - sum_?'])
+   m = MFF(
+       df,
+       equality_constraints=['var1_? + var2_? - sum_?'],
+       parallelize=False,
+   )
    df2 = m.fit()
    
    # plots results
    fig,axes = plt.subplots(3,1,sharey=True, figsize=(9,9))
    
-   axes[0].plot(df2['var2'], label='forecasted var2')
-   axes[0].plot(df_true['var2'], label='true var2')
+   df2['var2'].plot(ax=axes[0], label='forecasted var2')
+   df_true['var2'].plot(ax=axes[0], label='true var2')
    axes[0].legend()
    
-   axes[1].plot(df2['sum'], label='forecasted sum')
-   axes[1].plot(df_true['sum'], label='true sum')
+   df2['sum'].plot(ax=axes[1], label='forecasted sum')
+   df_true['sum'].plot(ax=axes[1], label='true sum')
    axes[1].legend()
    
-   axes[2].plot( df2['var1'] + df2['var2'] - df2['sum'], label='summation error')
+   (df2['var1'] + df2['var2'] - df2['sum']).plot(ax=axes[2], label='summation error')
    axes[2].legend()
 
 

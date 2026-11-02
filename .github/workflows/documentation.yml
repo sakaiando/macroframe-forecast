@@ -20,7 +20,7 @@ jobs:
         run: pip install .
       - name: Run API docstring examples and constraint regressions
         run: |
-          pytest --doctest-modules src/macroframe_forecast/MFF.py src/macroframe_forecast/MFF_mixed_frequency.py src/macroframe_forecast/utils.py src/macroframe_forecast/examples.py tests/test_api_docs.py
+          pytest --doctest-modules src/macroframe_forecast/MFF.py src/macroframe_forecast/MFF_mixed_frequency.py src/macroframe_forecast/utils.py src/macroframe_forecast/examples.py tests/test_api_docs.py tests/test_documentation_examples.py
       - name: Sphinx build
         run: |
           sphinx-build -W --keep-going docs/source docs_ready

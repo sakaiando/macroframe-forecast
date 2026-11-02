@@ -10,15 +10,13 @@ Single-variable example
   import pandas as pd
   import numpy as np
   from macroframe_forecast import MFF
-  import macroframe_forecast
-  from string import ascii_uppercase, ascii_lowercase
-  from sktime.datasets import load_macroeconomic
+  from macroframe_forecast.utils import Reconciliation
   import matplotlib.pyplot as plt
   
   #%% Reading the data and generating forecasts.
   
   # Reading GDP data as a pandas dataframe.
-  # This dataframe has two columns: year and GDP. Data from 2024-2029 are WEO forecasts. 
+  # This dataframe has two columns: year and GDP; the final six years are forecasts.
   from pandas import DataFrame
   
   GDP_data_true = DataFrame({
@@ -59,10 +57,7 @@ Single-variable example
   })
   
   
-  # Forecasted GDP growth in 2029 (last year) is as given below
-  final_year_growth =  100*(GDP_data_true.iloc[-1,1]/GDP_data_true.iloc[-2,1]-1)
-  
-  # The original GDP data is in dollar numbers, but changing this to billions 
+  # The original GDP data is in dollars; convert it to trillions
   # going forward in order to deal with problem of matrix invertibility.
   GDP_data_true['GDP'] = GDP_data_true['GDP']/1e12
   
@@ -78,14 +73,14 @@ Single-variable example
   # function. 
   GDP_data.iloc[-6:,0] = np.nan
   
-  # Now we assume that US GDP grows by 4% from 2028 to 2029, which is given by the 
+  # Now assume that US GDP grows by 4% from 2029 to 2030, which is given by the
   # WEO forecast. This therefore works as a constraint for the forecasts.
   # The dataframe has GDP in levels terms, therefore the constraint has to be 
   # specified in levels terms as well. The constraints can be rewritten in the following
   # steps.
-  # GDP_2029/GDP_2028 - 1 = 0.04
-  # GDP_2029 = 1.04*GDP_2028 
-  # GDP_2029 - 1.04*GDP_2028 = 0
+  # GDP_2030/GDP_2029 - 1 = 0.04
+  # GDP_2030 = 1.04*GDP_2029
+  # GDP_2030 - 1.04*GDP_2029 = 0
   
   # Constraints are to be provided in the form of a list, even when there is only 
   # constraint.
@@ -93,7 +88,8 @@ Single-variable example
   
   m = MFF(df = GDP_data,
           equality_constraints = GDP_constraint,
-          parallelize = False)
+          parallelize = False,
+          n_forecast_error = 2)
   
   # Using the fit method generates first as well as second step forecasts.
   m.fit()
@@ -103,6 +99,7 @@ Single-variable example
   
   # The forecasted data is filled into the df2 dataframe in the fitted object.
   reconciled_GDP = m.df2
+  np.testing.assert_allclose(reconciled_GDP.loc[2030, "GDP"], 1.04 * reconciled_GDP.loc[2029, "GDP"])
   
   # Models are stored in a dataframe in the fitted object.
   
@@ -145,7 +142,7 @@ Single-variable example
   ax.set_title('US GDP growth rates')  
   ax.legend(loc = 'upper left')
   
-  # Add triangle marker at (2029, 4)
+  # Add triangle marker at the constrained 2030 growth rate.
   ax.plot(2030, 4, marker='v', color='black', markersize=8, label='_nolegend_')
   
   # Add text annotation
@@ -161,35 +158,24 @@ Single-variable example
   
   # %% Looking at externally generated first-stage
   
-  GDP_forecasts_external = pd.DataFrame({"GDP": [29.0, 31.5, 33, 34.1,36.8, 39]},
-                              index = [2025, 2026, 2027, 2028, 2029, 2030])
-  
-  # Build MultiIndex using column name
-  multi_index = pd.MultiIndex.from_product([[GDP_forecasts_external.columns[0]], GDP_forecasts_external.index],
-                                           names=[None, 'year'])
-  
-  # Correct: flatten the 2D array to 1D
-  GDP_multiindex_series = pd.Series(GDP_forecasts_external.values.ravel(), index=multi_index)
-  
-  
-  
-  W_alt =  pd.DataFrame(np.eye(len(multi_index)), index=multi_index, columns=multi_index)  # Create identity matrix with shape (n x n)
-  
-  smoothness_alt = pd.Series(np.ones(1) * 100, index=[multi_index])
-  
-  Phi_alt = macroframe_forecast.utils.GenSmoothingMatrix(W_alt, smoothness_alt)
-  
-  
-  final_forecasts = macroframe_forecast.utils.Reconciliation(y1 = GDP_multiindex_series, 
-                                                             W = m.W, Phi = m.Phi, 
-                                                             C = m.C, d = m.d, 
-                                                             C_ineq = m.C_ineq, 
-                                                             d_ineq = m.d_ineq)
+  GDP_forecasts_external = pd.DataFrame(
+      {"GDP": [29.0, 31.5, 33.0, 34.1, 36.8, 39.0]},
+      index=m.y1.index,
+  )
+  GDP_multiindex_series = GDP_forecasts_external["GDP"]
+
+  final_forecasts = Reconciliation(
+      y1=GDP_multiindex_series,
+      W=m.W,
+      Phi=m.Phi,
+      C=m.C,
+      d=m.d,
+      C_ineq=m.C_ineq,
+      d_ineq=m.d_ineq,
+  )
   # %%
   
   # Convert MultiIndex Series to regular Series with year index
-  
-  gdp_to_forecast_series = GDP_data
   
   gdp_series = GDP_multiindex_series.xs('GDP', level=0)
   second_stage_series = final_forecasts.xs('GDP', level=0)
@@ -224,7 +210,7 @@ Multi-variable example
   from sklearn.linear_model import LinearRegression  
   from pandas import DataFrame
   
-  data = DataFrame({
+  fiscal_data_true = DataFrame({
       "year": [
           2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
           2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020,
@@ -251,25 +237,27 @@ Multi-variable example
           -8.721, -0.561, -3.564, -3.067, -2.158, -1.063, -0.902, -1.246, -1.136, -1.324
       ]
   })
-  
-  
+  fiscal_data_true = fiscal_data_true.set_index("year")
+
   # Data upto 2024 is known for all variables. 2024 onwards data are all WEO forecasts.
   # Let us assume that the path for Primary Balance/GDP is known to the forecaster,
   # which is given by the WEO forecasts, while the other three variables are to be
   # forecasted. These unknown values are therefore replaced by NaNs.
   
   fiscal_data = fiscal_data_true.copy()
-  fiscal_data.iloc[-6:,:3] = np.nan
-  
-  # fiscal_data.iloc[-1,0] = fiscal_data_true.iloc[-1,0].copy()
+  fiscal_data.iloc[-6:, :3] = np.nan
   
   # The basic acccounting identiy can be writted as:
   # Primary Balance/GDP = Revenue /GDP - Expenditure/GDP + Interest Payments/GDP
   # We know that this identity has to bind throughout the forecasting horizon, and
   # therefore we can specify this using the wildcard feature.
   
-  fiscal_constraint = ['pb? - rev? + exp? - int_payments?',
-                       'exp_2030 - 37']
+  constraint_year = 2030
+  constraint_exp = 37.0
+  fiscal_constraint = [
+      'pb? - rev? + exp? - int_payments?',
+      f'exp_{constraint_year} - {constraint_exp}',
+  ]
   
   # Defining the OLS forecasting pipeline for the example
   
@@ -286,6 +274,16 @@ Multi-variable example
   
   first_step_forecasts = m.df1
   second_step_forecasts = m.df2
+  np.testing.assert_allclose(
+      second_step_forecasts.loc[constraint_year, "exp"], constraint_exp, atol=1e-8
+  )
+  np.testing.assert_allclose(
+      second_step_forecasts.loc[2025:2030, "pb"],
+      second_step_forecasts.loc[2025:2030, "rev"]
+      - second_step_forecasts.loc[2025:2030, "exp"]
+      + second_step_forecasts.loc[2025:2030, "int_payments"],
+      atol=1e-8,
+  )
   
   # final_forecasts = 
   # %% Expenditure forecasts
@@ -300,13 +298,15 @@ Multi-variable example
   ax.set_title('Government Expenditure')  
   ax.legend(loc = 'lower left')
   
-  ax.plot(2030, 36.65, marker='v', color='black', markersize=8, label='_nolegend_')
+  ax.plot(constraint_year, constraint_exp, marker='v', color='black', markersize=8, label='_nolegend_')
   
   # Add text annotation
-  ax.annotate('2030 expenditure constraint value', xy=(2030, fiscal_data_true.iloc[-1,0]), xytext=(2027, 40),
+  ax.annotate(
+              '2030 expenditure constraint value',
+              xy=(constraint_year, constraint_exp),
+              xytext=(2027, 40),
               arrowprops=dict(arrowstyle='->', color='black'), color='black')
   
-  # max_xlastvalue = reconciled_GDP.index.max()
   ax.set_xlim([2021, 2030])
   
   plt.xticks(np.arange(2021, 2031,2))
@@ -324,7 +324,6 @@ Multi-variable example
   ax.set_title('Government Revenue')  
   ax.legend(loc = 'lower left')
   
-  # max_xlastvalue = reconciled_GDP.index.max()
   ax.set_xlim([2021, 2030])
   
   plt.xticks(np.arange(2021, 2031,2))
@@ -343,7 +342,6 @@ Multi-variable example
   ax.set_title('Interest Payments')  
   ax.legend(loc = 'lower left')
   
-  # max_xlastvalue = reconciled_GDP.index.max()
   ax.set_xlim([2021, 2030])
   
   plt.xticks(np.arange(2021, 2031,2))
@@ -372,7 +370,6 @@ Multi-variable example
   ax.set_title('Primary Balance')  
   ax.legend(loc = 'lower left')
   
-  # max_xlastvalue = reconciled_GDP.index.max()
   ax.set_xlim([2021, 2030])
   
   plt.xticks(np.arange(2021, 2031,2))
