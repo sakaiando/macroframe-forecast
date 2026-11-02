@@ -59,6 +59,12 @@ axes[2].plot( df2['var1'] + df2['var2'] - df2['sum'], label='summation error')
 axes[2].legend()
 ```
 
+# Reproducing the paper figures
+
+See the [self-contained fiscal example](paper/README.md) for instructions to
+generate the paper's fiscal forecasting figure, along with forecast values and
+the dependency versions used.
+
 # Support
 
 For usage questions or support requests, please email the maintainers at

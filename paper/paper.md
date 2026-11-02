@@ -34,7 +34,7 @@ affiliations:
 
 # Summary
 
-The Python package `macroframe-forecast` generates forecasts that are both temporally smooth and consistent with user-specified constraints. The framework consists of model estimation and reconciliation: first, unconstrained forecasts are produced using user-specified statistical or machine learning models; second, these forecasts are adjusted to satisfy linear equality and inequality constraints while minimizing volatility over time in the forecast horizon. The package offers a user-friendly interface for specifying constraints as strings and supports advanced customization of weights and smoothing parameters.  An example - forecasting U.S. GDP with a terminal GDP growth rate target - illustrates the usage.
+The Python package `macroframe-forecast` generates forecasts that are both temporally smooth and consistent with user-specified constraints. The framework consists of model estimation and reconciliation: first, unconstrained forecasts are produced using user-specified statistical or machine learning models; second, these forecasts are adjusted to satisfy linear equality and inequality constraints while minimizing volatility over time in the forecast horizon. The package offers a user-friendly interface for specifying constraints as strings and supports advanced customization of weights and smoothing parameters.  An example of U.S. fiscal forecasting with an accounting identity and an expenditure target illustrates the usage.
 
 # Statement of need
 
@@ -122,32 +122,37 @@ F_i \;=\;
 where $i=1,...,M$. Default parameter values $\lambda_i^*$ follow HP filter conventions (e.g., 1600 for quarterly data). It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
 
 
-# An example: single-variable GDP forecast
+# An example: fiscal forecasts with accounting constraints
 
-Using U.S. nominal GDP data (1950-2024), we forecast the values for 2025-2030 under the constraint that 2030 growth rate equals 4 percent. When the column name of the variable to be forecasted is `GDP`, the constraint is expressed as `GDP_2030 - 1.04 * GDP_2029 = 0`. The `MFF` class generates the first-step forecast via the default pipeline and reconciles them to satisfy the constraint while smoothing the trajectory. Assuming that the user has read the GDP data as a `pandas` dataframe named `df0` with index `year` and `GDP`, the forecasts (both first and second-step) can be generated as follows:
+Using U.S. fiscal data for 2001-2024, we forecast expenditure, revenue, and interest payments for 2025-2030, all as percentages of GDP. The primary balance follows a prescribed path. Forecasts must satisfy the accounting identity `pb - rev + exp - int_payments = 0` each year and an expenditure target of 37 percent of GDP in 2030. We use ordinary least squares for the first-step forecasts:
 
 ```python
+from sklearn.linear_model import LinearRegression
+from sktime.forecasting.compose import DirectReductionForecaster
 from macroframe_forecast import MFF
-from macroframe_forecast.examples import generate_example_GDP_df
+from macroframe_forecast.examples import generate_example_fiscal_df
 
-df0 = generate_example_GDP_df()
-m = MFF(df0, equality_constraints=["GDP_2030 - 1.04 * GDP_2029"])
+m = MFF(
+    generate_example_fiscal_df(),
+    forecaster=DirectReductionForecaster(LinearRegression()),
+    equality_constraints=[
+        "pb_? - rev_? + exp_? - int_payments_?",
+        "exp_2030 - 37",
+    ],
+    parallelize=False,
+)
 m.fit()
 ```
 
+Figure 1 shows how reconciliation smooths the forecasts while satisfying both constraints. Expenditure in 2030 changes from 32.90 to 37.00 percent of GDP, and the implied primary balance matches the prescribed path. The [self-contained reproduction script](https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/reproduce_figures.py) generates the figure from bundled data and verifies the constraints; [instructions](https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/README.md) are provided alongside it.
+
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.48\textwidth]{example_1_levels_figure.pdf}
-\includegraphics[width=0.48\textwidth]{example_1_growth_figure.pdf}
-\caption{US GDP forecasts: (a) levels and (b) growth.\label{fig:us_gdp}}
+\includegraphics[width=\textwidth]{fiscal_forecasts.pdf}
+\caption{U.S. fiscal forecasts, 2025-2030, in percent of GDP. First-step OLS forecasts and reconciled forecasts are shown alongside historical observations, the expenditure target, and the prescribed primary balance. Source: IMF April 2025 World Economic Outlook database and authors' calculations.\label{fig:us_fiscal}}
 \end{figure}
 
-Figure 1: Forecasts of U.S. nominal GDP, 2025-030, under the 4 percent growth constraint in 2030.  
-*Source:* IMF April 2025 World Economic Outlook database and authors' calculations.  
-*Note:* Panel (a) shows the forecast of annual US GDP in trillion USD. Panel (b) shows the growth rates computed from the level forecasts.
-
-
-The second-step forecast can also be customized by providing exogenously defined first-step forecast, weight matrix, or the smoothness parameters. These can be achieved by using the function `Reconciliation` available in the package.
+The second step can also use externally supplied forecasts, weights, and smoothing parameters through the package's `Reconciliation` function.
 
 # Acknowledgements
 

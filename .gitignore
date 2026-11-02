@@ -20,3 +20,6 @@ docs/build/
 
 # build files
 build/
+
+# local testing
+local_tests/
