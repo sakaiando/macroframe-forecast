@@ -22,7 +22,52 @@ from .utils import (
     get_freq_of_freq,
 )
 
+
 class MFF_mixed_freqency:
+    """Forecast and reconcile time series supplied at multiple frequencies.
+
+    The input mapping associates frequency codes with wide dataframes indexed
+    by ``PeriodIndex``. The ``fit`` method forecasts missing values and applies
+    the supplied equality constraints across the frequencies.
+
+    Parameters
+    ----------
+    df_dict : dict[str, pd.DataFrame]
+        Dataframes keyed by frequency code, such as ``"Y"`` for annual or
+        ``"Q"`` for quarterly observations.
+    forecaster : sktime.forecasting.base.BaseForecaster, optional
+        Forecaster used for the initial forecasts. Defaults to the package's
+        configured default forecaster.
+    constraints_with_wildcard : list[str], optional
+        Equality constraints written as expressions equal to zero. A ``?``
+        wildcard applies the constraint across matching periods. Defaults to
+        an empty list.
+    ineq_constraints_with_wildcard : list[str], optional
+        Inequality constraint expressions. This argument is retained in the
+        constructor but is not currently applied by ``fit``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from macroframe_forecast import MFF_mixed_freqency
+    >>> periods = pd.period_range("2000", periods=30, freq="Y")
+    >>> values = np.arange(1.0, 31.0)
+    >>> annual = pd.DataFrame(
+    ...     {"a": values, "b": values * 2, "total": values * 3},
+    ...     index=periods,
+    ... )
+    >>> annual.iloc[-2:, 0] = np.nan
+    >>> model = MFF_mixed_freqency(
+    ...     {"Y": annual},
+    ...     forecaster=NaiveForecaster(strategy="last"),
+    ...     constraints_with_wildcard=["a? + b? - total?"],
+    ... )
+    >>> list(model.df_dict)
+    ['Y']
+    """
+
     def __init__(
         self, df_dict, forecaster=DefaultForecaster(), constraints_with_wildcard=[], ineq_constraints_with_wildcard=[]
     ):
@@ -31,7 +76,16 @@ class MFF_mixed_freqency:
         self.constraints_with_wildcard = constraints_with_wildcard
         self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
 
-    def fit(self):
+    def fit(self) -> list[pd.DataFrame]:
+        """Fit the forecaster and return reconciled dataframes by frequency.
+
+        Returns
+        -------
+        list[pd.DataFrame]
+            Reconciled dataframes in the same frequency order as the input
+            mapping. The intermediate organized inputs and initial forecasts
+            are also stored on ``df0_list`` and ``df1_list``.
+        """
         df_dict = self.df_dict
         forecaster = self.forecaster
         constraints_with_wildcard = self.constraints_with_wildcard
