@@ -16,7 +16,10 @@ Please refer to [this link](https://sakaiando.github.io/macroframe-forecast/) fo
 
 # Installation
 
-To install the `macroframe-forecast` package, run the following from the repository root:
+Python 3.11 and 3.12 are the supported, tested versions. Python 3.13 and later
+are outside the supported range; see [PR #80](https://github.com/sakaiando/macroframe-forecast/pull/80)
+for the corresponding runtime compatibility and package metadata changes.
+To install the `macroframe-forecast` package, run:
 
 ```shell
 pip install macroframe-forecast
@@ -61,13 +64,12 @@ axes[2].plot( df2['var1'] + df2['var2'] - df2['sum'], label='summation error')
 axes[2].legend()
 ```
 
-# Support
+# Support and contributions
 
-For usage questions or support requests, please email the maintainers at
-[sando@imf.org](mailto:sando@imf.org) and [sorazbayev@imf.org](mailto:sorazbayev@imf.org).
-
-If you find a reproducible bug or want to request a feature, please open an issue in the
-[issue tracker](https://github.com/sakaiando/macroframe-forecast/issues).
+For usage questions, support requests, reproducible bug reports, or feature requests, please open an issue in the
+[GitHub issue tracker](https://github.com/sakaiando/macroframe-forecast/issues). See
+[CONTRIBUTING.md](CONTRIBUTING.md) for what to include in a report, how to set up a development environment, run tests,
+and submit a contribution.
 
 # Disclaimer
 
