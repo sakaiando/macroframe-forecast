@@ -5,16 +5,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for the Macroframework Forecasting package.
+Documentation for the Macroframework Forecasting package
 ====================================================================
 
-This package assists forecasting with constraints and is based on the following papers:
+Statement of need
+------------
 
-`A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025) <https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041>`_.
+This package assists forecasting with constraints.
 
-`Smooth Forecast Reconciliation (2024) <https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654>`_.
-
-`Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities (2023) <https://link.springer.com/article/10.1057/s41308-023-00225-8>`_.
+In forecasting economic time series, statistical models often need to be supplemented with procedures that impose constraints while preserving smoothness over time. Systematically imposing constraints while retaining smoothness is important but challenging. Existing packages in R and Python assist forecast reconciliation and smoothing separately but not jointly. To our knowledge, macroframe-forecast is the first package that supports the simultaneous application of both reconciliation and smoothing.
 
 The targeted audience is policy makers that conduct multivariate economic forecasting with large *N* and small *T* (many time series and short sample periods), but the methodology can also be applied to other problems.
 
@@ -80,6 +79,15 @@ The relevant import from `macroframe-foreacst` is `MFF`:
    
    (df2['var1'] + df2['var2'] - df2['sum']).plot(ax=axes[2], label='summation error')
    axes[2].legend()
+
+
+References
+------------
+`A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025) <https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041>`_
+
+`Smooth Forecast Reconciliation (2024) <https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654>`_
+
+`Systematizing Macroframework Forecasting: High-Dimensional Conditional Forecasting with Accounting Identities (2023) <https://link.springer.com/article/10.1057/s41308-023-00225-8>`_
 
 
 .. toctree::
