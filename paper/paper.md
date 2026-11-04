@@ -44,7 +44,7 @@ Systematically imposing constraints while retaining smoothness is important but 
 
 Existing packages in R and Python assist forecast reconciliation and smoothing separately but not jointly. For instance, the `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] packages in R support reconciliation, but the reconciled forecast may not be smooth over time. This is also the case for `hierarchicalforecast` [@Olivaresetal2024] package in Python. On the other hand, packages, such as `smooth` [@Svetnukov2024] and `forecast` [@Hyndmanetal2024] for R and `statsmodels` [@seabold2010statsmodels] for Python, provide methods to generate smooth forecasts but do not have the functionality to impose constraints.
 
-To our knowledge, no package supports the simultaneous application of both reconciliation and smoothing, and this is the gap that `macroframe-forecast` attempts to fill. The package is intended to help policy makers conduct macroframework forecasting systematically, but the methodology can be applied in other situations. A more detailed explanation of `macroframe-forecast` can be found in @Andoetal2025.
+To our knowledge, no package supports the simultaneous application of both reconciliation and smoothing, and this is the gap that `macroframe-forecast` attempts to fill. The package is intended to help policymakers conduct macroframework forecasting systematically, although the methodology can also be applied in other forecasting contexts. A more detailed explanation of `macroframe-forecast` can be found in @Andoetal2025.
 
 # State of the field
 
@@ -64,7 +64,7 @@ Although existing packages support forecast reconciliation or smoothing individu
 
 # Research Impact Statement
 
-`macroframe‑forecas`t enables economic policy makers to produce multivariate macroeconomic forecasts that are both smooth over time and internally consistent with accounting identities through an intuitive interface. While existing reconciliation tools such as `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] enforce accounting consistency, they often generate unrealistic kinks in forecast paths, limiting their usefulness in policy settings. Such artifacts are difficult for policy makers to justify publicly and weaken the credibility of forecasts when communicated to the media.
+`macroframe‑forecas`t enables economic policymakers to produce multivariate macroeconomic forecasts that are both smooth over time and internally consistent with accounting identities through an intuitive interface. While existing reconciliation tools such as `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] enforce accounting consistency, they often generate unrealistic kinks in forecast paths, limiting their usefulness in policy settings. Such artifacts are difficult for policymakers to justify publicly and weaken the credibility of forecasts when communicated to the media.
  
 In the absence of a systematic solution, macroframework forecasting has typically relied on manual adjustments in spreadsheet environments, requiring substantial staff time and limiting scalability and transparency. `macroframe‑forecast` is the first open‑source package to jointly ensure smoothness and accounting coherence, allowing experts to incorporate judgment without sacrificing statistical rigor. This significantly lowers the cost of producing explainable, high‑dimensional forecasts and improves institutional forecasting capacity.
  
