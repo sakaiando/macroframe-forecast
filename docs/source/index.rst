@@ -9,7 +9,7 @@ Documentation for the Macroframework Forecasting package
 ====================================================================
 
 Statement of need
-------------
+-----------------
 
 This package assists forecasting with constraints.
 
