@@ -6,7 +6,7 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-INTERNATIONAL MONETARY FUND – NOTICE OF PRIVILEGES AND IMMUNITIES, DISPUTE RESOLUTION AND OTHER PROCEDURAL TERMS
+INTERNATIONAL MONETARY FUND – NOTICE OF PRIVILEGES AND IMMUNITIES, DISPUTE RESOLUTION AND OTHER PROCEDURAL TERMS*
 
 This notice (“Notice”) supplements the MIT license (the “License”) where the License is identified on the IMF’s landing page on GitHub or in any repository as being applicable to code material owned by the International Monetary Fund (the “IMF”) and made available under that License (the “Code”). In this Notice, “Licensee” means any person or entity that exercises any rights granted under the License with respect to the Code. The License is subject to, and shall be read together with, the terms of this Notice:
 
@@ -18,4 +18,4 @@ This notice (“Notice”) supplements the MIT license (the “License”) where
 
 4. Precedence. In the event of any inconsistency between this Notice and the terms of the License, the terms of this Notice shall prevail.
 
-\* *This Notice is purely procedural. It reserves privileges and immunities enjoyed by the International Monetary Fund as an intergovernmental organization, without adding any restrictions to the permissions granted by the License.*
+*This Notice is purely procedural. It reserves privileges and immunities enjoyed by the International Monetary Fund as an intergovernmental organization, without adding any restrictions to the permissions granted by the License.
