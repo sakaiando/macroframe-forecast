@@ -91,3 +91,4 @@ The primary-balance panel plots `rev - exp + int_payments` from each stage,
 allowing comparison with the required balance. The script checks the identity
 for all six forecast years, expenditure of 37% of GDP in 2030, preservation of
 all supplied values, and finite reconciled forecasts.
+

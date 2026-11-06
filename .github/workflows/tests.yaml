@@ -1,0 +1,61 @@
+name: tests
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install pytest 'pytest-cov>=7.0.0' .
+      - name: Install the package
+        run: pip install .
+      - name: Run tests
+        run: |
+          pytest -m "" --cov=macroframe_forecast --cov-report=term-missing
+
+  minimum-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
+      - name: Install and verify exact runtime dependency lower bounds
+        run: |
+          python - <<'PY'
+          import subprocess
+          import tomllib
+          from importlib.metadata import version
+
+          with open("pyproject.toml", "rb") as manifest:
+              dependencies = tomllib.load(manifest)["project"]["dependencies"]
+          pins = {}
+          for dependency in dependencies:
+              name, separator, lower = dependency.partition(">=")
+              if not separator or any(symbol in lower for symbol in ",;<>=!~"):
+                  raise ValueError(f"Expected a single lower bound: {dependency}")
+              pins[name.strip()] = lower.strip()
+          subprocess.run(
+              ["uv", "pip", "install", "--system", ".", "pytest==8.4.0", "pytest-cov==7.0.0",
+               *[f"{name}=={lower}" for name, lower in pins.items()]],
+              check=True,
+          )
+          for name, expected in pins.items():
+              installed = version(name.split("[", 1)[0])
+              if installed != expected:
+                  raise RuntimeError(f"{name}: expected {expected}, installed {installed}")
+              print(f"{name}=={installed}")
+          PY
+      - name: Run tests
+        run: pytest -m "" --cov=macroframe_forecast --cov-report=term-missing
