@@ -239,13 +239,13 @@ Inspect the results
 
                  First step  Reconciled
    exp                32.90       37.00
-   rev                31.06       32.69
-   int_payments        1.03        2.99
+   rev                31.06       32.70
+   int_payments        1.03        2.98
 
 Expenditure reaches the required 37 percent of GDP. Revenue and interest
 payments change as well: all three adjustments must be consistent with the
 prescribed primary balance. At the displayed precision, the 2030 balance is
-``32.69 - 37.00 + 2.99 = -1.32`` percent of GDP; the unrounded result matches the
+``32.70 - 37.00 + 2.98 = -1.32`` percent of GDP; the unrounded result matches the
 supplied value of ``-1.324``.
 
 .. figure:: _static/fiscal_forecasts.png
@@ -262,9 +262,9 @@ marks the expenditure target. In the primary-balance panel, each line is
 calculated as ``rev - exp + int_payments`` so that we can compare the implied
 balance with the green points showing the required path.
 
-These outputs were generated with Python 3.14.7, NumPy 2.3.5, pandas 2.3.3,
-SciPy 1.17.1, scikit-learn 1.7.2, and sktime 0.40.1. Numerical results can vary
-with dependency versions.
+These outputs were reproduced with Python 3.12.3, NumPy 2.5.4, pandas 3.0.6,
+SciPy 1.18.1, scikit-learn 1.9.1, sktime 1.2.0, and matplotlib 3.11.2.
+Numerical results can vary with dependency versions.
 
 Verify the conditions
 ^^^^^^^^^^^^^^^^^^^^^
