@@ -65,10 +65,10 @@ Although existing packages support forecast reconciliation or smoothing individu
 # Research Impact Statement
 
 `macroframe‑forecast` enables economic policymakers to produce multivariate macroeconomic forecasts that are both smooth over time and internally consistent with accounting identities through an intuitive interface. While existing reconciliation tools such as `hts` [@Hyndmanetal2021] and `FoReco` [@GirolimettoDiFonzoPackage2023] enforce accounting consistency, they often generate unrealistic kinks in forecast paths, limiting their usefulness in policy settings. Such artifacts are difficult for policymakers to justify publicly and weaken the credibility of forecasts when communicated to the media.
- 
-In the absence of a systematic solution, macroframework forecasting has typically relied on manual adjustments in spreadsheet environments, requiring substantial staff time and limiting scalability and transparency. `macroframe‑forecast` is the first open‑source package to jointly ensure smoothness and accounting coherence, allowing experts to incorporate judgment without sacrificing statistical rigor. This significantly lowers the cost of producing explainable, high‑dimensional forecasts and improves institutional forecasting capacity.
- 
-Community readiness is demonstrated through comprehensive documentation, reproducible example workflows, and a permissive open‑source license that encourages reuse and extension. As macroeconomic forecasting increasingly combines expert judgment with data‑driven methods, macroframe‑forecast provides an infrastructure with strong potential for adoption and downstream impact across economic policy institutions.
+
+In the absence of a systematic solution, macroframework forecasting has typically relied on manual adjustments in spreadsheet environments, requiring substantial time and limiting scalability and transparency. To our knowledge, `macroframe‑forecast` is the only open‑source package to jointly ensure smoothness and accounting coherence, allowing experts to incorporate judgment without sacrificing statistical rigor. This significantly lowers the cost of producing explainable, high‑dimensional forecasts and improves institutional forecasting capacity.
+
+Community readiness is supported by documentation and reproducible example workflows. The project's license sets the terms for reuse and extension. `macroframe-forecast` complements the IMF's efforts to develop tools for macroframework forecasting, such as [@Feridhanusetyawan2025] and other unpublished tools that support capacity development for member countries. As macroeconomic forecasting increasingly combines expert judgment with data-driven methods, `macroframe-forecast` provides an infrastructure with potential for adoption and downstream impact across economic policy institutions.
 
 # AI Usage Disclosure
 
