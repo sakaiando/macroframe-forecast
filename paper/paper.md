@@ -117,35 +117,39 @@ F_i \;=\;
 \quad
 \lambda_i =   \frac{\lambda_i^*}{\sigma_i^2},$$
 
-where $i=1,...,M$. Default parameter values $\lambda_i^*$ follow HP filter conventions (e.g., 1600 for quarterly data). It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
+where $i=1,...,M$. By default, $\lambda_i^*$ is estimated using historical forecast errors. It is then scaled by the first step forecast error variance $\sigma_i^2$, obtained from the diagonal elements of the weight matrix $W$ for each time series $i$, to ensure unit invariance. Setting $\lambda_i^* = 0$ disables smoothing for time series $i$, reducing the problem to pure reconciliation.
 
 
 # An example: single-variable GDP forecast
 
-Using U.S. nominal GDP data (1950-2024), we forecast the values for 2025-2030 under the constraint that 2030 growth rate equals 4 percent. When the column name of the variable to be forecasted is `GDP`, the constraint is expressed as `GDP_2030 - 1.04 * GDP_2029 = 0`. The `MFF` class generates the first-step forecast via the default pipeline and reconciles them to satisfy the constraint while smoothing the trajectory. Assuming that the user has read the GDP data as a `pandas` dataframe named `df0` with index `year` and `GDP`, the forecasts (both first and second-step) can be generated as follows:
+Using U.S. nominal GDP data for 1950-2024, we forecast 2025-2030 subject to an illustrative terminal growth target of 4 percent in 2030. The first stage fits a separate ordinary least squares regression for each forecast horizon, using six lagged GDP levels. MFF estimates forecast-error weights and smoothing parameters from historical backtests and reconciles the forecasts to meet the growth target:
 
 ```python
+from sklearn.linear_model import LinearRegression
+from sktime.forecasting.compose import make_reduction
 from macroframe_forecast import MFF
 from macroframe_forecast.examples import generate_example_GDP_df
 
-df0 = generate_example_GDP_df()
-m = MFF(df0, equality_constraints=["GDP_2030 - 1.04 * GDP_2029"])
+m = MFF(
+    generate_example_GDP_df(),
+    forecaster=make_reduction(
+        LinearRegression(), strategy="direct", window_length=6,
+    ),
+    equality_constraints=["GDP_2030 - 1.04 * GDP_2029"],
+    parallelize=False,
+)
 m.fit()
 ```
 
+Figure 1 shows smoother GDP level forecasts, with 2030 growth adjusted from 5.52 to 4.00 percent. The [self-contained reproduction script](https://github.com/sakaiando/macroframe-forecast/blob/main/paper/reproduce_figures.py) generates the figure from bundled data and verifies the target; [instructions](https://github.com/sakaiando/macroframe-forecast/blob/main/paper/README.md) are provided alongside it.
+
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.48\textwidth]{example_1_levels_figure.pdf}
-\includegraphics[width=0.48\textwidth]{example_1_growth_figure.pdf}
-\caption{US GDP forecasts: (a) levels and (b) growth.\label{fig:us_gdp}}
+\includegraphics[width=\textwidth]{gdp_forecasts.pdf}
+\caption{U.S. nominal GDP forecasts, 2025-2030: (a) levels in trillion USD and (b) annual growth in percent. First-step direct autoregressive forecasts and reconciled forecasts are shown with historical observations and the 2030 growth target. Source: IMF April 2025 World Economic Outlook database and authors' calculations.\label{fig:us_gdp}}
 \end{figure}
 
-Figure 1: Forecasts of U.S. nominal GDP, 2025-2030, under the 4 percent growth constraint in 2030.
-*Source:* IMF April 2025 World Economic Outlook database and authors' calculations.  
-*Note:* Panel (a) shows the forecast of annual US GDP in trillion USD. Panel (b) shows the growth rates computed from the level forecasts.
-
-
-The second-step forecast can also be customized by providing exogenously defined first-step forecast, weight matrix, or the smoothness parameters. These can be achieved by using the function `Reconciliation` available in the package.
+The second step can also use externally supplied forecasts, weights, and smoothing parameters through the package's `Reconciliation` function.
 
 # Acknowledgements
 
