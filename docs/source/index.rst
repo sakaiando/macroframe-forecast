@@ -6,7 +6,7 @@
    contain the root `toctree` directive.
 
 Documentation for the Macroframework Forecasting package
-====================================================================
+========================================================
 
 Statement of need
 -----------------
@@ -82,7 +82,7 @@ The relevant import from `macroframe-foreacst` is `MFF`:
 
 
 References
-------------
+----------
 `A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025) <https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041>`_
 
 `Smooth Forecast Reconciliation (2024) <https://www.imf.org/en/Publications/WP/Issues/2024/03/22/Smooth-Forecast-Reconciliation-546654>`_
