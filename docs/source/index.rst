@@ -13,7 +13,7 @@ Statement of need
 
 This package assists forecasting with constraints.
 
-In forecasting economic time series, statistical models often need to be supplemented with procedures that impose constraints while preserving smoothness over time. Systematically imposing constraints while retaining smoothness is important but challenging. Existing packages in R and Python assist forecast reconciliation and smoothing separately but not jointly. To our knowledge, macroframe-forecast is the first package that supports the simultaneous application of both reconciliation and smoothing.
+In forecasting economic time series, statistical models often need to be supplemented with procedures that impose constraints while preserving smoothness over time. Systematically imposing constraints while retaining smoothness is important but challenging. Existing packages in R and Python assist forecast reconciliation and smoothing separately but not jointly. To our knowledge, macroframe-forecast is the only package that supports the simultaneous application of both reconciliation and smoothing.
 
 The targeted audience is policy makers that conduct multivariate economic forecasting with large *N* and small *T* (many time series and short sample periods), but the methodology can also be applied to other problems.
 
