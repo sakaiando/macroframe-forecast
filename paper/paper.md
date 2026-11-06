@@ -56,11 +56,11 @@ Existing reconciliation packages in R and Python — `hts` [@Hyndmanetal2021], `
 
 # Software Design
 
-The design of `macroframe-forecast` reflects a trade-off between flexibility, transparency, and computational efficiency. The package adopts a two-step architecture - first generating unconstrained forecasts, then adjusting them through reconciliation and smoothing - which clearly separates model estimation from constraint enforcement. To give users flexibility in choosing forecasting method most suitable for their specific context, we deliberately designed the unconstrained forecasting step  to explicitly support any forecasting model implemented in `sktime` [@Loningetal2019] without modifying the reconciliation logic.
- 
-The second step is formulated as a single quadratic programming problem with an explicit objective function and clearly defined equality and inequality constraints. This approach avoids ad hoc adjustments such as manually applying smoothing after constraints are imposed. Instead, forecast accuracy, smoothness over time, and consistency with constraints are handled jointly within one optimization problem. Constraints are specified using readable string expressions, reducing the need for users to work directly with matrices as in existing packages.
- 
-Although existing packages support forecast reconciliation or smoothing individually, there has not been a package that achives both. Incorporating smoothness penalties into reconciliation-focused packages, or adding general constraint handling to smoothing libraries, would have required substantial structural changes. Building a new package was therefore necessary to implement a transparent, theory-consistent framework that jointly enforces smoothness and constraints while remaining easy to use for applied macroeconomic forecasting.
+The design of `macroframe-forecast` reflects a trade-off between flexibility, transparency, and computational efficiency. The package adopts a two-step architecture - first generating unconstrained forecasts, then adjusting them through reconciliation and smoothing - which clearly separates model estimation from constraint enforcement. To give users flexibility in choosing the forecasting method most suitable for their specific context, we deliberately designed the unconstrained forecasting step to support user-supplied `sktime` forecasters [@Loningetal2019] without modifying the reconciliation logic. The `MFF` class coordinates this workflow for single-frequency data; the experimental `MFF_mixed_freqency` class arranges mixed-frequency inputs on a common lowest-frequency index and uses the same reconciliation functions, currently with equality constraints only. Separating the stages also supports transparency: the fitted `MFF` object retains the initial forecasts, forecast-error weights, and constraint and smoothing matrices so users can inspect how model output is adjusted. This inspectability comes at the cost of retaining intermediate data and matrices; operating on the explicit matrices also becomes more costly as the number of forecast values grows.
+
+The second step is formulated as a single quadratic programming problem with an explicit objective function and clearly defined equality and inequality constraints. `GenWeightMatrix` estimates forecast-error weights from pseudo-out-of-sample predictions, `GenLamstar` selects smoothness parameters, and `GenSmoothingMatrix` constructs the smoothness penalty; `Reconciliation` combines these with the initial forecasts and constraint matrices. Equality-only reconciliation uses an analytical matrix solution without invoking a quadratic-programming solver; the additional flexibility of inequality constraints requires a numerical solve through CVXPY. Thus, the computational approach depends on the constraints while preserving the same explicit objective. This approach avoids ad hoc adjustments such as manually applying smoothing after constraints are imposed. Instead, forecast accuracy, smoothness over time, and consistency with constraints are handled jointly within one optimization problem. Constraints are specified using readable string expressions, reducing the need for users to work directly with matrices as in existing packages.
+
+Although existing packages support forecast reconciliation or smoothing individually, there has not been a package that achieves both. Incorporating smoothness penalties into reconciliation-focused packages, or adding general constraint handling to smoothing libraries, would have required substantial structural changes. Building a new package was therefore necessary to implement a transparent, theory-consistent framework that jointly enforces smoothness and constraints while remaining easy to use for applied macroeconomic forecasting.
 
 # Research Impact Statement
 
@@ -73,8 +73,6 @@ Community readiness is demonstrated through comprehensive documentation, reprodu
 # AI Usage Disclosure
 
 Generative AI tools (Microsoft Copilot, GitHub Copilot) were used to assist the development of this package, the writing of this manuscript, and the preparation of supporting materials. The majority of the work was produced by the authors, and the usage of AI tools was to facilitate code debugging, generate potential solutions, fix typos and assist with other minor tasks (e.g. formatting). All AI-generated inputs were reviewed and edited by the authors before incorporation in the code/paper.
-
-<!---XXX[@AndoDasOrazbayev]XXX.--->
 
 # Method
 
@@ -142,7 +140,7 @@ m.fit()
 \caption{US GDP forecasts: (a) levels and (b) growth.\label{fig:us_gdp}}
 \end{figure}
 
-Figure 1: Forecasts of U.S. nominal GDP, 2025-030, under the 4 percent growth constraint in 2030.  
+Figure 1: Forecasts of U.S. nominal GDP, 2025-2030, under the 4 percent growth constraint in 2030.
 *Source:* IMF April 2025 World Economic Outlook database and authors' calculations.  
 *Note:* Panel (a) shows the forecast of annual US GDP in trillion USD. Panel (b) shows the growth rates computed from the level forecasts.
 
