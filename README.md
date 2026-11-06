@@ -69,6 +69,12 @@ axes[1].legend()
 axes[2].legend()
 ```
 
+# Reproducing the paper figures
+
+See the [self-contained GDP example](paper/README.md) for instructions to
+generate the paper's GDP forecasting figure, along with forecast values and
+the dependency versions used.
+
 # Support and contributions
 
 For usage questions, support requests, reproducible bug reports, or feature requests, please open an issue in the

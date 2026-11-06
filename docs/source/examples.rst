@@ -1,379 +1,366 @@
 Examples
 --------
 
-Single-variable example
-~~~~~~~~~~~~~~~~~~~~~~~
+These examples show how to incorporate economic constraints into forecasts.
+The GDP example introduces the workflow with a single growth target. The fiscal
+example extends it to several variables linked by an accounting identity,
+while the final example shows how to apply reconciliation to forecasts from
+another model or from expert judgment.
 
+.. _gdp-example:
 
-.. code-block:: python
+GDP forecasting with a growth target
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  import pandas as pd
-  import numpy as np
-  from macroframe_forecast import MFF
-  from macroframe_forecast.utils import Reconciliation
-  import matplotlib.pyplot as plt
-  
-  #%% Reading the data and generating forecasts.
-  
-  # Reading GDP data as a pandas dataframe.
-  # This dataframe has two columns: year and GDP; the final six years are forecasts.
-  from pandas import DataFrame
-  
-  GDP_data_true = DataFrame({
-      "year": [
-          1950, 1951, 1952, 1953, 1954, 1955, 1956, 1957, 1958, 1959,
-          1960, 1961, 1962, 1963, 1964, 1965, 1966, 1967, 1968, 1969,
-          1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979,
-          1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989,
-          1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-          2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-          2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
-          2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029,
-          2030
-      ],
-      "GDP": [
-          301782704906.154, 348993057004.926, 368027835977.609, 389147698401.843,
-          390276672099.46, 424868331217.657, 448388356231.708, 471707274214.225,
-          478166880805.205, 519476064642.104, 539899866168.654, 558583293630.287,
-          600454646133.34, 633368190949.311, 680153540812.135, 737201978910.734,
-          808045440847.441, 853883822469.0601, 933096436159.1281, 1008751520510.61,
-          1064366709379.28, 1155403629216.3, 1269884411457.22, 1418456050381.57,
-          1536647924378.57, 1674009506825.93, 1867242215504.46, 2079644632633.34,
-          2350400768409.49, 2627325000000.0, 2857325000000.0, 3207025000000.0,
-          3343800000000.0, 3634025000000.0, 4037650000000.0, 4339000000000.0,
-          4579625000000.0, 4855250000000.0, 5236425000000.0, 5641600000000.0,
-          5963125000000.0, 6158125000000.0, 6520325000000.0, 6858550000000.0,
-          7287250000000.0, 7639750000000.0, 8073125000000.0, 8577550000000.0,
-          9062825000000.0, 9631175000000.0, 10250950000000.0, 10581925000000.0,
-          10929100000000.0, 11456450000000.0, 12217175000000.0, 13039200000000.0,
-          13815600000000.0, 14474250000000.0, 14769850000000.0, 14478050000000.0,
-          15048975000000.0, 15599725000000.0, 16253950000000.0, 16880675000000.0,
-          17608125000000.0, 18295000000000.0, 18804900000000.0, 19612100000000.0,
-          20656525000000.0, 21539975000000.0, 21354125000000.0, 23681175000000.0,
-          26006900000000.0, 27720725000000.0, 29184900000000.0, 30507217002511.25,
-          31717641479090.75, 32941710359665.25, 34342131994149.0, 35712823521822.0,
-          37153089058192.75
-      ]
-  })
-  
-  
-  # The original GDP data is in dollars; convert it to trillions
-  # going forward in order to deal with problem of matrix invertibility.
-  GDP_data_true['GDP'] = GDP_data_true['GDP']/1e12
-  
-  # Time period hs to be set as the index. Here year is the time identifier, 
-  # therefore setting this as the index. 
-  GDP_data_true.set_index(GDP_data_true['year'], inplace = True)
-  GDP_data_true.drop(columns = 'year', inplace = True)
-  
-  # Creating a copy which is used for geenrating the forecasts. Removing the last
-  # six years of data for ease of forecasts
-  GDP_data = GDP_data_true.copy()
-  # Removing the last six years of data so that they are forecasted by the 
-  # function. 
-  GDP_data.iloc[-6:,0] = np.nan
-  
-  # Now assume that US GDP grows by 4% from 2029 to 2030, which is given by the
-  # WEO forecast. This therefore works as a constraint for the forecasts.
-  # The dataframe has GDP in levels terms, therefore the constraint has to be 
-  # specified in levels terms as well. The constraints can be rewritten in the following
-  # steps.
-  # GDP_2030/GDP_2029 - 1 = 0.04
-  # GDP_2030 = 1.04*GDP_2029
-  # GDP_2030 - 1.04*GDP_2029 = 0
-  
-  # Constraints are to be provided in the form of a list, even when there is only 
-  # constraint.
-  GDP_constraint = ['GDP_2030 - 1.04*GDP_2029']
-  
-  m = MFF(df = GDP_data,
-          equality_constraints = GDP_constraint,
-          parallelize = False,
-          n_forecast_error = 2)
-  
-  # Using the fit method generates first as well as second step forecasts.
-  m.fit()
-  
-  # First step forecasts are stored as df1 in the fitted object.
-  firststep_GDP = m.df1
-  
-  # The forecasted data is filled into the df2 dataframe in the fitted object.
-  reconciled_GDP = m.df2
-  np.testing.assert_allclose(reconciled_GDP.loc[2030, "GDP"], 1.04 * reconciled_GDP.loc[2029, "GDP"])
-  
-  # Models are stored in a dataframe in the fitted object.
-  
-  models_used = m.df1_model
-  models_used.iloc[-1,0]
-  #%% Plotting first and second step forecasts 
-  fig, ax = plt.subplots(figsize=(8, 4.8)) 
-  
-  firststep_GDP['GDP'].plot(ax=ax, label='First step forecasts', linestyle = '--')
-  reconciled_GDP['GDP'].plot(ax=ax, label='Final forecasts', linestyle = '-.')
-  GDP_data['GDP'].plot(ax = ax, label = 'Known values', color = 'red')
-  
-  ax.set_xlabel('Year')  
-  ax.set_ylabel('US Nominal GDP (in US$ trn)')  
-  ax.set_title('US GDP in levels')  
-  ax.legend(loc = 'lower left')
-  
-  # max_xlastvalue = reconciled_GDP.index.max()
-  ax.set_xlim([2020, 2030])
-  ax.set_ylim([15, 40])
-  
-  plt.xticks(np.arange(2019, 2031,2))
-  
-  plt.show()
-  
-  # %%
-  
-  firststep_GDP['GDP_growth'] = (firststep_GDP['GDP']/firststep_GDP['GDP'].shift(1) - 1)*100
-  reconciled_GDP['GDP_growth'] = (reconciled_GDP['GDP']/reconciled_GDP['GDP'].shift(1) - 1)*100
-  GDP_data['GDP_growth'] = (GDP_data['GDP']/GDP_data['GDP'].shift(1) - 1)*100
-  
-  fig, ax = plt.subplots(figsize=(8, 4.8))
-  
-  firststep_GDP['GDP_growth'].plot(ax=ax, label='First-step forecasts', linestyle = '--')
-  reconciled_GDP['GDP_growth'].plot(ax=ax, label='Second-step forecasts', linestyle = '-.')
-  GDP_data['GDP_growth'].plot(ax = ax, label = 'Known values', color = 'red')
-  
-  ax.set_xlabel('Year')  
-  ax.set_ylabel('Nominal GDP growth (annual, %)')  
-  ax.set_title('US GDP growth rates')  
-  ax.legend(loc = 'upper left')
-  
-  # Add triangle marker at the constrained 2030 growth rate.
-  ax.plot(2030, 4, marker='v', color='black', markersize=8, label='_nolegend_')
-  
-  # Add text annotation
-  ax.annotate('2030 growth constraint', xy=(2030, 4), xytext=(2030-2, 2.5),
-              arrowprops=dict(arrowstyle='->', color='black'), color='black')
-  
-  # max_xlastvalue = reconciled_GDP.index.max()
-  ax.set_xlim([2019, 2031])
-  
-  plt.xticks(np.arange(2020, 2031,2))
-  
-  plt.show()
-  
-  # %% Looking at externally generated first-stage
-  
-  GDP_forecasts_external = pd.DataFrame(
-      {"GDP": [29.0, 31.5, 33.0, 34.1, 36.8, 39.0]},
-      index=m.y1.index,
-  )
-  GDP_multiindex_series = GDP_forecasts_external["GDP"]
-
-  final_forecasts = Reconciliation(
-      y1=GDP_multiindex_series,
-      W=m.W,
-      Phi=m.Phi,
-      C=m.C,
-      d=m.d,
-      C_ineq=m.C_ineq,
-      d_ineq=m.d_ineq,
-  )
-  # %%
-  
-  # Convert MultiIndex Series to regular Series with year index
-  
-  gdp_series = GDP_multiindex_series.xs('GDP', level=0)
-  second_stage_series = final_forecasts.xs('GDP', level=0)
-  
-  # Now plot it
-  fig, ax = plt.subplots(figsize=(8, 4.8))
-  gdp_series.plot(ax=ax, label='Externally generated first-step forecasts', linestyle='--')
-  second_stage_series.iloc[:,0].plot(ax=ax, label='Second-step forecasts', linestyle = '-.')
-  
-  
-  
-  # Add labels and formatting
-  ax.set_xlabel('Year')
-  ax.set_ylabel('US Nominal GDP (in US$ trn)')  
-  ax.set_title('US GDP in levels') 
-  ax.legend(loc='upper left')
-  ax.set_xlim([2024, 2030])
-  ax.set_ylim([15, 40])
-
-
-Multi-variable example
-~~~~~~~~~~~~~~~~~~~~~~
+This example forecasts US nominal GDP for 2025-2030 with an illustrative
+terminal growth target of 4 percent. The bundled data contain annual observations
+for 1950-2024 in **trillions of US dollars**, followed by six missing values
+to forecast.
+No data download is needed. Install the repository checkout with
+``python -m pip install -e .``, then run:
 
 .. code-block:: python
 
-  import pandas as pd
-  import numpy as np
-  from macroframe_forecast import MFF
-  import matplotlib.pyplot as plt
-  from sktime.forecasting.compose import DirectReductionForecaster
-  from sktime.forecasting.compose import ForecastingPipeline
-  from sklearn.linear_model import LinearRegression  
-  from pandas import DataFrame
-  
-  fiscal_data_true = DataFrame({
-      "year": [
-          2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-          2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020,
-          2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030
-      ],
-      "exp": [
-          32.801, 33.698, 34.037, 33.719, 33.928, 33.692, 34.562, 37.144, 41.399, 39.763,
-          38.796, 37.223, 35.782, 35.324, 35.031, 35.333, 35.194, 35.349, 35.819, 44.779,
-          43.218, 36.829, 37.113, 37.593, 37.848, 38.004, 38.107, 38.024, 37.711, 37.862
-      ],
-      "rev": [
-          32.257, 29.877, 29.266, 29.476, 30.853, 31.656, 31.649, 30.532, 28.222, 28.770,
-          29.080, 29.109, 31.222, 31.298, 31.501, 30.977, 30.400, 30.014, 30.014, 30.631,
-          31.827, 33.130, 29.949, 30.331, 31.389, 32.514, 32.754, 32.409, 32.222, 32.248
-      ],
-      "int_payments": [
-          3.255, 2.892, 2.658, 2.563, 2.704, 2.775, 2.933, 2.776, 2.574, 2.678,
-          2.880, 2.726, 2.485, 2.474, 2.341, 2.490, 2.522, 2.769, 2.817, 2.537,
-          2.669, 3.137, 3.600, 4.195, 4.301, 4.427, 4.451, 4.370, 4.353, 4.290
-      ],
-      "pb": [
-          2.711, -0.929, -2.113, -1.681, -0.371, 0.739, 0.020, -3.836, -10.603, -8.315,
-          -6.836, -5.387, -2.076, -1.552, -1.189, -1.867, -2.272, -2.566, -2.988, -11.610,
-          -8.721, -0.561, -3.564, -3.067, -2.158, -1.063, -0.902, -1.246, -1.136, -1.324
-      ]
-  })
-  fiscal_data_true = fiscal_data_true.set_index("year")
+   import numpy as np
+   from sklearn.linear_model import LinearRegression
+   from sktime.forecasting.compose import make_reduction
+   from macroframe_forecast import MFF
+   from macroframe_forecast.examples import generate_example_GDP_df
 
-  # Data upto 2024 is known for all variables. 2024 onwards data are all WEO forecasts.
-  # Let us assume that the path for Primary Balance/GDP is known to the forecaster,
-  # which is given by the WEO forecasts, while the other three variables are to be
-  # forecasted. These unknown values are therefore replaced by NaNs.
-  
-  fiscal_data = fiscal_data_true.copy()
-  fiscal_data.iloc[-6:, :3] = np.nan
-  
-  # The basic acccounting identiy can be writted as:
-  # Primary Balance/GDP = Revenue /GDP - Expenditure/GDP + Interest Payments/GDP
-  # We know that this identity has to bind throughout the forecasting horizon, and
-  # therefore we can specify this using the wildcard feature.
-  
-  constraint_year = 2030
-  constraint_exp = 37.0
-  fiscal_constraint = [
-      'pb? - rev? + exp? - int_payments?',
-      f'exp_{constraint_year} - {constraint_exp}',
-  ]
-  
-  # Defining the OLS forecasting pipeline for the example
-  
-  ols = ForecastingPipeline(steps=[
-      ('ols',DirectReductionForecaster(LinearRegression()))
-      ])
-  
-  m = MFF(df = fiscal_data,
-          equality_constraints = fiscal_constraint,
-          forecaster = ols,
-          parallelize = False) 
-  
-  m.fit()
-  
-  first_step_forecasts = m.df1
-  second_step_forecasts = m.df2
-  np.testing.assert_allclose(
-      second_step_forecasts.loc[constraint_year, "exp"], constraint_exp, atol=1e-8
-  )
-  np.testing.assert_allclose(
-      second_step_forecasts.loc[2025:2030, "pb"],
-      second_step_forecasts.loc[2025:2030, "rev"]
-      - second_step_forecasts.loc[2025:2030, "exp"]
-      + second_step_forecasts.loc[2025:2030, "int_payments"],
-      atol=1e-8,
-  )
-  
-  # final_forecasts = 
-  # %% Expenditure forecasts
-  fig, ax = plt.subplots(figsize=(8, 4.8)) 
-  
-  first_step_forecasts['exp'].plot(ax=ax, label='First-step forecasts', linestyle = '--')
-  second_step_forecasts['exp'].plot(ax=ax, label='Second-step forecast', linestyle = '-.')
-  fiscal_data['exp'].plot(ax = ax, label = 'WEO values', color = 'red')
-  
-  ax.set_xlabel('Year')  
-  ax.set_ylabel('US Government Expenditure to GDP ratio (%)')  
-  ax.set_title('Government Expenditure')  
-  ax.legend(loc = 'lower left')
-  
-  ax.plot(constraint_year, constraint_exp, marker='v', color='black', markersize=8, label='_nolegend_')
-  
-  # Add text annotation
-  ax.annotate(
-              '2030 expenditure constraint value',
-              xy=(constraint_year, constraint_exp),
-              xytext=(2027, 40),
-              arrowprops=dict(arrowstyle='->', color='black'), color='black')
-  
-  ax.set_xlim([2021, 2030])
-  
-  plt.xticks(np.arange(2021, 2031,2))
-  
-  plt.show()
-  # %% Revenue forecasts
-  fig, ax = plt.subplots(figsize=(8, 4.8)) 
-  
-  first_step_forecasts['rev'].plot(ax=ax, label='First-step forecast', linestyle = '--')
-  second_step_forecasts['rev'].plot(ax=ax, label='Second-step forecast', linestyle = '-.')
-  fiscal_data['rev'].plot(ax = ax, label = 'WEO values', color = 'red')
-  
-  ax.set_xlabel('Year')  
-  ax.set_ylabel('US Government Revenue to GDP ratio (%)')  
-  ax.set_title('Government Revenue')  
-  ax.legend(loc = 'lower left')
-  
-  ax.set_xlim([2021, 2030])
-  
-  plt.xticks(np.arange(2021, 2031,2))
-  
-  plt.show()
-  
-  # %% Interest Payment forecasts
-  fig, ax = plt.subplots(figsize=(8, 4.8)) 
-  
-  first_step_forecasts['int_payments'].plot(ax=ax, label='First-step forecast', linestyle = '--')
-  second_step_forecasts['int_payments'].plot(ax=ax, label='Second-step forecast', linestyle = '-.')
-  fiscal_data['int_payments'].plot(ax = ax, label = 'WEO values', color = 'red')
-  
-  ax.set_xlabel('Year')  
-  ax.set_ylabel('US Government Interest Payments to GDP ratio (%)')  
-  ax.set_title('Interest Payments')  
-  ax.legend(loc = 'lower left')
-  
-  ax.set_xlim([2021, 2030])
-  
-  plt.xticks(np.arange(2021, 2031,2))
-  
-  plt.show()
-  
-  
-  
-  # %% First step primary balance vs. the constraints
-  
-  first_step_forecasts['pb_calculated'] = first_step_forecasts['rev'] - first_step_forecasts['exp'] + first_step_forecasts['int_payments']
-  second_step_forecasts['pb_calculated'] = second_step_forecasts['rev'] - second_step_forecasts['exp'] + second_step_forecasts['int_payments']
-  
-  fig, ax = plt.subplots(figsize=(8, 4.8)) 
-  
-  first_step_forecasts['pb_calculated'].plot(ax=ax, label='First-step forecast', linestyle = '--')
-  second_step_forecasts['pb_calculated'].plot(ax=ax, label='Second-step forecast', linestyle = '-.')
-  
-  # fiscal_data[fiscal_data]['pb'].plot(ax=ax, label='WEO values', linestyle = '-.')
-  fiscal_data[fiscal_data.index<2024]['pb'].plot(ax = ax, label = 'WEO values', color = 'red')
-  fiscal_data[fiscal_data.index>=2024]['pb'].plot(ax = ax, label = 'Constraint values', color = 'green', marker = 'o', linestyle = 'None')
-  
-  
-  ax.set_xlabel('Year')  
-  ax.set_ylabel('Primary Balance to GDP ratio (%)')  
-  ax.set_title('Primary Balance')  
-  ax.legend(loc = 'lower left')
-  
-  ax.set_xlim([2021, 2030])
-  
-  plt.xticks(np.arange(2021, 2031,2))
-  
-  plt.show()
-  # %%
-  
+   data = generate_example_GDP_df()
+   model = MFF(
+       data,
+       forecaster=make_reduction(
+           LinearRegression(), strategy="direct", window_length=6,
+       ),
+       equality_constraints=["GDP_2030 - 1.04 * GDP_2029"],
+       parallelize=False,
+   )
+   forecasts = model.fit()
+   growth_2030 = 100 * (forecasts.loc[2030, "GDP"] / forecasts.loc[2029, "GDP"] - 1)
+   print(f"Reconciled GDP growth in 2030: {growth_2030:.4f}%")
+   np.testing.assert_allclose(growth_2030, 4.0, rtol=0, atol=1e-8)
+
+.. code-block:: text
+
+   Reconciled GDP growth in 2030: 4.0000%
+
+The constraint rewrites ``GDP_2030 / GDP_2029 - 1 = 0.04`` as a linear
+expression equal to zero. ``model.df1`` contains the first-step forecasts;
+``forecasts`` (also available as ``model.df2``) contains the reconciled values.
+Both include the historical data.
+
+The first stage fits a separate ordinary least squares regression for each
+forecast horizon, using the six most recent observed GDP values as predictors.
+This is direct autoregressive forecasting: each horizon has its own fitted
+coefficients. The first-stage regressions do not use the 4 percent target.
+MFF then estimates forecast-error weights and smoothing parameters from
+historical backtests and reconciles the forecasts. No smoothing parameter is
+specified in this example.
+
+Compare annual growth before and after reconciliation:
+
+.. code-block:: python
+
+   import pandas as pd
+
+   growth_comparison = pd.DataFrame({
+       "First step": model.df1["GDP"],
+       "Reconciled": forecasts["GDP"],
+   }).pct_change(fill_method=None) * 100
+   print(growth_comparison.loc[2025:2030].round(2).to_string())
+
+.. code-block:: text
+
+         First step  Reconciled
+   year
+   2025        7.12        4.99
+   2026        4.98        4.75
+   2027        2.52        4.53
+   2028        1.75        4.34
+   2029        4.06        4.16
+   2030        5.52        4.00
+
+The first-step growth rates vary across forecast years. Reconciliation smooths
+GDP levels within the forecast horizon and meets the terminal target, changing
+2030 growth from about 5.52 percent to 4 percent. The historical observations
+remain unchanged.
+
+Plot the levels and annual growth rates using the fitted model. Run this block
+in the same session; it also saves ``gdp_forecasts.png`` in the current directory.
+
+.. code-block:: python
+
+   import matplotlib.pyplot as plt
+   import pandas as pd
+
+   levels = pd.DataFrame({
+       "First step": model.df1["GDP"],
+       "Reconciled": forecasts["GDP"],
+       "Historical": data["GDP"],
+   })
+   # Calculate growth before selecting the plotting window, without filling NaNs.
+   growth = levels.pct_change(fill_method=None) * 100
+   fig, axes = plt.subplots(1, 2, figsize=(9, 3.8), layout="constrained")
+   for ax, series, title, units in zip(
+       axes, [levels, growth], ["(a) GDP levels", "(b) Annual GDP growth"],
+       ["Trillion USD", "Percent"],
+   ):
+       ax.plot(series["First step"].loc[2024:], "--o", markersize=3, label="First step")
+       ax.plot(series["Reconciled"].loc[2024:], "-.", label="Reconciled")
+       ax.plot(series["Historical"].loc[2021:2024], color="red", label="Historical")
+       ax.set(title=title, xlabel="Year", ylabel=units, xlim=(2021, 2031))
+       ax.set_xticks([2022, 2024, 2026, 2028, 2030])
+   axes[1].plot(2030, 4, "v", color="black", label="2030 target: 4%")
+   for ax in axes:
+       ax.legend(fontsize=8)
+   fig.savefig("gdp_forecasts.png", dpi=180)
+   plt.show()
+
+.. figure:: _static/gdp_forecasts.png
+   :alt: US GDP levels and annual growth. First-step direct autoregressive forecasts vary across horizons. Reconciliation smooths GDP levels within the forecast horizon and makes growth reach 4 percent in 2030.
+   :width: 100%
+
+   US nominal GDP forecasts for 2025-2030. Source: IMF April 2025 World Economic
+   Outlook example and package calculations.
+
+The self-contained :download:`reproduction script <../../paper/reproduce_figures.py>`
+generates this figure, saves both forecast stages, and verifies the terminal
+target and preservation of historical observations. From the repository root,
+run ``python paper/reproduce_figures.py``. Outputs are saved in
+``build/paper-figures/``; the
+:download:`reproduction instructions <../../paper/README.md>` describe the files.
+
+The following fiscal example extends the workflow to constraints linking
+several variables.
+
+
+.. _fiscal-walkthrough:
+
+Fiscal forecasting walkthrough
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose we know the primary-balance path for the United States through 2030,
+while expenditure, revenue, and interest payments still need to be forecasted.
+We also want expenditure to reach 37 percent of GDP in 2030. Forecasting each
+series separately does not guarantee that the results satisfy those conditions.
+This example shows how MFF adjusts the forecasts jointly.
+
+All quantities below are percentages of GDP. Run the Python blocks in order in
+one session. They include all required imports and use bundled data, without
+an external download. To use the new example helper, install this repository
+checkout from its root before starting:
+
+.. code-block:: console
+
+   python -m pip install -e .
+
+Load the data
+^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   import numpy as np
+   import pandas as pd
+   from sklearn.linear_model import LinearRegression
+   from sktime.forecasting.compose import DirectReductionForecaster
+   from macroframe_forecast import MFF
+   from macroframe_forecast.examples import generate_example_fiscal_df
+
+   data = generate_example_fiscal_df()
+   print(data.loc[2024:2026].to_string())
+
+.. code-block:: text
+
+            exp     rev  int_payments     pb
+   year
+   2024  37.593  30.331         4.195 -3.067
+   2025     NaN     NaN           NaN -2.158
+   2026     NaN     NaN           NaN -1.063
+
+The index identifies the year. ``exp`` is expenditure, ``rev`` is revenue,
+``int_payments`` is interest payments, and ``pb`` is the primary balance.
+Observations run from 2001 through 2024. The missing values (``NaN``) tell MFF
+which cells to forecast for 2025-2030. The primary-balance values remain filled
+because they are the prescribed path, not an additional forecast target.
+
+Specify the constraints
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The primary balance equals revenue minus expenditure plus interest payments.
+Moving every term to the left gives the expression MFF expects to equal zero:
+
+.. code-block:: python
+
+   constraints = [
+       "pb_? - rev_? + exp_? - int_payments_?",
+       "exp_2030 - 37",
+   ]
+
+The wildcard ``?`` applies the accounting identity across forecast years. The second
+expression applies only in 2030. The supplied primary-balance values enter the
+identity as known quantities; MFF adjusts the other three variables to satisfy
+it. Constraint strings contain expressions, without an ``= 0`` suffix.
+
+Fit and reconcile the forecasts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   model = MFF(
+       data,
+       forecaster=DirectReductionForecaster(LinearRegression()),
+       equality_constraints=constraints,
+       parallelize=False,
+   )
+   reconciled = model.fit()
+   first_step = model.df1
+
+This example explicitly selects ordinary least squares (OLS), with direct
+forecasting for each horizon. The first stage produces forecasts independently
+of the accounting constraints. MFF then estimates forecast-error weights and
+smoothing parameters from historical backtests and jointly reconciles the
+forecasts. ``first_step`` contains the initial forecasts, while ``reconciled``
+contains the final values. Both retain the historical observations.
+
+Inspect the results
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   variables = ["exp", "rev", "int_payments"]
+   comparison = pd.DataFrame({
+       "First step": first_step.loc[2030, variables],
+       "Reconciled": reconciled.loc[2030, variables],
+   })
+   print(comparison.round(2).to_string())
+
+.. code-block:: text
+
+                 First step  Reconciled
+   exp                32.90       37.00
+   rev                31.06       32.69
+   int_payments        1.03        2.99
+
+Expenditure reaches the required 37 percent of GDP. Revenue and interest
+payments change as well: all three adjustments must be consistent with the
+prescribed primary balance. At the displayed precision, the 2030 balance is
+``32.69 - 37.00 + 2.99 = -1.32`` percent of GDP; the unrounded result matches the
+supplied value of ``-1.324``.
+
+.. figure:: _static/fiscal_forecasts.png
+   :alt: Four panels comparing initial and reconciled fiscal forecasts. Reconciled expenditure reaches 37 percent of GDP and the implied primary balance matches the prescribed path.
+   :width: 100%
+
+   First-step and reconciled US fiscal forecasts, in percent of GDP.
+   Source: IMF April 2025 World Economic Outlook example and package calculations.
+
+The blue dashed lines show the first-stage OLS forecasts; the orange lines show
+the reconciled forecasts. The final paths are smoother across the forecast
+years, particularly for expenditure and interest payments. The black triangle
+marks the expenditure target. In the primary-balance panel, each line is
+calculated as ``rev - exp + int_payments`` so that we can compare the implied
+balance with the green points showing the required path.
+
+These outputs were generated with Python 3.14.7, NumPy 2.3.5, pandas 2.3.3,
+SciPy 1.17.1, scikit-learn 1.7.2, and sktime 0.40.1. Numerical results can vary
+with dependency versions.
+
+Verify the conditions
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   years = slice(2025, 2030)
+   first_balance = first_step["rev"] - first_step["exp"] + first_step["int_payments"]
+   final_balance = reconciled["rev"] - reconciled["exp"] + reconciled["int_payments"]
+   first_error = (first_balance - data["pb"]).loc[years].abs().max()
+   final_error = (final_balance - data["pb"]).loc[years].abs().max()
+   print(f"Largest first-step balance error: {first_error:.4f}")
+   print(f"Largest reconciled balance error: {final_error:.4f}")
+
+   np.testing.assert_allclose(final_balance.loc[years], data.loc[years, "pb"], rtol=0, atol=1e-8)
+   np.testing.assert_allclose(reconciled.loc[2030, "exp"], 37, rtol=0, atol=1e-8)
+   pd.testing.assert_frame_equal(reconciled.loc[:2024], data.loc[:2024])
+   pd.testing.assert_series_equal(reconciled["pb"], data["pb"])
+
+.. code-block:: text
+
+   Largest first-step balance error: 1.9161
+   Largest reconciled balance error: 0.0000
+
+Errors are in percentage points of GDP. The assertions check both constraints
+within numerical tolerance and confirm that historical values and the supplied
+primary-balance path are unchanged.
+
+Reproduce the figure
+^^^^^^^^^^^^^^^^^^^^
+
+The complete :download:`reproduction script <../../paper/reproduce_figures.py>`
+uses the same data and model, includes the plotting code, and saves the figure,
+forecast values, and dependency versions. From the repository root, run:
+
+.. code-block:: console
+
+   python paper/reproduce_figures.py --example fiscal
+
+The outputs appear in ``build/paper-figures/``. See the
+:download:`reproduction instructions <../../paper/README.md>` for details.
+To refresh the documentation image after regenerating the figure, copy
+``build/paper-figures/fiscal_forecasts.png`` to
+``docs/source/_static/fiscal_forecasts.png``.
+
+
+.. _external-forecasts:
+
+Advanced: reconcile externally supplied forecasts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use the reconciliation step without fitting an ``MFF`` model. For
+example, the GDP forecasts below might come from another model or from expert
+judgment. This block runs independently of the examples above and includes
+all imports and inputs.
+
+.. code-block:: python
+
+   import numpy as np
+   import pandas as pd
+   from macroframe_forecast.utils import GenSmoothingMatrix, Reconciliation
+
+   # One entry for each (variable, year), in trillions of USD.
+   cells = pd.MultiIndex.from_product([["GDP"], range(2025, 2031)])
+   initial = pd.Series([29.0, 31.5, 33.0, 34.1, 36.8, 39.0], index=cells)
+
+   # Identity weights give each forecast the same weight.
+   weights = pd.DataFrame(np.eye(len(cells)), index=cells, columns=cells)
+   smoothness = pd.Series([100.0], index=[cells])
+   penalty = GenSmoothingMatrix(weights, smoothness)
+
+   # GDP_2030 - 1.04 * GDP_2029 = 0, in matrix form C @ y = d.
+   C = pd.DataFrame([[0.0, 0.0, 0.0, 0.0, -1.04, 1.0]],
+                    index=["terminal_growth"], columns=cells)
+   d = pd.DataFrame([0.0], index=C.index)
+   result = Reconciliation(initial, weights, penalty, C, d)
+
+   comparison = pd.DataFrame({"Supplied": initial, "Reconciled": result.iloc[:, 0]})
+   print(comparison.xs("GDP").round(2).to_string())
+   np.testing.assert_allclose(C.to_numpy() @ result.to_numpy(), d.to_numpy(), rtol=0, atol=1e-8)
+
+.. code-block:: text
+
+         Supplied  Reconciled
+   2025      29.0       30.07
+   2026      31.5       31.65
+   2027      33.0       33.22
+   2028      34.1       34.76
+   2029      36.8       36.27
+   2030      39.0       37.72
+
+Here the weight matrix and smoothing parameter are explicit illustrative
+choices, rather than estimates from backtesting. ``GenSmoothingMatrix`` builds
+the penalty, and ``Reconciliation`` uses that penalty and those weights to
+adjust the supplied forecasts subject to the terminal growth constraint.
+The row and column ordering must agree across the forecast vector, weights,
+penalty, and constraint matrix. Increasing the smoothing parameter places
+more weight on reducing changes in the slope of the forecast path; zero
+removes that penalty.
