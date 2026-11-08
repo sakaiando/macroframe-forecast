@@ -4,6 +4,7 @@
 # its Executive Board, member governments.
 
 import pandas as pd
+from sktime.forecasting.base import BaseForecaster
 
 from .utils import (
     BreakDataFrameIntoTimeSeriesList,
@@ -35,16 +36,20 @@ class MFF_mixed_freqency:
     df_dict : dict[str, pd.DataFrame]
         Dataframes keyed by frequency code, such as ``"Y"`` for annual or
         ``"Q"`` for quarterly observations.
-    forecaster : sktime.forecasting.base.BaseForecaster, optional
-        Forecaster used for the initial forecasts. Defaults to the package's
-        configured default forecaster.
-    constraints_with_wildcard : list[str], optional
+    forecaster : sktime.forecasting.base.BaseForecaster or None, optional
+        Forecaster used for the initial forecasts. Defaults to ``None``, which
+        creates a new package-configured default forecaster for each instance.
+        A supplied forecaster is retained by reference.
+    constraints_with_wildcard : list[str] or None, optional
         Equality constraints written as expressions equal to zero. A ``?``
         wildcard applies the constraint across matching periods. Defaults to
-        an empty list.
-    ineq_constraints_with_wildcard : list[str], optional
+        ``None``, which creates a new empty list for each instance. A supplied
+        list is retained by reference.
+    ineq_constraints_with_wildcard : list[str] or None, optional
         Inequality constraint expressions. This argument is retained in the
-        constructor but is not currently applied by ``fit``.
+        constructor but is not currently applied by ``fit``. Defaults to
+        ``None``, which creates a new empty list for each instance. A supplied
+        list is retained by reference.
 
     Examples
     --------
@@ -69,12 +74,18 @@ class MFF_mixed_freqency:
     """
 
     def __init__(
-        self, df_dict, forecaster=DefaultForecaster(), constraints_with_wildcard=[], ineq_constraints_with_wildcard=[]
+        self,
+        df_dict: dict[str, pd.DataFrame],
+        forecaster: BaseForecaster | None = None,
+        constraints_with_wildcard: list[str] | None = None,
+        ineq_constraints_with_wildcard: list[str] | None = None,
     ):
         self.df_dict = df_dict
-        self.forecaster = forecaster
-        self.constraints_with_wildcard = constraints_with_wildcard
-        self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
+        self.forecaster = DefaultForecaster() if forecaster is None else forecaster
+        self.constraints_with_wildcard = [] if constraints_with_wildcard is None else constraints_with_wildcard
+        self.ineq_constraints_with_wildcard = (
+            [] if ineq_constraints_with_wildcard is None else ineq_constraints_with_wildcard
+        )
 
     def fit(self) -> list[pd.DataFrame]:
         """Fit the forecaster and return reconciled dataframes by frequency.
