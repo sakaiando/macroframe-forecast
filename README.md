@@ -69,6 +69,21 @@ axes[1].legend()
 axes[2].legend()
 ```
 
+# Forecaster training-data retention
+
+Package-default forecasters explicitly use `remember_data=True` on sktime
+versions that support it, preserving training-data retention and update/refit
+behavior for returned fitted models. Supplied forecasters keep their own
+`remember_data` setting, and the original estimator is not modified. The package
+locally silences only sktime's `remember_data` default-change warning while
+constructing and fitting its models, including nested forecasters.
+
+If the warning appears when constructing your own forecaster before passing it
+to the package, it originates outside the package's scope. Setting
+`forecaster.set_config(remember_data=False)` opts out of retention, but can change
+subsequent update/refit behavior; it also cannot undo a constructor warning that
+has already been emitted.
+
 # Reproducing the paper figures
 
 The [self-contained GDP example and figure reproduction instructions](https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/README.md)
