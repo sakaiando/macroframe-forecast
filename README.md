@@ -86,9 +86,8 @@ has already been emitted.
 
 # Reproducing the paper figures
 
-See the [self-contained GDP example](paper/README.md) for instructions to
-generate the paper's GDP forecasting figure, along with forecast values and
-the dependency versions used.
+The [self-contained GDP example and figure reproduction instructions](https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/README.md)
+are maintained on the JOSS submission branch.
 
 # Support and contributions
 
