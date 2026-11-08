@@ -124,12 +124,13 @@ in the same session; it also saves ``gdp_forecasts.png`` in the current director
    US nominal GDP forecasts for 2025-2030. Source: IMF April 2025 World Economic
    Outlook example and package calculations.
 
-The self-contained :download:`reproduction script <../../paper/reproduce_figures.py>`
-generates this figure, saves both forecast stages, and verifies the terminal
-target and preservation of historical observations. From the repository root,
-run ``python paper/reproduce_figures.py``. Outputs are saved in
-``build/paper-figures/``; the
-:download:`reproduction instructions <../../paper/README.md>` describe the files.
+The self-contained `reproduction script
+<https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/reproduce_figures.py>`_
+and `reproduction instructions
+<https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/README.md>`_
+are maintained on the JOSS submission branch, not in this branch. To regenerate
+the figure, check out ``joss_branch`` and run ``python paper/reproduce_figures.py``
+from the repository root. Outputs are saved in ``build/paper-figures/``.
 
 The following fiscal example extends the workflow to constraints linking
 several variables.
@@ -296,17 +297,21 @@ primary-balance path are unchanged.
 Reproduce the figure
 ^^^^^^^^^^^^^^^^^^^^
 
-The complete :download:`reproduction script <../../paper/reproduce_figures.py>`
+The complete `reproduction script
+<https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/reproduce_figures.py>`_
 uses the same data and model, includes the plotting code, and saves the figure,
-forecast values, and dependency versions. From the repository root, run:
+forecast values, and dependency versions. The script and
+`reproduction instructions
+<https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/README.md>`_
+are maintained on the JOSS submission branch, not in this branch. To regenerate
+the figure, check out ``joss_branch`` and from the repository root run:
 
 .. code-block:: console
 
    python paper/reproduce_figures.py --example fiscal
 
-The outputs appear in ``build/paper-figures/``. See the
-:download:`reproduction instructions <../../paper/README.md>` for details.
-To refresh the documentation image after regenerating the figure, copy
+The outputs appear in ``build/paper-figures/``. To refresh the documentation
+image after regenerating the figure, copy
 ``build/paper-figures/fiscal_forecasts.png`` to
 ``docs/source/_static/fiscal_forecasts.png``.
 
