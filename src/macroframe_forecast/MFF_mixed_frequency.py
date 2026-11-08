@@ -3,6 +3,8 @@
 # should not be reported as representing the views of the IMF,
 # its Executive Board, member governments.
 
+from typing import Literal, cast
+
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 
@@ -107,11 +109,11 @@ class MFF_mixed_freqency:
         freq_order = ["Y", "Q", "M", "W", "D", "H", "T", "S"]
         lowest_freq = freq_order[min([freq_order.index(k) for k in df_dict.keys()])]
 
-        df0_list = []
-        all_cells_list = []
-        unknown_cells_list = []
-        known_cells_list = []
-        islands_list = []
+        df0_list: list[pd.DataFrame] = []
+        all_cells_list: list[pd.Series] = []
+        unknown_cells_list: list[pd.Series] = []
+        known_cells_list: list[pd.Series] = []
+        islands_list: list[pd.Series] = []
         for k in df_dict.keys():
             df0_k, all_cells_k, unknown_cells_k, known_cells_k, islands_k = OrganizeCells(df_dict[k])
             df0_list.append(df0_k)
@@ -120,7 +122,7 @@ class MFF_mixed_freqency:
             known_cells_list.append(known_cells_k)
             islands_list.append(islands_k)
 
-        df0_stacked = ConcatMixFreqMultiIndexSeries([df0.T.stack() for df0 in df0_list], axis=0)
+        df0_stacked = ConcatMixFreqMultiIndexSeries([cast(pd.Series, df0.T.stack()) for df0 in df0_list], axis=0)
         all_cells = pd.concat(all_cells_list, axis=0)
         unknown_cells = pd.concat(unknown_cells_list, axis=0)
         known_cells = pd.concat(known_cells_list, axis=0)
@@ -133,15 +135,17 @@ class MFF_mixed_freqency:
         df0wide_colflat_list = []
         for df in df0_list:
             df0 = df.copy()  # don't want to change df0_list
-            df0_freq = df0.index.freqstr[0]
+            # Mixed-frequency inputs use PeriodIndex, as documented by the API.
+            df0_index = cast(pd.PeriodIndex, df0.index)
+            df0_freq = cast(Literal["Y", "Q", "M", "W", "D", "H", "T", "S"], df0_index.freqstr[0])
 
             if df0_freq == lowest_freq:
                 df0wide_freq = df0.copy()
                 df0wide_colfat_freq = pd.Series(df0wide_freq.columns, index=df0wide_freq.columns)
 
             else:
-                index_freq = df0.index.asfreq(lowest_freq)
-                col_freq = df0_freq + get_freq_of_freq(df0.index, df0_freq).astype(str)
+                index_freq = df0_index.asfreq(lowest_freq)
+                col_freq = df0_freq + get_freq_of_freq(df0_index, df0_freq).astype(str)
                 df0.index = pd.MultiIndex.from_arrays([index_freq, col_freq])
                 df0wide_freq = df0.unstack()
                 df0wide_colfat_freq = pd.Series(df0wide_freq.columns.map("_".join), index=df0wide_freq.columns)
@@ -162,7 +166,7 @@ class MFF_mixed_freqency:
         # get df1_list by breaking wide dataframe into different frequencies
         df1_list = []
         for df0i, df0 in enumerate(df0_list):
-            if df0.index.freqstr[0] == lowest_freq:
+            if cast(pd.PeriodIndex, df0.index).freqstr[0] == lowest_freq:
                 df1_freq = df0.copy()
                 df1_freq.update(df1wide.loc[:, df0wide_colflat_list[df0i].values])
             else:
@@ -178,31 +182,33 @@ class MFF_mixed_freqency:
         pred_allfreq = []
         true_allfreq = []
         for df0i, df0 in enumerate(df0_list):
+            df0_index = cast(pd.PeriodIndex, df0.index)
             # get nan cells
             df0wide_freq = df0wide_list[df0i].copy()
             df0wide_freq.columns = df0wide_colflat_list[df0i].values
             na_cells = _get_missing_cells(df0wide_freq)
 
             # slice predwide
-            pred_freq = predwide.loc[:, na_cells]
-            true_freq = truewide.loc[:, na_cells]
+            # pandas accepts MultiIndex column selectors; these stubs do not.
+            pred_freq = predwide.loc[:, na_cells]  # pyright: ignore[reportCallIssue, reportArgumentType]
+            true_freq = truewide.loc[:, na_cells]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
-            if df0.index.freqstr[0] != lowest_freq:
+            if df0_index.freqstr[0] != lowest_freq:
                 # reshape colname multiindex of (var_freq,lowestfreq) to var_lowestfreqfreq
                 colflat = pred_freq.columns
                 var_list = [v[: v.rfind("_")] for v in colflat.get_level_values(0)]
                 freq_list = [v[v.rfind("_") + 1 :] for v in colflat.get_level_values(0)]
                 lowest_freq_list = colflat.get_level_values(-1).astype(str)
                 original_time = pd.PeriodIndex(
-                    [lowest_freq_list[i] + freq_list[i] for i in range(len(colflat))], freq=df0.index.freq
+                    [lowest_freq_list[i] + freq_list[i] for i in range(len(colflat))], freq=df0_index.freq
                 )
                 pred_freq_colname = pd.MultiIndex.from_arrays([var_list, original_time])
                 pred_freq.columns = pred_freq_colname
                 true_freq.columns = pred_freq_colname
 
             # change col order
-            pred_freq = pred_freq.loc[:, _get_missing_cells(df0)]
-            true_freq = true_freq.loc[:, pred_freq.columns]
+            pred_freq = pred_freq.loc[:, _get_missing_cells(df0)]  # pyright: ignore[reportCallIssue, reportArgumentType]
+            true_freq = true_freq.loc[:, pred_freq.columns]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
             # append pred, true for each frequency
             pred_allfreq.append(pred_freq)

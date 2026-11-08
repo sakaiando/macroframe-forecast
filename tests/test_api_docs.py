@@ -1,5 +1,7 @@
 """Regression checks for the documented constraint syntax."""
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -14,7 +16,7 @@ def test_expression_only_inequality_constraints():
         index=pd.period_range("2020", periods=3, freq="Y"),
     )
     df0, all_cells, unknown_cells, known_cells, _ = OrganizeCells(df)
-    stacked = df0.T.stack(future_stack=True)
+    stacked = cast(pd.Series, df0.T.stack(future_stack=True))
 
     coefficients, bounds = StringToMatrixConstraints(
         stacked, all_cells, unknown_cells, known_cells, ["a? - 5"]

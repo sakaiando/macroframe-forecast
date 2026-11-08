@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import warnings
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -94,7 +95,7 @@ def test_supplied_forecaster_config_and_predictions_are_preserved(forecast_data,
             forecast_data, forecaster, n_forecast_error=2, parallelize=False
         )
 
-    pd.testing.assert_series_equal(prediction, reference.predict())
+    pd.testing.assert_series_equal(prediction, cast(pd.Series, reference.predict()))
     assert forecaster.get_config() == original_config
     assert not forecaster.is_fitted
     assert fitted is not forecaster
@@ -111,7 +112,7 @@ def test_supplied_forecaster_config_and_predictions_are_preserved(forecast_data,
             warnings.filterwarnings("ignore", REMEMBER_DATA_WARNING, FutureWarning)
             fitted.update(new_data)
             reference.update(new_data)
-            pd.testing.assert_series_equal(fitted.predict(), reference.predict())
+            pd.testing.assert_series_equal(cast(pd.Series, fitted.predict()), cast(pd.Series, reference.predict()))
 
 
 def test_unrelated_future_warnings_are_not_silenced(forecast_data, monkeypatch):

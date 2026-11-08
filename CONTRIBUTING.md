@@ -50,6 +50,35 @@ Run the complete test suite, including slow tests, with:
 pytest -m ""
 ```
 
+### Static type checking
+
+CI runs Pyright in **basic** mode on Python 3.11 and 3.12. The checked scope is
+the entire production package in `src` (including executable examples), all
+tracked tests in `tests`, and the documentation configuration
+`docs/source/conf.py`. Notebooks and Python snippets embedded in Markdown/RST
+are not static-check inputs; the documentation tests execute those snippets.
+No production modules or diagnostic categories are excluded.
+
+Use a dedicated virtual environment with the same typing dependency group as
+CI (install [uv](https://docs.astral.sh/uv/getting-started/installation/) first):
+
+```shell
+uv venv --python 3.12
+uv pip install -e . --group typing pytest sphinx numpydoc
+.venv/bin/python -m pyright --pythonpath .venv/bin/python
+```
+
+The `typing` group pins Pyright (with a bundled Node.js runtime), pandas and
+its matching stubs, NumPy, and sktime for repeatable diagnostics without
+changing the package's runtime dependency bounds. Other runtime dependencies
+are resolved from those bounds, as in the test jobs. Pyright uses Python 3.11
+syntax compatibility for both supported interpreter versions. Third-party
+packages without complete stubs remain checked using their available types.
+Narrow inline exceptions document gaps in third-party annotations, including
+pandas indexers/object-dtype cells and sktime's sequential backend and legacy
+import paths. Casts describe existing dataframe shapes and documented input
+types; they do not convert data or introduce new runtime validation.
+
 ### Coverage reporting
 
 Install the coverage plugin and run the full suite with coverage from the

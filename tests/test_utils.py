@@ -112,7 +112,8 @@ def test_get_freq_of_freq_quarterly():
     years = [2000, 2000, 2001]
     quarters = [1, 2, 4]
 
-    test_index = PeriodIndex.from_fields(year=years, quarter=quarters)
+    # pandas-stubs omits the supported from_fields constructor.
+    test_index = PeriodIndex.from_fields(year=years, quarter=quarters)  # pyright: ignore[reportAttributeAccessIssue]
 
     assert get_freq_of_freq(test_index, "Y").equals(Index(years, dtype="int64"))
     assert get_freq_of_freq(test_index, "Q").equals(Index(quarters, dtype="int64"))
@@ -126,7 +127,7 @@ def test_get_freq_of_freq_datetime():
     minutes = [5, 10, 30]
     seconds = [1, 4, 5]
 
-    test_index_2 = PeriodIndex.from_fields(
+    test_index_2 = PeriodIndex.from_fields(  # pyright: ignore[reportAttributeAccessIssue]
         year=years, month=months, day=days, hour=hours, minute=minutes, second=seconds, freq="s"
     )
     assert get_freq_of_freq(test_index_2, "M").equals(Index(months, dtype="int64"))

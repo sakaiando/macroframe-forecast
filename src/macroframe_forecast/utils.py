@@ -6,18 +6,19 @@
 import copy
 import re
 import warnings
+from collections.abc import Hashable, Iterable
 from contextlib import contextmanager
 from random import sample, seed
 from string import ascii_lowercase
 from time import time
-from typing import Literal
+from typing import Literal, cast, overload
 
 import cvxpy as cp
 import numpy as np
 import pandas as pd
 import scipy
 import sympy as sp
-from dask.distributed import Client
+from dask.distributed import Client, Future
 from numpy import ndarray
 from numpy.linalg import inv
 from pandas import DataFrame, Index, PeriodIndex, Series
@@ -36,8 +37,10 @@ from sktime.forecasting.compose import (
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingGreedySplitter
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.feature_selection import FeatureSelection
+
+# sktime 1.x exposes these legacy paths as runtime aliases, invisible to Pyright.
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor  # pyright: ignore[reportMissingImports]
+from sktime.transformations.series.feature_selection import FeatureSelection  # pyright: ignore[reportMissingImports]
 
 
 @contextmanager
@@ -221,7 +224,7 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
                     "ols_pca",
                 ]
             },
-            backend=None,
+            backend=None,  # pyright: ignore[reportArgumentType] # sktime accepts None for sequential execution.
         )
 
     else:
@@ -270,15 +273,16 @@ def CleanIslands(df: DataFrame) -> tuple[DataFrame, Series]:
     coli_list = [df_no_islands.columns.get_loc(col) for col in col_with_islands]
     for coli in coli_list:  # for col with na
         first_na_index = np.argwhere(df.iloc[:, coli].isna()).min()
-        df_no_islands.iloc[first_na_index:, coli] = np.nan
+        df_no_islands.iloc[first_na_index:, coli] = np.nan  # pyright: ignore[reportArgumentType] # pandas supports get_loc indexers.
 
-    islands: Series = df.T.stack(future_stack=True).reindex(_get_missing_cells(df_no_islands)).dropna()
+    # Stacking a frame with single-level axes produces a Series.
+    islands = cast(Series, df.T.stack(future_stack=True)).reindex(_get_missing_cells(df_no_islands)).dropna()
     return df_no_islands, islands
 
 
 def _get_missing_cells(df: DataFrame) -> pd.MultiIndex:
-    missing = df.isna().T.stack(future_stack=True)
-    return missing[missing].index
+    missing = cast(Series, df.isna().T.stack(future_stack=True))
+    return cast(pd.MultiIndex, missing[missing].index)
 
 
 def OrganizeCells(df: DataFrame) -> tuple[DataFrame, Series, Series, Series, Series]:
@@ -377,15 +381,15 @@ def find_permissible_wildcard(constraints_with_wildcard: list[str], _seed: int =
     return alphabet_wildcard
 
 
-def find_strings_to_replace_wildcard(constraint: str, var_list: Series, wildcard: str) -> list[str]:
+def find_strings_to_replace_wildcard(constraint: str, var_list: Iterable[str], wildcard: str) -> list[str]:
     """Find suffixes shared by variables that match a wildcard constraint.
 
     Parameters
     ----------
     constraint : str
         One constraint expression containing the temporary wildcard marker.
-    var_list : pd.Series
-        Series of variable-and-period labels, such as ``"GDP_2030"``.
+    var_list : iterable[str]
+        Variable-and-period labels, such as ``"GDP_2030"``.
     wildcard : str
         Temporary marker replacing the user's wildcard in ``constraint``.
 
@@ -419,7 +423,7 @@ def find_strings_to_replace_wildcard(constraint: str, var_list: Series, wildcard
     return missing_string_list
 
 
-def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Series, wildcard: str):
+def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Iterable[str], wildcard: str):
     """
     Expand constraints with wildcard to all possible time periods. This is
     called within ``StringToMatrixConstraints``, and the wildcard character
@@ -431,8 +435,8 @@ def expand_wildcard(constraints_with_alphabet_wildcard: list[str], var_list: Ser
     constraints_with_alphabet_wildcard : list[str]
         Linear equality constraints with wildcard string replaced
         with alphabets.
-    var_list : pd.Series
-        Series of names for all cells (known and unknown) in the dataframe.
+    var_list : iterable[str]
+        Names for all cells (known and unknown) in the dataframe.
     wildcard : string
         Alphabet which has replaced wildcard string in the constraints.
 
@@ -613,7 +617,7 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
 
 @_silence_remember_data_warning()
 def FillAnEmptyCell(
-    df: DataFrame, row: int | str, col: int | str, forecaster: BaseForecaster
+    df: DataFrame, row: Hashable, col: int | str, forecaster: BaseForecaster
 ) -> tuple[Series, BaseForecaster]:
     """
     Generate a forecast for a given cell based on the latest known value
@@ -625,7 +629,7 @@ def FillAnEmptyCell(
     df : pd.DataFrame
         Dataframe containing known values of all variables and nan for
         unknown values.
-    row : int or str
+    row : hashable
         Row index of cell to be forecasted.
     col : int or str
         Column index of cell to be forecasted.
@@ -732,7 +736,7 @@ def FillAllEmptyCells(
     """
 
     # get indices of all np.nan cells
-    na_cells = [(df.index[rowi], df.columns[coli]) for rowi, coli in np.argwhere(df.isna())]
+    na_cells = [(cast(Hashable, df.index[rowi]), df.columns[coli]) for rowi, coli in np.argwhere(df.isna())]
 
     # apply dask
     if parallelize:
@@ -741,7 +745,8 @@ def FillAllEmptyCells(
         df_future = client.scatter(df, broadcast=True)
         forecaster_future = client.scatter(forecaster, broadcast=True)
         futures = [client.submit(FillAnEmptyCell, df_future, row, col, forecaster_future) for (row, col) in na_cells]
-        results = client.gather(futures)
+        # Client is synchronous here; Dask's annotation also includes async clients.
+        results = cast(list[tuple[Series, BaseForecaster]], client.gather(futures))
         client.close()
         print("Dask filled", len(results), "out-of-sample cells:", round(time() - start, 3), "seconds")
 
@@ -754,8 +759,9 @@ def FillAllEmptyCells(
     df1 = df.copy()
     df1_models = df.copy().astype(object)
     for idx, rowcol in enumerate(na_cells):
-        df1.loc[rowcol] = results[idx][0].iloc[0]
-        df1_models.loc[rowcol] = results[idx][1]
+        df1.loc[rowcol] = results[idx][0].iloc[0]  # pyright: ignore[reportCallIssue, reportArgumentType] # pandas accepts hashable row labels.
+        # Object-dtype model frames intentionally store forecaster instances.
+        df1_models.loc[rowcol] = results[idx][1]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
     return df1, df1_models
 
@@ -827,12 +833,12 @@ def GenPredTrueData(
     if parallelize:
         start = time()
         client = Client()
-        df_futures = client.scatter(df_list, broadcast=True)
+        df_futures = cast(list[Future], client.scatter(df_list, broadcast=True))
         forecaster_future = client.scatter(forecaster, broadcast=True)
         futures = [
             client.submit(FillAnEmptyCell, df_futures[dfi], row, col, forecaster_future) for (dfi, row, col) in tasks
         ]
-        results = client.gather(futures)
+        results = cast(list[tuple[Series, BaseForecaster]], client.gather(futures))
         client.close()
         print("Dask filled", len(results), "in-sample cells:", round(time() - start, 3), "seconds")
     else:
@@ -846,7 +852,7 @@ def GenPredTrueData(
     for task_idx, task in enumerate(tasks):
         dfi, row, col = task
         filled_list[dfi].loc[row, col] = results[task_idx][0].iloc[0]
-        model_list[dfi].loc[row, col] = results[task_idx][1]
+        model_list[dfi].loc[row, col] = results[task_idx][1]  # pyright: ignore[reportCallIssue, reportArgumentType] # Object-dtype model frame.
 
     # reduce n samples into a dataframe
     colname = _get_missing_cells(df)
@@ -875,7 +881,7 @@ def GenPredTrueData(
 
 def BreakDataFrameIntoTimeSeriesList(
     df0: DataFrame, df1: DataFrame, pred: DataFrame, true: DataFrame
-) -> tuple[list[DataFrame], list[DataFrame], list[DataFrame]]:
+) -> tuple[list[Series], list[DataFrame], list[DataFrame]]:
     """Transform relevant dataframes into lists for ensuing reconciliation step.
 
     Parameters
@@ -894,7 +900,7 @@ def BreakDataFrameIntoTimeSeriesList(
 
     Returns
     -------
-    ts_list : list
+    ts_list : list[pd.Series]
         List containing all first step out of sample forecasts.
     pred_list : list
         List of dataframes, with each dataframe containing in-sample forecasts
@@ -931,9 +937,12 @@ def BreakDataFrameIntoTimeSeriesList(
     Fill 6 in-sample cells: ... seconds
     >>> ts_list, pred_list, true_list = BreakDataFrameIntoTimeSeriesList(df0, df1, pred, true)
     """
-    ts_list = [df1[df0.isna()].loc[:, col:col].dropna().T.stack() for col in df0.columns[df0.isna().any()]]
-    pred_list = [pred.loc[:, ts.index] for ts in ts_list]
-    true_list = [true.loc[:, ts.index] for ts in ts_list]
+    ts_list = [
+        cast(Series, df1[df0.isna()].loc[:, col:col].dropna().T.stack())
+        for col in df0.columns[df0.isna().any()]
+    ]
+    pred_list = [pred.loc[:, ts.index] for ts in ts_list]  # pyright: ignore[reportCallIssue, reportArgumentType] # pandas accepts MultiIndex column selectors.
+    true_list = [true.loc[:, ts.index] for ts in ts_list]  # pyright: ignore[reportCallIssue, reportArgumentType]
 
     return ts_list, pred_list, true_list
 
@@ -979,12 +988,12 @@ def HP_matrix(size: int) -> ndarray:
     return F
 
 
-def GenVecForecastWithIslands(ts_list: list[DataFrame], islands: list[Series]) -> Series:
+def GenVecForecastWithIslands(ts_list: list[Series], islands: Series) -> Series:
     """Overwrite forecasted values for islands with known island value.
 
     Parameters
     ----------
-    ts_list : list
+    ts_list : list[pd.Series]
         List of all first step forecasted values.
     islands : pd.Series
         Series containing island values.
@@ -1271,8 +1280,8 @@ def GenSmoothingMatrix(W: DataFrame, lamstar: Series) -> DataFrame:
 
     """
     lam = lamstar / [np.diag(W.loc[tsidx, tsidx]).min() for tsidx in lamstar.index]
-    Phi_np = block_diag(*[lam.iloc[tsidxi] * HP_matrix(len(tsidx)) for tsidxi, tsidx in enumerate(lam.index)])
-    Phi = pd.DataFrame(Phi_np, index=W.index, columns=W.columns)
+    Phi_np = block_diag(*[lam.iloc[tsidxi] * HP_matrix(len(cast(Index, tsidx))) for tsidxi, tsidx in enumerate(lam.index)])
+    Phi = pd.DataFrame(cast(ndarray, Phi_np), index=W.index, columns=W.columns)
     return Phi
 
 
@@ -1335,7 +1344,7 @@ def Reconciliation(
     assert (y1.index == C.columns).all()
     assert (C.index == d.index).all()
 
-    def DropLinDepRows(C_aug, d_aug):
+    def DropLinDepRows(C_aug: DataFrame, d_aug: DataFrame) -> tuple[DataFrame, DataFrame]:
         # Convert the DataFrame to a numpy array
         C = C_aug.to_numpy()
 
@@ -1366,7 +1375,7 @@ def Reconciliation(
                 C_aug.index[dropped],
             )
 
-        return C_aug.iloc[independent, :], d_aug.iloc[independent, :]
+        return cast(DataFrame, C_aug.iloc[independent, :]), cast(DataFrame, d_aug.iloc[independent, :])
 
     # keep lin indep rows
     C, d = DropLinDepRows(C, d)
@@ -1379,10 +1388,12 @@ def Reconciliation(
     CdC_inv = inv(Cn @ denom @ Cn.T)  # removing linearly dependent rows to use inv doesn't change results much
 
     In = np.eye(len(y1))
-    y1n = y1.values.reshape(-1, 1)
+    y1n = cast(ndarray, y1.values).reshape(-1, 1)
     y2n = (In - denom @ Cn.T @ CdC_inv @ Cn) @ denom @ W_inv @ y1n + denom @ Cn.T @ CdC_inv @ dn
 
     if C_ineq is not None and C_ineq.shape[0] > 0:
+        # Callers supply both inequality matrices together.
+        d_ineq = cast(DataFrame, d_ineq)
         C_ineq, d_ineq = DropLinDepRows(C_ineq, d_ineq)
 
         # augment C_ineq, d_ineq to be compatible with y1
@@ -1454,7 +1465,7 @@ def get_freq_of_freq(periodindex: PeriodIndex, freqstr: Literal["Y", "Q", "M", "
     if freqstr == "M":
         return periodindex.month
     if freqstr == "W":
-        return periodindex.week
+        return periodindex.week  # pyright: ignore[reportAttributeAccessIssue] # pandas-stubs omits PeriodIndex.week.
     if freqstr == "D":
         return periodindex.day
     if freqstr == "H":
@@ -1465,7 +1476,17 @@ def get_freq_of_freq(periodindex: PeriodIndex, freqstr: Literal["Y", "Q", "M", "
         return periodindex.second
 
 
-def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: int) -> DataFrame:
+@overload
+def ConcatMixFreqMultiIndexSeries(df_list: list[Series], axis: Literal[0]) -> Series: ...
+
+
+@overload
+def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: Literal[0, 1]) -> DataFrame: ...
+
+
+def ConcatMixFreqMultiIndexSeries(
+    df_list: list[DataFrame] | list[Series], axis: Literal[0, 1]
+) -> DataFrame | Series:
     """Concatenate frames whose MultiIndex contains mixed period frequencies.
 
     First attempts ordinary pandas concatenation. If pandas cannot combine the
@@ -1474,16 +1495,17 @@ def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: int) -> DataFr
 
     Parameters
     ----------
-    df_list : list[pd.DataFrame]
-        Frames to concatenate. The concatenated axis must use a MultiIndex
-        whose second level contains ``Period`` values.
+    df_list : list[pd.DataFrame] or list[pd.Series]
+        Frames or series to concatenate. Series support row-wise concatenation.
+        The concatenated axis must use a MultiIndex whose second level contains
+        ``Period`` values.
     axis : {0, 1}
         Concatenation axis: ``0`` for rows or ``1`` for columns.
 
     Returns
     -------
-    pd.DataFrame
-        The concatenated frames.
+    pd.DataFrame or pd.Series
+        The concatenated frames or series, preserving the input container type.
 
     Examples
     --------
@@ -1500,12 +1522,12 @@ def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: int) -> DataFr
     except Exception:
         if axis == 0:
             # concat by freq
-            freqs = [df.index.get_level_values(1).freqstr[0] for df in df_list]
+            freqs = [cast(PeriodIndex, df.index.get_level_values(1)).freqstr[0] for df in df_list]
             seen = set()
             freq_unique = [x for x in freqs if not (x in seen or seen.add(x))]
             dflong_list = []
             for k in freq_unique:
-                df_list_k = [df for df in df_list if df.index.get_level_values(1).freqstr[0] == k]
+                df_list_k = [df for df in df_list if cast(PeriodIndex, df.index.get_level_values(1)).freqstr[0] == k]
                 dflong_k = pd.concat(df_list_k, axis=0)
                 dflong_list.append(dflong_k)
 
@@ -1513,13 +1535,14 @@ def ConcatMixFreqMultiIndexSeries(df_list: list[DataFrame], axis: int) -> DataFr
             return dflong
 
         if axis == 1:
+            frames = cast(list[DataFrame], df_list)
             # concat by freq
-            freqs = [df.columns.get_level_values(1).freqstr[0] for df in df_list]
+            freqs = [cast(PeriodIndex, df.columns.get_level_values(1)).freqstr[0] for df in frames]
             seen = set()
             freq_unique = [x for x in freqs if not (x in seen or seen.add(x))]
             dfwide_list = []
             for k in freq_unique:
-                df_list_k = [df for df in df_list if df.columns.get_level_values(1).freqstr[0] == k]
+                df_list_k = [df for df in frames if cast(PeriodIndex, df.columns.get_level_values(1)).freqstr[0] == k]
                 dfwide_k = pd.concat(df_list_k, axis=1)
                 dfwide_list.append(dfwide_k)
 

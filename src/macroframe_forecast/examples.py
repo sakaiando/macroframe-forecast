@@ -5,10 +5,12 @@
 
 
 from string import ascii_uppercase
+from typing import cast
 from pandas import DataFrame
 import numpy as np
 import pandas as pd
 from sktime.datasets import load_macroeconomic
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 
 from macroframe_forecast import MFF, MFF_mixed_freqency
 
@@ -46,7 +48,8 @@ def example1():  # no constraints
     print("smoothness", smoothness.values)
     print("shrinkage", np.round(shrinkage, 3))
     for ri, ci in np.argwhere(df.isna()):
-        print(df1_model.index[ri], df1_model.columns[ci], df1_model.iloc[ri, ci].best_params_)
+        model = cast(ForecastingGridSearchCV, df1_model.iloc[ri, ci])
+        print(df1_model.index[ri], df1_model.columns[ci], model.best_params_)
 
 
 # example 2: with constraints
@@ -80,7 +83,8 @@ def example2():
     # TODO: delete, the assignment below, if not needed
     W = m.W  # noqa: F841
     for ri, ci in np.argwhere(df.isna()):
-        print(df1_model.index[ri], df1_model.columns[ci], df1_model.iloc[ri, ci].best_params_)
+        model = cast(ForecastingGridSearchCV, df1_model.iloc[ri, ci])
+        print(df1_model.index[ri], df1_model.columns[ci], model.best_params_)
 
     import matplotlib.pyplot as plt
 
@@ -124,7 +128,7 @@ def example3():
         index=pd.period_range(start="2000-1-1", periods=n, freq="Q"),
     )
     dfQ_true.iloc[:, -1] = dfQ_true.iloc[:, :-1].sum(axis=1)
-    dfA_true = dfQ_true.groupby(dfQ_true.index.year).sum()
+    dfA_true = dfQ_true.groupby(cast(pd.PeriodIndex, dfQ_true.index).year).sum()
     dfA_true.index = pd.PeriodIndex(dfA_true.index, freq="Y")
 
     dfA = dfA_true.copy()

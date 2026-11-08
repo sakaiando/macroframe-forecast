@@ -51,6 +51,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
+typing = [
+    "pyright[nodejs]==1.1.414",
+    "pandas==2.2.3",
+    "pandas-stubs==2.2.3.250308",
+    "numpy==2.2.6",
+    "sktime==1.2.0",
+]
 dev = [
     "furo>=2024.8.6",
     "numpydoc>=1.9.0",
@@ -60,6 +67,11 @@ dev = [
     "ruff>=0.11.13",
     "sphinx>=8.2.3",
 ]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+include = ["src", "tests", "docs/source/conf.py"]
+pythonVersion = "3.11"
 
 [tool.pytest.ini_options]
 addopts = [

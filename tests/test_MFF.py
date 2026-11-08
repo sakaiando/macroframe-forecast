@@ -5,6 +5,7 @@
 
 
 from string import ascii_uppercase
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ def test_add_islands_to_constraints_with_mixed_index_types():
     assert list(augmented.index) == [("B0", 2000), "A0_2001-B0_2000"]
     assert augmented.at[("B0", 2000), ("B0", 2000)] == 1
     assert augmented_rhs.at[("B0", 2000), 0] == 2
-    assert augmented.loc["A0_2001-B0_2000"].equals(constraints.loc["A0_2001-B0_2000"])
+    assert augmented.loc["A0_2001-B0_2000"].equals(cast(pd.Series, constraints.loc["A0_2001-B0_2000"]))
 
 
 def test_mixed_frequency_reconciles_annual_quarterly_identity():
@@ -36,7 +37,7 @@ def test_mixed_frequency_reconciles_annual_quarterly_identity():
 
     quarters = pd.period_range("2000Q1", periods=48, freq="Q")
     quarterly_true = pd.DataFrame({"a": np.arange(1, 49, dtype=float) ** 2}, index=quarters)
-    annual_true = quarterly_true.groupby(quarterly_true.index.asfreq("Y")).sum()
+    annual_true = quarterly_true.groupby(cast(pd.PeriodIndex, quarterly_true.index).asfreq("Y")).sum()
     quarterly = quarterly_true.copy()
     annual = annual_true.copy()
     quarterly.iloc[-8:] = np.nan
@@ -57,7 +58,7 @@ def test_mixed_frequency_reconciles_annual_quarterly_identity():
     assert quarterly_result.notna().all().all()
     pd.testing.assert_frame_equal(annual_result.iloc[:-3], annual.iloc[:-3])
     pd.testing.assert_frame_equal(quarterly_result.iloc[:-8], quarterly.iloc[:-8])
-    quarterly_totals = quarterly_result.groupby(quarterly_result.index.asfreq("Y")).sum()
+    quarterly_totals = quarterly_result.groupby(cast(pd.PeriodIndex, quarterly_result.index).asfreq("Y")).sum()
     np.testing.assert_allclose(annual_result, quarterly_totals, rtol=1e-8, atol=1e-8)
     np.testing.assert_allclose(annual_result.iloc[-3], annual_true.iloc[-3], rtol=1e-8, atol=1e-8)
 
@@ -123,7 +124,7 @@ def test_MFF_mixed_frequency():
         index=pd.period_range(start="2000-1-1", periods=n, freq="Q"),
     )
     dfQ_true.iloc[:, -1] = dfQ_true.iloc[:, :-1].sum(axis=1)
-    dfA_true = dfQ_true.groupby(dfQ_true.index.year).sum()
+    dfA_true = dfQ_true.groupby(cast(pd.PeriodIndex, dfQ_true.index).year).sum()
     dfA_true.index = pd.PeriodIndex(dfA_true.index, freq="Y")
 
     dfA = dfA_true.copy()
@@ -143,7 +144,7 @@ def test_MFF_mixed_frequency():
     assert df2_list[1].index.equals(dfQ.index)
     assert df2_list[0].iloc[-fhA:, :2].notna().all().all()
     assert df2_list[1].iloc[-fhQ:, :2].notna().all().all()
-    assert ~np.isnan(df2_list[0].iloc[-1, 0])
+    assert ~np.isnan(cast(float, df2_list[0].iloc[-1, 0]))
 
 
 @mark.slow
@@ -165,7 +166,7 @@ def test_small_sample_MFF():
     m = MFF(df, equality_constraints=equality_constraints, parallelize=False)
     df2 = m.fit()
 
-    assert ~np.isnan(df2.iloc[-1, 0])
+    assert ~np.isnan(cast(float, df2.iloc[-1, 0]))
 
 
 @mark.slow
@@ -194,7 +195,7 @@ def test_inequality_constraints():
     df2 = m.fit()
     df2.iloc[-1, 0]
 
-    assert (df2.iloc[-1, 0] <= -1) or np.isclose(df2.iloc[-1, 0], -1, atol=1e-12)
+    assert (cast(float, df2.iloc[-1, 0]) <= -1) or np.isclose(cast(float, df2.iloc[-1, 0]), -1, atol=1e-12)
 
 
 @mark.slow
@@ -223,4 +224,4 @@ def test_equality_constraints():
     df2 = m.fit()
     df2.iloc[-1, 0]
 
-    assert round(df2.iloc[-1, 0],2) == -1
+    assert round(cast(float, df2.iloc[-1, 0]), 2) == -1

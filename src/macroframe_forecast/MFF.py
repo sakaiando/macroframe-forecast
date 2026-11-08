@@ -4,7 +4,7 @@
 # its Executive Board, member governments.
 
 
-from typing import Literal
+from typing import Literal, cast
 
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
@@ -137,7 +137,7 @@ class MFF:
         self.inequality_constraints = [] if inequality_constraints is None else inequality_constraints
         self.parallelize = parallelize
         self.n_forecast_error = n_forecast_error
-        self.shrinkage_method = shrinkage_method
+        self.shrinkage_method: Literal["oas", "identity", "oasd", "monotone diagonal"] = shrinkage_method
         self.default_lam = default_lam
         self.max_lam = max_lam
 
@@ -167,10 +167,12 @@ class MFF:
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
         # get constraint matrices
-        C, d = StringToMatrixConstraints(df0.T.stack(), all_cells, unknown_cells, known_cells, equality_constraints)
+        C, d = StringToMatrixConstraints(
+            cast(pd.Series, df0.T.stack()), all_cells, unknown_cells, known_cells, equality_constraints
+        )
         C, d = AddIslandsToConstraints(C, d, islands)
         C_ineq, d_ineq = StringToMatrixConstraints(
-            df0.T.stack(), all_cells, unknown_cells, known_cells, inequality_constraints
+            cast(pd.Series, df0.T.stack()), all_cells, unknown_cells, known_cells, inequality_constraints
         )
 
         # Initiate DefaultForecaster only if a forecaster has not already been defined by the user.
