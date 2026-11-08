@@ -1,0 +1,9 @@
+name: macroframe-forecast
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - jupyterlab
+  - pip
+  - pip:
+      - -e .
