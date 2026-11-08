@@ -26,10 +26,11 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "**.ipynb_checkpoints", "**.ipynb"]
+exclude_patterns = ["_build", "**.ipynb_checkpoints", "**.ipynb", "getting_started/index.rst"]
 
 # generate autosummary even if no references
 autosummary_generate = True
+numpydoc_show_class_members = False
 
 # Members and inherited-members default to showing methods and attributes from a
 # class or those inherited.

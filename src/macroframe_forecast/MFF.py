@@ -4,6 +4,8 @@
 # its Executive Board, member governments.
 
 
+from typing import Literal
+
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 
@@ -23,87 +25,116 @@ from macroframe_forecast.utils import (
     StringToMatrixConstraints,
 )
 
-# %% MFF
-
 
 class MFF:
     """A class for Macro-Framework Forecasting (MFF).
 
-    This class facilitates forecasting of single frequency time series data
-    using a two-step process. First step of the forecasting procedure generates
-    unconstrained forecasts using the forecaster specified. In the next step,
-    these forecasts are then reconclied so that they satisfy the supplied
-    constrants, and smoothness of the forecasts is maintained.
+    Forecast single-frequency time series data by generating initial forecasts
+    and reconciling them to satisfy the supplied constraints while maintaining
+    forecast smoothness.
 
     Parameters
     ----------
     df : pd.DataFrame
-       Input dataframe containing time series data. Data should be in wide
-       format, with each row containing data for one period, and each
-       column containing data for one variable.
+        Input data in wide format, with periods in rows and variables in
+        columns. Missing values indicate cells to forecast.
 
-    forecaster : BaseForecaster, optional(default: None)
-        sktime BaseForecaster descendant. If not defined, then DefaultForecaster
+    forecaster : BaseForecaster, optional
+        An ``sktime`` forecaster. If omitted, the package's default forecaster
         is used.
 
-    constraints_with_wildcard : str, optional(default: None)
-        Constraints that hold with equality. Constraints may include wildcard,
-        in which case constraints will be applied across all horizons, or
-        may be defined for specified time periods.
+    equality_constraints : list[str] or None, optional
+        Linear equality constraints, expressed as strings that equal zero.
+        Use ``?`` as a wildcard to apply a constraint across forecast periods.
+        Defaults to ``None``, which creates a new empty list for each instance.
+        A supplied list is retained by reference.
 
-    ineq_constraints_with_wildcard : str, optional(default: None)
-        Inequality constraints, comparable to ``constraints_with_wildcard``.
-        Constraints may include wildcard, in which case constraints will be
-        applied across all horizons, or may be defined for specified time
-        periods. Constraints should be written in the form of 'C_ineq*y - d_ineq ≤ 0 '. 
+    inequality_constraints : list[str] or None, optional
+        Linear expressions interpreted as less than or equal to zero. Pass
+        only the expression: ``"a? - 5"`` imposes an upper bound of 5 on ``a``.
+        Do not include a comparison operator such as ``<=`` in the string.
+        Use ``?`` as a wildcard to apply a constraint across forecast periods.
+        Defaults to ``None``, which creates a new empty list for each instance.
+        A supplied list is retained by reference.
 
-    parallelize : boolean
-        Indicate whether parallelization should be employed for generating the
-        first step forecasts. Default value is `True`.
+    parallelize : bool, optional
+        Whether to parallelize generation of the initial forecasts. Defaults
+        to ``True``.
 
-    n_forecast_error : int
-        Number of windows to split data into training and testing sets for
-        generating matrix of forecast errors. Default is 5.
+    n_forecast_error : int, optional
+        Number of pseudo-out-of-sample forecast windows used to estimate
+        forecast errors. Defaults to ``5``.
 
-    shrinkage_method : str, optional(default: 'oas')
-        Method to be used for shrinking sample covariance matrix. Default is
-        Oracle Shrinking Approximating Estimator ('oas'). Other options are
-        oas, identity and monotone_diagonal.
+    shrinkage_method : {"oas", "identity", "oasd", "monotone diagonal"}, optional
+        Method used to shrink the sample covariance matrix. Defaults to
+        ``"oas"``.
 
-    default_lam : float, optional(default: -1)
-        The value of lambda to be used for calculating smoothing parameter if
-        frequency of observations cannot be determined from index names. If this
-        is set to -1, lambda is calculated empirically. Default is -1.
+    default_lam : float, optional
+        Smoothing parameter used when observation frequency cannot be inferred
+        from the index. A value of ``-1`` estimates it empirically. Defaults to
+        ``-1``.
 
-    max_lam : float, optional(default: 129600)
-        Maximum value of lamstar to be used for smoothing forecasts when being
-        estimated empirically.
+    max_lam : float, optional
+        Maximum smoothing parameter considered when estimating it empirically.
+        Defaults to ``129600``.
 
-    Returns
-    -------
-    df2 : pd.Dataframe
-        Output dataframe with all reconciled forecasts filled into the original
-        input.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from macroframe_forecast import MFF
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> periods = pd.period_range("2000", periods=20, freq="Y")
+    >>> values = np.random.default_rng(0).normal(size=20)
+    >>> df = pd.DataFrame({"a": values}, index=periods)
+    >>> df.iloc[-2:, 0] = np.nan
+    >>> model = MFF(
+    ...     df,
+    ...     forecaster=NaiveForecaster(strategy="last"),
+    ...     equality_constraints=["a? - 5"],
+    ...     parallelize=False,
+    ...     n_forecast_error=2,
+    ... )
+    >>> forecasts = model.fit()  # doctest: +ELLIPSIS
+    Forecast 2 cells: ... seconds
+    Fill 4 in-sample cells: ... seconds
+    >>> np.allclose(forecasts["a"].iloc[-2:], 5.0)
+    True
 
+    Inequalities use expression-only strings, just like equalities. Here the
+    unconstrained forecasts exceed 5, so the upper bound is binding.
 
+    >>> df["a"] += 10.0
+    >>> model = MFF(
+    ...     df,
+    ...     forecaster=NaiveForecaster(strategy="last"),
+    ...     inequality_constraints=["a? - 5"],
+    ...     parallelize=False,
+    ...     n_forecast_error=2,
+    ... )
+    >>> forecasts = model.fit()  # doctest: +ELLIPSIS
+    Forecast 2 cells: ... seconds
+    Fill 4 in-sample cells: ... seconds
+    >>> np.allclose(forecasts["a"].iloc[-2:], 5.0)
+    True
     """
 
     def __init__(
         self,
         df: pd.DataFrame,
         forecaster: BaseForecaster | None = None,
-        equality_constraints: list[str] = [],
-        inequality_constraints: list[str] = [],
+        equality_constraints: list[str] | None = None,
+        inequality_constraints: list[str] | None = None,
         parallelize: bool = True,
         n_forecast_error: int = 5,
-        shrinkage_method: str = "oas",
+        shrinkage_method: Literal["oas", "identity", "oasd", "monotone diagonal"] = "oas",
         default_lam: float = -1,
         max_lam: float = 129600
     ):
         self.df = df
         self.forecaster = forecaster
-        self.equality_constraints = equality_constraints
-        self.inequality_constraints = inequality_constraints
+        self.equality_constraints = [] if equality_constraints is None else equality_constraints
+        self.inequality_constraints = [] if inequality_constraints is None else inequality_constraints
         self.parallelize = parallelize
         self.n_forecast_error = n_forecast_error
         self.shrinkage_method = shrinkage_method
@@ -113,9 +144,13 @@ class MFF:
     def fit(
         self,
     ) -> pd.DataFrame:
-        """
-        Fits the model and generates reconciled forecasts for the input
-        dataframe subject to defined constraints.
+        """Fit the model and return forecasts reconciled to the defined constraints.
+
+        Returns
+        -------
+        pd.DataFrame
+            A copy of the input data with forecasted values filled in and
+            reconciled to satisfy the constraints.
         """
 
         df = self.df
@@ -131,19 +166,19 @@ class MFF:
         # modify inputs into machine-friendly shape
         df0, all_cells, unknown_cells, known_cells, islands = OrganizeCells(df)
 
-        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
-
-        # Initiate DefaultForecaster only if a forecaster has not already been
-        # defined by the user. Use OLS PCA if small_sample is True, and Grid Search
-        # if false.
-        if forecaster is None:
-            forecaster = DefaultForecaster(small_sample)
-
+        # get constraint matrices
         C, d = StringToMatrixConstraints(df0.T.stack(), all_cells, unknown_cells, known_cells, equality_constraints)
         C, d = AddIslandsToConstraints(C, d, islands)
         C_ineq, d_ineq = StringToMatrixConstraints(
             df0.T.stack(), all_cells, unknown_cells, known_cells, inequality_constraints
         )
+
+        # Initiate DefaultForecaster only if a forecaster has not already been defined by the user.
+        # Use OLS PCA if small_sample is True, and Grid Search if false.
+        small_sample: bool = CheckTrainingSampleSize(df0, n_forecast_error)
+        if forecaster is None:
+            forecaster = DefaultForecaster(small_sample)
+        
         # 1st stage forecast and its model
         df1, df1_model = FillAllEmptyCells(df0, forecaster, parallelize=parallelize)
 
@@ -156,12 +191,10 @@ class MFF:
         # get parts for reconciliation
         y1 = GenVecForecastWithIslands(ts_list, islands)
         W, shrinkage = GenWeightMatrix(pred_list, true_list, shrinkage_method=shrinkage_method)
-
         smoothness = GenLamstar(pred_list, true_list, default_lam=default_lam, max_lam=max_lam)
-        
         Phi = GenSmoothingMatrix(W, smoothness)
 
-        # 2nd stage forecast
+        # 2nd stage reconciled forecast
         y2 = Reconciliation(y1, W, Phi, C, d, C_ineq, d_ineq)
 
         # reshape vector y2 into df2

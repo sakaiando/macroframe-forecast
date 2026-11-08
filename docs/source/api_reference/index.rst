@@ -8,4 +8,5 @@ API Reference
     :maxdepth: 2
 
     main_classes
-    validators
+    utilities
+    example_data

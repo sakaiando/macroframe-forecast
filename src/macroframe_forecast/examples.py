@@ -170,19 +170,22 @@ def example3():
 
 
 def generate_example_GDP_df() -> DataFrame:
-    """Utility function to generate example GDP data for quick demonstration purposes.
+    """Return annual GDP example data with six missing values to forecast.
 
-    Example:
+    Returns
+    -------
+    pd.DataFrame
+        One ``GDP`` column in trillions of US dollars, indexed by integer years
+        from 1950 through 2030. The final six values are missing.
 
-    ```python
-    from macroframe_forecast import MFF
-    from macroframe_forecast.examples import generate_example_GDP_df
-
-    df0 = generate_example_GDP_df()
-    m = MFF(df0, equality_constraints=["GDP_2030 - 1.04 * GDP_2029"])
-    m.fit()
-    ```
-
+    Examples
+    --------
+    >>> from macroframe_forecast.examples import generate_example_GDP_df
+    >>> df = generate_example_GDP_df()
+    >>> df.shape
+    (81, 1)
+    >>> df["GDP"].iloc[-6:].isna().all().item()
+    True
     """
     GDP_data_true = DataFrame(
         {
@@ -371,3 +374,190 @@ def generate_example_GDP_df() -> DataFrame:
     # function.
     GDP_data.iloc[-6:, 0] = np.nan
     return GDP_data
+
+
+def generate_example_fiscal_df() -> DataFrame:
+    """Return the US fiscal data used in the paper example.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Annual observations indexed by year (2001-2030), in percent of GDP.
+        Columns are expenditure (``exp``), revenue (``rev``), interest payments
+        (``int_payments``), and primary balance (``pb``). The first three columns
+        are missing for 2025-2030; primary balance retains its prescribed path.
+        Data are from the April 2025 IMF World Economic Outlook example.
+
+    Examples
+    --------
+    >>> from macroframe_forecast.examples import generate_example_fiscal_df
+    >>> df = generate_example_fiscal_df()
+    >>> bool(df.loc[2025:2030, "exp"].isna().all())
+    True
+    """
+    data = pd.DataFrame(
+        {
+            "year": [
+                2001,
+                2002,
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026,
+                2027,
+                2028,
+                2029,
+                2030,
+            ],
+            "exp": [
+                32.801,
+                33.698,
+                34.037,
+                33.719,
+                33.928,
+                33.692,
+                34.562,
+                37.144,
+                41.399,
+                39.763,
+                38.796,
+                37.223,
+                35.782,
+                35.324,
+                35.031,
+                35.333,
+                35.194,
+                35.349,
+                35.819,
+                44.779,
+                43.218,
+                36.829,
+                37.113,
+                37.593,
+                37.848,
+                38.004,
+                38.107,
+                38.024,
+                37.711,
+                37.862,
+            ],
+            "rev": [
+                32.257,
+                29.877,
+                29.266,
+                29.476,
+                30.853,
+                31.656,
+                31.649,
+                30.532,
+                28.222,
+                28.77,
+                29.08,
+                29.109,
+                31.222,
+                31.298,
+                31.501,
+                30.977,
+                30.4,
+                30.014,
+                30.014,
+                30.631,
+                31.827,
+                33.13,
+                29.949,
+                30.331,
+                31.389,
+                32.514,
+                32.754,
+                32.409,
+                32.222,
+                32.248,
+            ],
+            "int_payments": [
+                3.255,
+                2.892,
+                2.658,
+                2.563,
+                2.704,
+                2.775,
+                2.933,
+                2.776,
+                2.574,
+                2.678,
+                2.88,
+                2.726,
+                2.485,
+                2.474,
+                2.341,
+                2.49,
+                2.522,
+                2.769,
+                2.817,
+                2.537,
+                2.669,
+                3.137,
+                3.6,
+                4.195,
+                4.301,
+                4.427,
+                4.451,
+                4.37,
+                4.353,
+                4.29,
+            ],
+            "pb": [
+                2.711,
+                -0.929,
+                -2.113,
+                -1.681,
+                -0.371,
+                0.739,
+                0.02,
+                -3.836,
+                -10.603,
+                -8.315,
+                -6.836,
+                -5.387,
+                -2.076,
+                -1.552,
+                -1.189,
+                -1.867,
+                -2.272,
+                -2.566,
+                -2.988,
+                -11.61,
+                -8.721,
+                -0.561,
+                -3.564,
+                -3.067,
+                -2.158,
+                -1.063,
+                -0.902,
+                -1.246,
+                -1.136,
+                -1.324,
+            ],
+        }
+    ).set_index("year")
+    data.loc[2025:2030, ["exp", "rev", "int_payments"]] = np.nan
+    return data

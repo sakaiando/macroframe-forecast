@@ -4,6 +4,7 @@
 # its Executive Board, member governments.
 
 import pandas as pd
+from sktime.forecasting.base import BaseForecaster
 
 from .utils import (
     BreakDataFrameIntoTimeSeriesList,
@@ -18,22 +19,84 @@ from .utils import (
     OrganizeCells,
     Reconciliation,
     StringToMatrixConstraints,
+    _get_missing_cells,
     get_freq_of_freq,
 )
 
-# %%
-
 
 class MFF_mixed_freqency:
+    """Forecast and reconcile time series supplied at multiple frequencies.
+
+    The input mapping associates frequency codes with wide dataframes indexed
+    by ``PeriodIndex``. The ``fit`` method forecasts missing values and applies
+    the supplied equality constraints across the frequencies.
+
+    Parameters
+    ----------
+    df_dict : dict[str, pd.DataFrame]
+        Dataframes keyed by frequency code, such as ``"Y"`` for annual or
+        ``"Q"`` for quarterly observations.
+    forecaster : sktime.forecasting.base.BaseForecaster or None, optional
+        Forecaster used for the initial forecasts. Defaults to ``None``, which
+        creates a new package-configured default forecaster for each instance.
+        A supplied forecaster is retained by reference.
+    constraints_with_wildcard : list[str] or None, optional
+        Equality constraints written as expressions equal to zero. A ``?``
+        wildcard applies the constraint across matching periods. Defaults to
+        ``None``, which creates a new empty list for each instance. A supplied
+        list is retained by reference.
+    ineq_constraints_with_wildcard : list[str] or None, optional
+        Inequality constraint expressions. This argument is retained in the
+        constructor but is not currently applied by ``fit``. Defaults to
+        ``None``, which creates a new empty list for each instance. A supplied
+        list is retained by reference.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from macroframe_forecast import MFF_mixed_freqency
+    >>> periods = pd.period_range("2000", periods=30, freq="Y")
+    >>> values = np.arange(1.0, 31.0)
+    >>> annual = pd.DataFrame(
+    ...     {"a": values, "b": values * 2, "total": values * 3},
+    ...     index=periods,
+    ... )
+    >>> annual.iloc[-2:, 0] = np.nan
+    >>> model = MFF_mixed_freqency(
+    ...     {"Y": annual},
+    ...     forecaster=NaiveForecaster(strategy="last"),
+    ...     constraints_with_wildcard=["a? + b? - total?"],
+    ... )
+    >>> list(model.df_dict)
+    ['Y']
+    """
+
     def __init__(
-        self, df_dict, forecaster=DefaultForecaster(), constraints_with_wildcard=[], ineq_constraints_with_wildcard=[]
+        self,
+        df_dict: dict[str, pd.DataFrame],
+        forecaster: BaseForecaster | None = None,
+        constraints_with_wildcard: list[str] | None = None,
+        ineq_constraints_with_wildcard: list[str] | None = None,
     ):
         self.df_dict = df_dict
-        self.forecaster = forecaster
-        self.constraints_with_wildcard = constraints_with_wildcard
-        self.ineq_constraints_with_wildcard = ineq_constraints_with_wildcard
+        self.forecaster = DefaultForecaster() if forecaster is None else forecaster
+        self.constraints_with_wildcard = [] if constraints_with_wildcard is None else constraints_with_wildcard
+        self.ineq_constraints_with_wildcard = (
+            [] if ineq_constraints_with_wildcard is None else ineq_constraints_with_wildcard
+        )
 
-    def fit(self):
+    def fit(self) -> list[pd.DataFrame]:
+        """Fit the forecaster and return reconciled dataframes by frequency.
+
+        Returns
+        -------
+        list[pd.DataFrame]
+            Reconciled dataframes in the same frequency order as the input
+            mapping. The intermediate organized inputs and initial forecasts
+            are also stored on ``df0_list`` and ``df1_list``.
+        """
         df_dict = self.df_dict
         forecaster = self.forecaster
         constraints_with_wildcard = self.constraints_with_wildcard
@@ -118,7 +181,7 @@ class MFF_mixed_freqency:
             # get nan cells
             df0wide_freq = df0wide_list[df0i].copy()
             df0wide_freq.columns = df0wide_colflat_list[df0i].values
-            na_cells = df0wide_freq.isna()[df0wide_freq.isna()].T.stack().index
+            na_cells = _get_missing_cells(df0wide_freq)
 
             # slice predwide
             pred_freq = predwide.loc[:, na_cells]
@@ -138,7 +201,7 @@ class MFF_mixed_freqency:
                 true_freq.columns = pred_freq_colname
 
             # change col order
-            pred_freq = pred_freq.loc[:, df0.isna()[df0.isna()].T.stack().index]
+            pred_freq = pred_freq.loc[:, _get_missing_cells(df0)]
             true_freq = true_freq.loc[:, pred_freq.columns]
 
             # append pred, true for each frequency
