@@ -96,7 +96,6 @@ References
 
    examples
    api_reference/index
-   mff_documentation
    contributing
 
 * :ref:`genindex`
