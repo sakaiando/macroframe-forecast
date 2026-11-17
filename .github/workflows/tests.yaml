@@ -31,7 +31,7 @@ jobs:
           python-version: '3.12'
       - name: Install uv
         run: pip install uv
-      - name: Install and verify exact runtime dependency lower bounds
+      - name: Install and verify runtime dependency lower bounds and exact pins
         run: |
           python - <<'PY'
           import subprocess
@@ -42,9 +42,9 @@ jobs:
               dependencies = tomllib.load(manifest)["project"]["dependencies"]
           pins = {}
           for dependency in dependencies:
-              name, separator, lower = dependency.partition(">=")
+              name, separator, lower = dependency.partition("==" if "==" in dependency else ">=")
               if not separator or any(symbol in lower for symbol in ",;<>=!~"):
-                  raise ValueError(f"Expected a single lower bound: {dependency}")
+                  raise ValueError(f"Expected a single lower bound or exact pin: {dependency}")
               pins[name.strip()] = lower.strip()
           subprocess.run(
               ["uv", "pip", "install", "--system", ".", "pytest==8.4.0", "pytest-cov==7.0.0",

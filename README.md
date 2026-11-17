@@ -25,6 +25,10 @@ To install the `macroframe-forecast` package, run:
 pip install macroframe-forecast
 ```
 
+sktime is pinned to 1.2.0, the latest compatible release. Version 1.3.0
+breaks `PolynomialTrendForecaster.update()` with an `AttributeError` for `_X`
+when retaining training data.
+
 # Quick start
 
 ```python
