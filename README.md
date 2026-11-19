@@ -100,6 +100,14 @@ For usage questions, support requests, reproducible bug reports, or feature requ
 [CONTRIBUTING.md](CONTRIBUTING.md) for what to include in a report, how to set up a development environment, run tests,
 and submit a contribution.
 
+# License
+
+Unless otherwise specified for particular materials:
+
+- All IMF-owned software code in our repositories is made available under the MIT License, or such other license as may be specified for particular IMF-owned material, as supplemented by the IMF’s Notice of Privileges and Immunities, Dispute Resolution, and other Procedural Terms.
+- All IMF-owned non-software materials—unless otherwise noted—are licensed under the CC BY-NC-SA 4.0 license.
+Users are responsible for complying with the terms applicable to any third-party materials they use.
+
 # Disclaimer
 
 Reuse of this tool and IMF information does not imply any endorsement of the research and/or product. Any research presented should not be reported as representing the views of the IMF, its Executive Board, or member governments.
