@@ -36,7 +36,7 @@ dependencies = [
     "scikit-learn >= 1.4.0",
     "dask[dataframe] >= 2024.8.1",
     "distributed >= 2024.8.1",
-    "sktime >= 0.28.0",
+    "sktime == 1.2.0",
     "sympy >= 1.12",
     "cvxpy >= 1.5.3",
     "statsmodels>=0.14.4",

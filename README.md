@@ -25,6 +25,10 @@ To install the `macroframe-forecast` package, run:
 pip install macroframe-forecast
 ```
 
+sktime is pinned to 1.2.0, the latest compatible release. Version 1.3.0
+breaks `PolynomialTrendForecaster.update()` with an `AttributeError` for `_X`
+when retaining training data.
+
 # Quick start
 
 ```python
@@ -95,6 +99,15 @@ For usage questions, support requests, reproducible bug reports, or feature requ
 [GitHub issue tracker](https://github.com/sakaiando/macroframe-forecast/issues). See
 [CONTRIBUTING.md](CONTRIBUTING.md) for what to include in a report, how to set up a development environment, run tests,
 and submit a contribution.
+
+# License
+
+Unless otherwise specified for particular materials:
+
+- All IMF-owned software code in our repositories is made available under the MIT License, or such other license as may be specified for particular IMF-owned material, as supplemented by the [IMF’s Notice of Privileges and Immunities, Dispute Resolution, and other Procedural Terms](https://github.com/IMForg-Public/.github/blob/main/MIT-P%26I-Notice.md).
+- All IMF-owned non-software materials—unless otherwise noted—are licensed under the CC BY-NC-SA 4.0 license.
+Users are responsible for complying with the terms applicable to any third-party materials they use.
+- All third-party materials published in this repository remain subject to the terms and conditions applicable to each of them, as identified in the Third Party Notices. Users are responsible for complying with the terms applicable to any third-party materials they use, and the IMF makes no warranty of any kind, express or implied, about any such third-party materials.
 
 # Disclaimer
 
