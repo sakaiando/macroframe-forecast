@@ -15,7 +15,7 @@
 
 ## Third-party runtime software
 
-The components below are not licensed by the Macro Framework Forecasting authors. All 11 are declared direct runtime dependencies of the published package.
+The components below are not licensed by the IMF. All 11 are declared direct runtime dependencies of the published package.
 
 | Component | Version | Applicable license | Use in release | License information |
 | --- | --- | --- | --- | --- |
