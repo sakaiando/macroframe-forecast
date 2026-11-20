@@ -1,7 +1,7 @@
 # `macroframe-forecast`: a Python package to assist with macroframework forecasting
 
 
-[![!pypi](https://img.shields.io/pypi/v/macroframe-forecast?color=green)](https://pypi.org/project/macroframe-forecast/) [![Downloads](https://static.pepy.tech/personalized-badge/macroframe-forecast?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/macroframe-forecast)
+[![!pypi](https://img.shields.io/pypi/v/macroframe-forecast?color=green)](https://pypi.org/project/macroframe-forecast/) [![Downloads](https://static.pepy.tech/personalized-badge/macroframe-forecast?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/macroframe-forecast) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sakaiando/macroframe-forecast/HEAD?urlpath=lab/tree/docs/source/getting_started/demo_notebook.ipynb)
 
 This package assists forecasting with constraints and is based on the following papers:
 * [A Python Package to Assist Macroframework Forecasting: Concepts and Examples (2025)](https://www.imf.org/en/Publications/WP/Issues/2025/08/29/A-Python-Package-to-Assist-Macroframework-Forecasting-Concepts-and-Examples-570041).
@@ -24,6 +24,10 @@ To install the `macroframe-forecast` package, run:
 ```shell
 pip install macroframe-forecast
 ```
+
+sktime is pinned to 1.2.0, the latest compatible release. Version 1.3.0
+breaks `PolynomialTrendForecaster.update()` with an `AttributeError` for `_X`
+when retaining training data.
 
 # Quick start
 
@@ -69,11 +73,25 @@ axes[1].legend()
 axes[2].legend()
 ```
 
+# Forecaster training-data retention
+
+Package-default forecasters explicitly use `remember_data=True` on sktime
+versions that support it, preserving training-data retention and update/refit
+behavior for returned fitted models. Supplied forecasters keep their own
+`remember_data` setting, and the original estimator is not modified. The package
+locally silences only sktime's `remember_data` default-change warning while
+constructing and fitting its models, including nested forecasters.
+
+If the warning appears when constructing your own forecaster before passing it
+to the package, it originates outside the package's scope. Setting
+`forecaster.set_config(remember_data=False)` opts out of retention, but can change
+subsequent update/refit behavior; it also cannot undo a constructor warning that
+has already been emitted.
+
 # Reproducing the paper figures
 
-See the [self-contained GDP example](paper/README.md) for instructions to
-generate the paper's GDP forecasting figure, along with forecast values and
-the dependency versions used.
+The [self-contained GDP example and figure reproduction instructions](https://github.com/sakaiando/macroframe-forecast/blob/joss_branch/paper/README.md)
+are maintained on the JOSS submission branch.
 
 # Support and contributions
 
@@ -81,6 +99,15 @@ For usage questions, support requests, reproducible bug reports, or feature requ
 [GitHub issue tracker](https://github.com/sakaiando/macroframe-forecast/issues). See
 [CONTRIBUTING.md](CONTRIBUTING.md) for what to include in a report, how to set up a development environment, run tests,
 and submit a contribution.
+
+# License
+
+Unless otherwise specified for particular materials:
+
+- All IMF-owned software code in our repositories is made available under the MIT License, or such other license as may be specified for particular IMF-owned material, as supplemented by the [IMF’s Notice of Privileges and Immunities, Dispute Resolution, and other Procedural Terms](https://github.com/IMForg-Public/.github/blob/main/MIT-P%26I-Notice.md).
+- All IMF-owned non-software materials—unless otherwise noted—are licensed under the CC BY-NC-SA 4.0 license.
+Users are responsible for complying with the terms applicable to any third-party materials they use.
+- All third-party materials published in this repository remain subject to the terms and conditions applicable to each of them, as identified in the Third Party Notices. Users are responsible for complying with the terms applicable to any third-party materials they use, and the IMF makes no warranty of any kind, express or implied, about any such third-party materials.
 
 # Disclaimer
 

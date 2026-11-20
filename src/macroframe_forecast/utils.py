@@ -6,6 +6,7 @@
 import copy
 import re
 import warnings
+from contextlib import contextmanager
 from random import sample, seed
 from string import ascii_lowercase
 from time import time
@@ -37,6 +38,33 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingGreedySplitter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.feature_selection import FeatureSelection
+
+
+@contextmanager
+def _silence_remember_data_warning():
+    # sktime warns during construction, before set_config can be called, even
+    # when retaining training data explicitly. Include nested clones and fits.
+    caught = []
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.filterwarnings(
+                "ignore",
+                message=r"The default of config ``remember_data`` will change",
+                category=FutureWarning,
+                module=r"sktime\.forecasting\.base\._base",
+            )
+            yield
+    finally:
+        # Nested sktime contexts can reset FutureWarning filters to "default".
+        # Discard only this warning and forward all others with their source location.
+        for warning in caught:
+            if isinstance(warning.message, FutureWarning) and str(warning.message).startswith(
+                "The default of config ``remember_data`` will change"
+            ):
+                continue
+            warnings.warn_explicit(
+                warning.message, warning.category, warning.filename, warning.lineno, source=warning.source
+            )
 
 
 def CheckTrainingSampleSize(df0: DataFrame, n_forecast_error: int = 5) -> bool:
@@ -97,6 +125,7 @@ def CheckTrainingSampleSize(df0: DataFrame, n_forecast_error: int = 5) -> bool:
         return False
 
 
+@_silence_remember_data_warning()
 def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     """
     Set up forecasting pipeline, specifying the scaling (transforming) to be
@@ -112,7 +141,9 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
     -------
     gscv : BaseForecaster
         A grid-search forecaster configured for model selection, or a naive
-        last-value forecaster when ``small_sample=True``.
+        last-value forecaster when ``small_sample=True``. Training data is
+        retained explicitly on sktime versions supporting ``remember_data``,
+        preserving the existing update/refit behavior of returned models.
 
     Examples
     --------
@@ -195,6 +226,9 @@ def DefaultForecaster(small_sample: bool = False) -> BaseForecaster:
 
     else:
         gscv = NaiveForecaster(strategy="last")
+
+    if "remember_data" in gscv.get_config():
+        gscv.set_config(remember_data=True)
 
     return gscv
 
@@ -577,6 +611,7 @@ def AddIslandsToConstraints(C: DataFrame, d: DataFrame, islands: Series) -> tupl
     return C_aug, d_aug
 
 
+@_silence_remember_data_warning()
 def FillAnEmptyCell(
     df: DataFrame, row: int | str, col: int | str, forecaster: BaseForecaster
 ) -> tuple[Series, BaseForecaster]:
@@ -602,7 +637,8 @@ def FillAnEmptyCell(
     y_pred : pd.Series
         Forecast for the requested period.
     fitted_forecaster : BaseForecaster
-        Fitted clone of the supplied forecaster.
+        Fitted clone of the supplied forecaster, preserving its
+        ``remember_data`` setting when supported by sktime.
 
     Examples
     --------
@@ -627,6 +663,9 @@ def FillAnEmptyCell(
 
     # clone a forecaster
     f = forecaster.clone()
+    config = forecaster.get_config()
+    if "remember_data" in config:
+        f.set_config(remember_data=config["remember_data"])
 
     # last historical data and forecast horizon in num
     T = np.argwhere(df.loc[:, col].isna()).min()

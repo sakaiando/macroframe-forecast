@@ -43,17 +43,19 @@ class MFF:
         An ``sktime`` forecaster. If omitted, the package's default forecaster
         is used.
 
-    equality_constraints : list[str], optional
+    equality_constraints : list[str] or None, optional
         Linear equality constraints, expressed as strings that equal zero.
         Use ``?`` as a wildcard to apply a constraint across forecast periods.
-        Defaults to an empty list.
+        Defaults to ``None``, which creates a new empty list for each instance.
+        A supplied list is retained by reference.
 
-    inequality_constraints : list[str], optional
+    inequality_constraints : list[str] or None, optional
         Linear expressions interpreted as less than or equal to zero. Pass
         only the expression: ``"a? - 5"`` imposes an upper bound of 5 on ``a``.
         Do not include a comparison operator such as ``<=`` in the string.
         Use ``?`` as a wildcard to apply a constraint across forecast periods.
-        Defaults to an empty list.
+        Defaults to ``None``, which creates a new empty list for each instance.
+        A supplied list is retained by reference.
 
     parallelize : bool, optional
         Whether to parallelize generation of the initial forecasts. Defaults
@@ -121,8 +123,8 @@ class MFF:
         self,
         df: pd.DataFrame,
         forecaster: BaseForecaster | None = None,
-        equality_constraints: list[str] = [],
-        inequality_constraints: list[str] = [],
+        equality_constraints: list[str] | None = None,
+        inequality_constraints: list[str] | None = None,
         parallelize: bool = True,
         n_forecast_error: int = 5,
         shrinkage_method: Literal["oas", "identity", "oasd", "monotone diagonal"] = "oas",
@@ -131,8 +133,8 @@ class MFF:
     ):
         self.df = df
         self.forecaster = forecaster
-        self.equality_constraints = equality_constraints
-        self.inequality_constraints = inequality_constraints
+        self.equality_constraints = [] if equality_constraints is None else equality_constraints
+        self.inequality_constraints = [] if inequality_constraints is None else inequality_constraints
         self.parallelize = parallelize
         self.n_forecast_error = n_forecast_error
         self.shrinkage_method = shrinkage_method
